@@ -3,6 +3,7 @@
 import type {
   ApplyOptimizationResponse,
   BenchmarkResult,
+  BenchmarkRun,
   HardwareInfo,
   OllamaStatus,
   PullEvent,
@@ -103,4 +104,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ model }),
     }),
+
+  history: () => request<{ runs: BenchmarkRun[] }>("/benchmark/history"),
 };

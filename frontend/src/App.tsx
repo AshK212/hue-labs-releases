@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
 import { Orbs } from "./components/Orbs";
 import { Screen } from "./components/Screen";
 import { TopBar } from "./components/TopBar";
+import { Dashboard } from "./dashboard/Dashboard";
 
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 import { ScanningScreen } from "./screens/ScanningScreen";
@@ -36,23 +38,39 @@ function renderScreen(step: number) {
   }
 }
 
-function Journey() {
-  const { step, back } = useJourney();
-  const isWelcome = step === STEP.Welcome;
+const pageMotion = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.26, ease: [0.16, 1, 0.3, 1] as const },
+};
 
-  // Welcome is a full-bleed hero: it owns the whole viewport and its own header,
-  // so we skip the centered stage and the standard chrome for it.
-  if (isWelcome) {
-    return <WelcomeScreen />;
+function Journey() {
+  const { view, step, back } = useJourney();
+
+  if (view === "dashboard") {
+    return <Dashboard />;
+  }
+
+  if (step === STEP.Welcome) {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div key="welcome" {...pageMotion}>
+          <WelcomeScreen />
+        </motion.div>
+      </AnimatePresence>
+    );
   }
 
   return (
     <>
       <Orbs />
       <TopBar step={step} onBack={back} />
-
-      {/* Keyed on step so each screen remounts and replays its enter motion. */}
-      <Screen key={step}>{renderScreen(step)}</Screen>
+      <AnimatePresence mode="wait">
+        <motion.div key={step} {...pageMotion}>
+          <Screen>{renderScreen(step)}</Screen>
+        </motion.div>
+      </AnimatePresence>
     </>
   );
 }

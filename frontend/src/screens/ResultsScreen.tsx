@@ -5,7 +5,7 @@ import { Button } from "../components/Button";
 import { MetricCard } from "../components/Metric";
 import { useCountUp } from "../components/useCountUp";
 import { friendlySetting } from "../journey/labels";
-import { ArrowUpIcon, CheckIcon, ChipIcon, GpuIcon, SparkIcon } from "../components/Icons";
+import { ArrowRightIcon, ArrowUpIcon, CheckIcon, ChipIcon, GpuIcon, SparkIcon } from "../components/Icons";
 
 function changeIcon(label: string): ReactNode {
   const s = label.toLowerCase();
@@ -15,7 +15,7 @@ function changeIcon(label: string): ReactNode {
 }
 
 export function ResultsScreen() {
-  const { baseline, optimized, profile, reset } = useJourney();
+  const { baseline, optimized, profile, reset, openDashboard } = useJourney();
   const before = baseline?.tokens_per_sec ?? 0;
   const after = optimized?.tokens_per_sec ?? 0;
   const pct = before > 0 ? ((after - before) / before) * 100 : 0;
@@ -105,7 +105,9 @@ export function ResultsScreen() {
         <Button variant="ghost" onClick={reset}>
           Start over
         </Button>
-        <Button onClick={reset}>Finish</Button>
+        <Button onClick={openDashboard} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
+          Go to dashboard
+        </Button>
       </Reveal>
     </Column>
   );

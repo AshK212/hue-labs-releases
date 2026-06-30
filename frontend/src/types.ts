@@ -75,6 +75,18 @@ export interface PullEvent {
   error?: string;
 }
 
+// A stored benchmark run as returned by /benchmark/history.
+export interface BenchmarkRun {
+  id: number;
+  model: string;
+  profile: string;
+  tokens_per_sec: number;
+  output_tokens: number;
+  total_seconds: number;
+  options_json: string;
+  created_at: string;
+}
+
 export interface OptimizationProfile {
   name: string;
   label: string;

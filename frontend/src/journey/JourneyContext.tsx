@@ -18,7 +18,16 @@ import { STEP } from "./steps";
 
 export type Phase = "idle" | "loading" | "done" | "error";
 
+type View = "onboarding" | "dashboard";
+
 interface JourneyValue {
+  // Top-level view
+  view: View;
+  openDashboard: () => void;
+  enterFlowAt: (step: number) => void;
+  restartBenchmarks: () => void;
+  reoptimize: () => void;
+
   // Navigation
   step: number;
   next: () => void;
@@ -58,6 +67,7 @@ interface JourneyValue {
 const JourneyContext = createContext<JourneyValue | null>(null);
 
 export function JourneyProvider({ children }: { children: ReactNode }) {
+  const [view, setView] = useState<View>("onboarding");
   const [step, setStep] = useState<number>(STEP.Welcome);
 
   const [hardware, setHardware] = useState<HardwareInfo | null>(null);
@@ -88,7 +98,13 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   const next = useCallback(() => setStep((s) => Math.min(s + 1, STEP.Results)), []);
   const back = useCallback(() => setStep((s) => Math.max(s - 1, STEP.Welcome)), []);
   const goTo = useCallback((n: number) => setStep(n), []);
+  const openDashboard = useCallback(() => setView("dashboard"), []);
+  const enterFlowAt = useCallback((n: number) => {
+    setStep(n);
+    setView("onboarding");
+  }, []);
   const reset = useCallback(() => {
+    setView("onboarding");
     setStep(STEP.Welcome);
     setProfile(null);
     setBaseline(null);
@@ -97,6 +113,29 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
     setOptimizePhase("idle");
     setBaselineError(null);
     setOptimizeError(null);
+  }, []);
+
+  // Re-run the full benchmark + optimization from a clean state (real runs).
+  const restartBenchmarks = useCallback(() => {
+    setBaseline(null);
+    setOptimized(null);
+    setProfile(null);
+    setBaselinePhase("idle");
+    setOptimizePhase("idle");
+    setBaselineError(null);
+    setOptimizeError(null);
+    setStep(STEP.Baseline);
+    setView("onboarding");
+  }, []);
+
+  // Re-run just the optimization against the existing baseline.
+  const reoptimize = useCallback(() => {
+    setOptimized(null);
+    setProfile(null);
+    setOptimizePhase("idle");
+    setOptimizeError(null);
+    setStep(STEP.Optimize);
+    setView("onboarding");
   }, []);
 
   // --- Async actions ---
@@ -157,6 +196,11 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   }, [selectedModel]);
 
   const value: JourneyValue = {
+    view,
+    openDashboard,
+    enterFlowAt,
+    restartBenchmarks,
+    reoptimize,
     step,
     next,
     back,

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 export function Screen({ children }: { children: ReactNode }) {
   return (
     <main className="min-h-[100dvh] flex items-center justify-center px-8 sm:px-12 pt-[84px] pb-16">
-      <div className="w-full animate-screen-in">{children}</div>
+      <div className="w-full">{children}</div>
     </main>
   );
 }
