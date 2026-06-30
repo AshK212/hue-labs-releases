@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
-import { Pill } from "../components/Bits";
-import { ArrowRightIcon, CheckIcon, SparkIcon } from "../components/Icons";
+import { SectionHeader } from "../components/Card";
+import { StatusBadge } from "../components/Badge";
+import { Button } from "../components/Button";
+import { ArrowRightIcon, CheckIcon, DownloadIcon, GaugeIcon, SparkIcon } from "../components/Icons";
+import { cleanCopy } from "../journey/labels";
 import type { ModelRecommendation } from "../types";
 
 export function RecommendationScreen() {
@@ -16,37 +19,32 @@ export function RecommendationScreen() {
   return (
     <Column>
       <Reveal index={0}>
-        <h1 className="text-[32px] leading-tight font-semibold tracking-tight2 text-ink-900">
-          We suggest {primary.display_name}
-        </h1>
-      </Reveal>
-      <Reveal index={1} className="mt-2">
-        <p className="text-[16px] text-ink-500">
-          A good balance of speed, quality and size for your computer.
-        </p>
+        <SectionHeader
+          title={`We suggest ${primary.display_name}`}
+          subtitle="A good balance of speed, quality and size for your computer."
+        />
       </Reveal>
 
-      <Reveal index={2} className="mt-6">
-        <ModelCard
+      <Reveal index={1} className="mt-7">
+        <PrimaryCard
           rec={primary}
-          recommended
           selected={selectedModel === primary.model}
           onSelect={() => setSelectedModel(primary.model)}
         />
       </Reveal>
 
       {alt && (
-        <Reveal index={3} className="mt-3">
+        <Reveal index={2} className="mt-3">
           {!showAlt ? (
             <button
-              className="inline-flex items-center gap-1 text-[14px] font-medium text-sky-600 hover:text-sky-700 transition-colors"
+              className="inline-flex items-center gap-1 text-caption font-medium text-sky-600 hover:text-sky-700 transition-colors"
               onClick={() => setShowAlt(true)}
             >
               Show a smaller model
               <ArrowRightIcon className="w-4 h-4" />
             </button>
           ) : (
-            <ModelCard
+            <AltCard
               rec={alt}
               selected={selectedModel === alt.model}
               onSelect={() => setSelectedModel(alt.model)}
@@ -55,24 +53,25 @@ export function RecommendationScreen() {
         </Reveal>
       )}
 
-      <Reveal index={4} className="mt-8">
-        <button className="btn-primary" onClick={next} disabled={!selectedModel}>
+      <Reveal index={3} className="mt-9">
+        <Button
+          onClick={next}
+          disabled={!selectedModel}
+          rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}
+        >
           Continue
-          <ArrowRightIcon className="w-[18px] h-[18px]" />
-        </button>
+        </Button>
       </Reveal>
     </Column>
   );
 }
 
-function ModelCard({
+function PrimaryCard({
   rec,
-  recommended,
   selected,
   onSelect,
 }: {
   rec: ModelRecommendation;
-  recommended?: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -80,37 +79,88 @@ function ModelCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-card p-5 transition-all duration-200 border",
-        selected
-          ? "bg-white border-sky-300 ring-2 ring-sky-100 shadow-card"
-          : "bg-white border-mist-200 shadow-tile hover:border-sky-200",
+        "w-full text-left rounded-card p-7 border transition-all duration-200",
+        selected ? "bg-white border-sky-300 ring-2 ring-sky-100 shadow-card" : "bg-white border-mist-200 shadow-tile hover:border-sky-200",
       ].join(" ")}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-5">
         <div
           className={[
-            "flex-shrink-0 grid place-items-center w-11 h-11 rounded-tile transition-colors",
+            "flex-shrink-0 grid place-items-center w-14 h-14 rounded-card transition-colors",
             selected ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-500",
           ].join(" ")}
         >
-          {selected ? <CheckIcon className="w-6 h-6" /> : <SparkIcon className="w-6 h-6" />}
+          {selected ? <CheckIcon className="w-7 h-7" /> : <SparkIcon className="w-7 h-7" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-[16px] font-semibold text-ink-900">{rec.display_name}</h3>
-            {recommended && <Pill tone="good">Suggested</Pill>}
-            {rec.already_installed ? (
-              <Pill tone="info">Ready</Pill>
-            ) : (
-              <Pill tone="neutral">{rec.download_size_gb} GB</Pill>
-            )}
+            <h3 className="text-cardtitle font-semibold text-ink-900">{rec.display_name}</h3>
+            <StatusBadge tone="green">Suggested</StatusBadge>
+            {rec.already_installed && <StatusBadge tone="blue">Ready</StatusBadge>}
           </div>
-          <p className="text-[14px] text-ink-500 mt-2 leading-relaxed">{rec.reason}</p>
-          <p className="text-[13px] text-ink-400 mt-2.5">
-            Around {rec.estimated_tokens_per_sec}. This is just an estimate. We measure the
-            real speed in a moment.
-          </p>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Fact icon={<DownloadIcon className="w-4 h-4" />} label="Download" value={`${rec.download_size_gb} GB`} />
+            <Fact icon={<GaugeIcon className="w-4 h-4" />} label="Estimated speed" value={rec.estimated_tokens_per_sec} />
+          </div>
+
+          <div className="mt-4">
+            <div className="text-caption font-semibold text-ink-700">Why this model</div>
+            <p className="text-caption text-ink-500 mt-1 leading-relaxed">{cleanCopy(rec.reason)}</p>
+            <p className="text-micro text-ink-400 mt-2">
+              Installs locally and runs offline. The speed above is an estimate, we measure
+              the real number next.
+            </p>
+          </div>
         </div>
+      </div>
+    </button>
+  );
+}
+
+function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="surface-quiet px-4 py-3">
+      <div className="flex items-center gap-1.5 text-ink-400">
+        <span className="text-sky-500">{icon}</span>
+        <span className="text-micro">{label}</span>
+      </div>
+      <div className="text-body font-semibold text-ink-900 mt-1">{value}</div>
+    </div>
+  );
+}
+
+function AltCard({
+  rec,
+  selected,
+  onSelect,
+}: {
+  rec: ModelRecommendation;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className={[
+        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-center gap-4",
+        selected ? "bg-white border-sky-300 ring-2 ring-sky-100 shadow-card" : "bg-white border-mist-200 shadow-tile hover:border-sky-200",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "flex-shrink-0 grid place-items-center w-11 h-11 rounded-tile",
+          selected ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-500",
+        ].join(" ")}
+      >
+        {selected ? <CheckIcon className="w-5 h-5" /> : <SparkIcon className="w-5 h-5" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="text-body font-semibold text-ink-900">{rec.display_name}</h3>
+          <StatusBadge tone="neutral">{rec.download_size_gb} GB</StatusBadge>
+        </div>
+        <p className="text-caption text-ink-500 mt-0.5 line-clamp-1">{cleanCopy(rec.reason)}</p>
       </div>
     </button>
   );

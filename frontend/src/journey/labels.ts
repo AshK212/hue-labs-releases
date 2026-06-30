@@ -2,6 +2,11 @@
 // labels for the UI. The precise technical details still live in the docs and
 // the API response; we just keep the main screens calm and non-technical.
 
+/** Normalize backend-sourced copy for display: no em/en dashes in the UI. */
+export function cleanCopy(text: string): string {
+  return text.replace(/\s*[—–]\s*/g, ", ");
+}
+
 export function friendlySetting(setting: string): string {
   const s = setting.toLowerCase();
 

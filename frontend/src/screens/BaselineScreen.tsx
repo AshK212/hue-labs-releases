@@ -1,10 +1,11 @@
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
-import { Pulse } from "../components/Pulse";
-import { HeroStat, IconBadge, Note, Pill } from "../components/Bits";
+import { Button } from "../components/Button";
+import { RunningStages } from "../components/RunningStages";
+import { HeroNumber } from "../components/Metric";
+import { IconBadge, Note } from "../components/Bits";
+import { StatusBadge } from "../components/Badge";
 import { ArrowRightIcon, GaugeIcon } from "../components/Icons";
-
-const FAIR_NOTE = "Same prompt, same model. The numbers stay fair.";
 
 export function BaselineScreen() {
   const { baseline, baselinePhase, baselineError, runBaseline, next } = useJourney();
@@ -12,24 +13,7 @@ export function BaselineScreen() {
   if (baselinePhase === "loading") {
     return (
       <Column>
-        <h1 className="text-[28px] leading-tight font-semibold tracking-tight2 text-ink-900">
-          Let's measure the current speed
-        </h1>
-        <p className="mt-2 text-[16px] text-ink-500">
-          We send the model a short prompt and time how fast it replies.
-        </p>
-
-        <div className="mt-9 flex flex-col items-center text-center">
-          <Pulse>
-            <GaugeIcon className="w-7 h-7" />
-          </Pulse>
-          <h2 className="mt-7 text-[20px] font-semibold text-ink-900">Measuring the speed</h2>
-          <p className="mt-1.5 text-[14px] text-ink-500">This takes a few seconds.</p>
-        </div>
-
-        <div className="mt-9">
-          <Note>{FAIR_NOTE}</Note>
-        </div>
+        <RunningStages title="Measuring your speed" icon={<GaugeIcon className="w-7 h-7" />} />
       </Column>
     );
   }
@@ -37,58 +21,57 @@ export function BaselineScreen() {
   if (baselinePhase === "done" && baseline) {
     return (
       <Column>
-        <Reveal index={0}>
-          <p className="text-[15px] text-ink-500">Here is the speed right now</p>
-        </Reveal>
-        <Reveal index={1} className="mt-4">
-          <HeroStat value={baseline.tokens_per_sec.toFixed(1)} unit="tokens per second" />
-        </Reveal>
-        <Reveal index={2} className="mt-5">
-          <Pill tone="neutral">
-            Default settings, {baseline.output_tokens} tokens in {baseline.total_seconds}s
-          </Pill>
-        </Reveal>
-        <Reveal index={3} className="mt-9">
-          <button className="btn-primary" onClick={next}>
-            Continue
-            <ArrowRightIcon className="w-[18px] h-[18px]" />
-          </button>
-        </Reveal>
+        <div className="flex flex-col items-center text-center">
+          <Reveal index={0}>
+            <p className="text-body text-ink-500">Your speed right now</p>
+          </Reveal>
+          <Reveal index={1} className="mt-5">
+            <HeroNumber value={baseline.tokens_per_sec} unit="tokens per second" />
+          </Reveal>
+          <Reveal index={2} className="mt-6">
+            <StatusBadge tone="neutral">
+              Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s
+            </StatusBadge>
+          </Reveal>
+          <Reveal index={3} className="mt-9">
+            <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
+              Continue
+            </Button>
+          </Reveal>
+        </div>
       </Column>
     );
   }
 
+  // Intro
   return (
     <Column>
       <Reveal index={0}>
-        <IconBadge>
-          <GaugeIcon className="w-6 h-6" />
+        <IconBadge size="lg">
+          <GaugeIcon className="w-7 h-7" />
         </IconBadge>
       </Reveal>
       <Reveal index={1} className="mt-6">
-        <h1 className="text-[30px] leading-tight font-semibold tracking-tight2 text-ink-900">
-          Let's measure the current speed
-        </h1>
+        <h1 className="text-page font-semibold text-ink-900">Let's measure your speed</h1>
       </Reveal>
-      <Reveal index={2} className="mt-2">
-        <p className="text-[16px] leading-relaxed text-ink-500 max-w-[28rem]">
-          We send the model a short prompt and time how fast it replies. The model reports
-          the real timing.
+      <Reveal index={2} className="mt-3">
+        <p className="text-body leading-relaxed text-ink-500 max-w-[31rem]">
+          We measure how fast your computer responds using the same prompt every time. This
+          gives us a fair comparison before and after optimization.
         </p>
       </Reveal>
       <Reveal index={3} className="mt-6">
-        <Note>{FAIR_NOTE}</Note>
+        <Note>The model reports the real timing, so this number is honest.</Note>
       </Reveal>
       {baselineError && (
         <Reveal index={4} className="mt-4">
-          <p className="text-[14px] text-sky-600">{baselineError}</p>
+          <p className="text-caption text-sky-600">{baselineError}</p>
         </Reveal>
       )}
       <Reveal index={4} className="mt-8">
-        <button className="btn-primary" onClick={runBaseline}>
-          <GaugeIcon className="w-[18px] h-[18px]" />
+        <Button onClick={runBaseline} leftIcon={<GaugeIcon className="w-[18px] h-[18px]" />}>
           {baselineError ? "Try again" : "Run the test"}
-        </button>
+        </Button>
       </Reveal>
     </Column>
   );

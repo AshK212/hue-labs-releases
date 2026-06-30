@@ -11,15 +11,14 @@
 
   body {
     @apply text-ink-700 antialiased;
-    background-color: #f3f5f9;
-    /* A soft sky that lightens toward the top, like an overcast morning. */
+    background-color: #f4f7fb;
     background-image:
       radial-gradient(1200px 760px at 72% -12%, #e9f0fb 0%, rgba(233, 240, 251, 0) 58%),
-      linear-gradient(180deg, #fafbfe 0%, #eef1f7 100%);
+      linear-gradient(180deg, #fafbfe 0%, #eef2f8 100%);
     background-attachment: fixed;
+    font-feature-settings: "cv11", "ss01";
   }
 
-  /* Calm, considered text rendering. */
   h1, h2, h3 {
     text-wrap: balance;
   }
@@ -29,9 +28,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -40,43 +37,20 @@
 }
 
 @layer components {
-  /* Surfaces: a hairline border plus a soft shadow gives crisp desktop depth. */
-  .card {
+  /* Surfaces ------------------------------------------------------------- */
+  .surface {
     @apply rounded-card bg-white border border-mist-200 shadow-card;
   }
-
-  .panel {
-    @apply rounded-card bg-white/85 backdrop-blur-md border border-white/70 shadow-card;
-  }
-
-  .tile {
+  .surface-tile {
     @apply rounded-tile bg-white border border-mist-200 shadow-tile;
   }
-
-  /* Buttons: one height (44px), one radius, one easing. ------------------ */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-btn
-           text-[15px] font-medium transition-all duration-200 ease-out select-none
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none;
-  }
-
-  .btn-primary {
-    @apply btn px-6 text-white bg-sky-500 shadow-button
-           hover:bg-sky-600 hover:-translate-y-px
-           active:translate-y-0 active:scale-[0.99];
-  }
-
-  .btn-secondary {
-    @apply btn bg-mist-100 text-ink-700 hover:bg-mist-200;
-  }
-
-  .btn-ghost {
-    @apply btn text-ink-500 hover:text-ink-900 hover:bg-mist-100;
+  .surface-quiet {
+    @apply rounded-tile bg-mist-50 border border-mist-200;
   }
 
   /* Badges --------------------------------------------------------------- */
-  .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium;
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-badge px-3 py-1 text-micro font-semibold;
   }
 }
 
@@ -92,5 +66,8 @@
       rgba(255, 255, 255, 0) 70%
     );
     background-size: 200% 100%;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
 }

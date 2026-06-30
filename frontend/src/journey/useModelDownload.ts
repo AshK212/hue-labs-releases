@@ -18,6 +18,10 @@ export interface DownloadState {
   percent: number | null;
   completedBytes: number;
   totalBytes: number;
+  /** Smoothed download speed in bytes/sec, derived from real progress (0 if unknown). */
+  speedBytesPerSec: number;
+  /** Estimated seconds remaining, or null when unknown. */
+  etaSeconds: number | null;
   error: string | null;
   start: (model: string) => Promise<void>;
   cancel: () => void;
@@ -41,21 +45,28 @@ export function useModelDownload(): DownloadState {
   const [percent, setPercent] = useState<number | null>(null);
   const [completedBytes, setCompletedBytes] = useState(0);
   const [totalBytes, setTotalBytes] = useState(0);
+  const [speedBytesPerSec, setSpeed] = useState(0);
+  const [etaSeconds, setEta] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const failedRef = useRef(false);
   // Real bytes per layer (digest), summed for the overall figure.
   const layersRef = useRef<Map<string, { total: number; completed: number }>>(new Map());
+  // Sampling state for the smoothed speed (derived only from real byte deltas).
+  const sampleRef = useRef<{ time: number; bytes: number } | null>(null);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
     layersRef.current.clear();
+    sampleRef.current = null;
     setStatus("idle");
     setPercent(null);
     setCompletedBytes(0);
     setTotalBytes(0);
+    setSpeed(0);
+    setEta(null);
     setError(null);
   }, []);
 
@@ -88,6 +99,26 @@ export function useModelDownload(): DownloadState {
       setTotalBytes(total);
       setCompletedBytes(completed);
       if (total > 0) setPercent(Math.min(100, (completed / total) * 100));
+
+      // Derive a smoothed speed and ETA from the real byte/time deltas.
+      const now = performance.now();
+      const prev = sampleRef.current;
+      if (prev) {
+        const dt = (now - prev.time) / 1000;
+        const db = completed - prev.bytes;
+        if (dt > 0.2 && db >= 0) {
+          const instant = db / dt;
+          setSpeed((s) => (s > 0 ? s * 0.6 + instant * 0.4 : instant));
+          setEta(() => {
+            const speed = speedBytesPerSec > 0 ? speedBytesPerSec * 0.6 + instant * 0.4 : instant;
+            const remaining = total - completed;
+            return speed > 1 ? remaining / speed : null;
+          });
+          sampleRef.current = { time: now, bytes: completed };
+        }
+      } else {
+        sampleRef.current = { time: now, bytes: completed };
+      }
     }
 
     // Advance the status label, but never move backwards out of "complete".
@@ -101,11 +132,14 @@ export function useModelDownload(): DownloadState {
   const start = useCallback(
     async (model: string) => {
       layersRef.current.clear();
+      sampleRef.current = null;
       failedRef.current = false;
       setError(null);
       setPercent(null);
       setCompletedBytes(0);
       setTotalBytes(0);
+      setSpeed(0);
+      setEta(null);
       setStatus("preparing");
 
       const ac = new AbortController();
@@ -138,6 +172,8 @@ export function useModelDownload(): DownloadState {
     percent,
     completedBytes,
     totalBytes,
+    speedBytesPerSec,
+    etaSeconds,
     error,
     start,
     cancel,

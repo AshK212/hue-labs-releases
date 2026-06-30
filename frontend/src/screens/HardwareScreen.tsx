@@ -1,6 +1,9 @@
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
+import { SectionHeader } from "../components/Card";
 import { StatTile } from "../components/Bits";
+import { StatusBadge } from "../components/Badge";
+import { Button } from "../components/Button";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -19,19 +22,17 @@ export function HardwareScreen() {
   return (
     <Column>
       <Reveal index={0}>
-        <h1 className="text-[32px] leading-tight font-semibold tracking-tight2 text-ink-900">
-          We found your computer
-        </h1>
-      </Reveal>
-      <Reveal index={1} className="mt-2">
-        <p className="text-[16px] text-ink-500">Here's what we detected. Everything looks good.</p>
+        <SectionHeader
+          title="We found your computer"
+          subtitle="Here is what we detected. Everything looks good."
+        />
       </Reveal>
 
-      <div className="mt-7 grid grid-cols-2 gap-3">
-        <Reveal index={2}>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <Reveal index={1}>
           <StatTile icon={<MonitorIcon className="w-[18px] h-[18px]" />} label="System" value={hardware.os_name} />
         </Reveal>
-        <Reveal index={3}>
+        <Reveal index={2}>
           <StatTile
             icon={<ChipIcon className="w-[18px] h-[18px]" />}
             label="Processor"
@@ -39,7 +40,7 @@ export function HardwareScreen() {
             hint={`${hardware.cpu_cores_physical} cores`}
           />
         </Reveal>
-        <Reveal index={4}>
+        <Reveal index={3}>
           <StatTile
             icon={<MemoryIcon className="w-[18px] h-[18px]" />}
             label="Memory"
@@ -47,7 +48,7 @@ export function HardwareScreen() {
             hint={`${hardware.memory_available_gb} GB free`}
           />
         </Reveal>
-        <Reveal index={5}>
+        <Reveal index={4}>
           <StatTile
             icon={<GpuIcon className="w-[18px] h-[18px]" />}
             label="Graphics"
@@ -57,19 +58,17 @@ export function HardwareScreen() {
         </Reveal>
       </div>
 
-      <Reveal index={6} className="mt-6 flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-50 text-sage-600 px-3 py-1.5 text-[13px] font-semibold">
-          <CheckIcon className="w-4 h-4" />
+      <Reveal index={5} className="mt-6 flex items-center gap-3">
+        <StatusBadge tone="green" icon={<CheckIcon className="w-3.5 h-3.5" />}>
           Great match
-        </span>
-        <span className="text-[14px] text-ink-500">Your computer is ready for local AI.</span>
+        </StatusBadge>
+        <span className="text-caption text-ink-500">Your computer is ready for local AI.</span>
       </Reveal>
 
-      <Reveal index={7} className="mt-8">
-        <button className="btn-primary" onClick={next}>
+      <Reveal index={6} className="mt-9">
+        <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
           Continue
-          <ArrowRightIcon className="w-[18px] h-[18px]" />
-        </button>
+        </Button>
       </Reveal>
     </Column>
   );
