@@ -82,6 +82,23 @@ class BenchmarkResult(BaseModel):
     created_at: str
 
 
+# --- Ollama pull ----------------------------------------------------------
+
+class PullModelRequest(BaseModel):
+    model: str
+
+
+# A single normalized progress event streamed during a model download.
+# (Documentation/reference only; the live endpoint streams NDJSON, not this model.)
+class PullProgressEvent(BaseModel):
+    phase: str  # preparing | downloading | verifying | finalizing | complete | error
+    status: Optional[str] = None
+    digest: Optional[str] = None
+    total: Optional[int] = None       # bytes, when Ollama reports it
+    completed: Optional[int] = None   # bytes, when Ollama reports it
+    error: Optional[str] = None
+
+
 # --- Optimization ---------------------------------------------------------
 
 class OptimizationProfile(BaseModel):

@@ -4,29 +4,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Soft sky / cloud palette — calm, modern, premium.
-        sky: {
-          50: "#f3f8ff",
-          100: "#e6f0ff",
-          200: "#cfe2ff",
-          300: "#a9caff",
-          400: "#7fabfb",
-          500: "#5b8def",
-          600: "#3f6fd6",
-          700: "#2f56ad",
+        // Neutral canvas + surfaces: soft, slightly cool "mist" rather than pure white.
+        mist: {
+          50: "#fbfcfe",
+          100: "#f3f5f9",
+          200: "#e9ecf3",
+          300: "#dde1ea",
+          400: "#c5cbd8",
         },
-        cloud: {
-          50: "#fcfdff",
-          100: "#f5f8fc",
-          200: "#e9eff7",
-          300: "#dbe4ef",
-        },
+        // Text: deep, desaturated slate. Never pure black.
         ink: {
-          300: "#9aa7b8",
-          400: "#7c8a9e",
-          500: "#5b6b80",
-          700: "#33455c",
-          900: "#172234",
+          900: "#1b2430",
+          700: "#39424f",
+          500: "#646e7c",
+          400: "#929aa8",
+          300: "#b6bdc9",
+        },
+        // Accent: a soft cornflower / periwinkle. Calmer and warmer than default blue.
+        sky: {
+          50: "#eef2fc",
+          100: "#dfe7f9",
+          200: "#c6d4f2",
+          300: "#9fb6e9",
+          400: "#7c97e0",
+          500: "#5e7cd4",
+          600: "#4a64ba",
+          700: "#3c539b",
+        },
+        // Positive: a quiet sage, used sparingly for improvement.
+        sage: {
+          50: "#edf6f1",
+          100: "#dcefe4",
+          500: "#4fa07f",
+          600: "#3f886b",
         },
       },
       fontFamily: {
@@ -40,72 +50,72 @@ export default {
         ],
       },
       letterSpacing: {
-        tightest: "-0.03em",
-      },
-      boxShadow: {
-        soft: "0 18px 40px -18px rgba(63, 111, 214, 0.30)",
-        card: "0 24px 60px -28px rgba(23, 34, 52, 0.22)",
-        glass: "0 1px 0 0 rgba(255,255,255,0.6) inset, 0 30px 60px -30px rgba(23,34,52,0.25)",
-        lift: "0 12px 30px -12px rgba(63, 111, 214, 0.45)",
+        tightish: "-0.015em",
+        tight2: "-0.025em",
       },
       borderRadius: {
-        xl2: "1.5rem",
-        xl3: "2rem",
+        btn: "13px",
+        tile: "16px",
+        card: "20px",
+        panel: "24px",
+      },
+      boxShadow: {
+        // Subtle, layered, desktop-grade. Never heavy.
+        xs: "0 1px 2px rgba(27, 36, 48, 0.06)",
+        sm: "0 1px 3px rgba(27, 36, 48, 0.06), 0 1px 2px rgba(27, 36, 48, 0.04)",
+        card: "0 1px 3px rgba(27, 36, 48, 0.05), 0 14px 30px -16px rgba(27, 36, 48, 0.18)",
+        button: "0 1px 2px rgba(27, 36, 48, 0.12), 0 8px 18px -10px rgba(74, 100, 186, 0.55)",
+        tile: "0 1px 2px rgba(27, 36, 48, 0.05), 0 8px 20px -16px rgba(27, 36, 48, 0.20)",
       },
       keyframes: {
         fadeUp: {
-          "0%": { opacity: "0", transform: "translateY(14px)" },
+          "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         screenIn: {
-          "0%": { opacity: "0", transform: "translateY(16px) scale(0.985)" },
-          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
         popIn: {
-          "0%": { opacity: "0", transform: "scale(0.9)" },
-          "60%": { opacity: "1", transform: "scale(1.03)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
+          "0%": { opacity: "0", transform: "translateY(8px) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
         },
         breathe: {
-          "0%, 100%": { opacity: "0.55", transform: "scale(1)" },
-          "50%": { opacity: "1", transform: "scale(1.06)" },
+          "0%, 100%": { opacity: "0.7", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.04)" },
         },
         ring: {
-          "0%": { transform: "scale(0.8)", opacity: "0.6" },
-          "100%": { transform: "scale(2.2)", opacity: "0" },
+          "0%": { transform: "scale(0.85)", opacity: "0.45" },
+          "100%": { transform: "scale(1.9)", opacity: "0" },
         },
-        driftA: {
+        drift: {
           "0%, 100%": { transform: "translate(0, 0)" },
-          "50%": { transform: "translate(40px, -30px)" },
+          "50%": { transform: "translate(34px, -26px)" },
         },
-        driftB: {
+        driftAlt: {
           "0%, 100%": { transform: "translate(0, 0)" },
-          "50%": { transform: "translate(-50px, 25px)" },
+          "50%": { transform: "translate(-40px, 22px)" },
         },
         shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-        progressGlow: {
-          "0%, 100%": { opacity: "0.7" },
-          "50%": { opacity: "1" },
+          "0%": { backgroundPosition: "-180% 0" },
+          "100%": { backgroundPosition: "180% 0" },
         },
       },
       animation: {
-        "fade-up": "fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "screen-in": "screenIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "fade-in": "fadeIn 0.5s ease-out both",
-        "pop-in": "popIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
-        breathe: "breathe 2.6s ease-in-out infinite",
-        ring: "ring 2.4s ease-out infinite",
-        "drift-a": "driftA 22s ease-in-out infinite",
-        "drift-b": "driftB 26s ease-in-out infinite",
-        shimmer: "shimmer 1.8s linear infinite",
-        "progress-glow": "progressGlow 2s ease-in-out infinite",
+        // One easing language across the app: a soft, confident ease-out.
+        "fade-up": "fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "screen-in": "screenIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-in": "fadeIn 0.45s ease-out both",
+        "pop-in": "popIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both",
+        breathe: "breathe 3s ease-in-out infinite",
+        ring: "ring 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite",
+        drift: "drift 24s ease-in-out infinite",
+        "drift-alt": "driftAlt 28s ease-in-out infinite",
+        shimmer: "shimmer 2s linear infinite",
       },
     },
   },

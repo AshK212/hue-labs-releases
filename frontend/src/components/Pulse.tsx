@@ -1,24 +1,28 @@
 import type { ReactNode } from "react";
 
 /**
- * A calm "breathing" pulse with expanding rings and a centered icon.
- * Used for scanning and benchmark running states — never a harsh spinner.
+ * A calm breathing mark with two soft expanding rings. Used for waiting moments
+ * (scanning, downloading, measuring). Left-aligned to match the composition.
  */
-export function Pulse({ children, tone = "sky" }: { children: ReactNode; tone?: "sky" | "emerald" }) {
-  const color = tone === "emerald" ? "bg-emerald-400" : "bg-sky-400";
-  const glow =
-    tone === "emerald"
-      ? "from-emerald-300 to-emerald-500"
-      : "from-sky-300 to-sky-500";
+export function Pulse({
+  children,
+  tone = "sky",
+}: {
+  children: ReactNode;
+  tone?: "sky" | "sage";
+}) {
+  const ring = tone === "sage" ? "bg-sage-500" : "bg-sky-400";
+  const fill =
+    tone === "sage" ? "from-sage-500 to-sage-600" : "from-sky-400 to-sky-500";
   return (
-    <div className="relative grid place-items-center" style={{ width: 160, height: 160 }}>
-      <span className={`absolute inset-0 rounded-full ${color} opacity-20 animate-ring`} />
+    <div className="relative grid place-items-center" style={{ width: 88, height: 88 }}>
+      <span className={`absolute inset-0 rounded-full ${ring} opacity-10 animate-ring`} />
       <span
-        className={`absolute inset-0 rounded-full ${color} opacity-20 animate-ring`}
-        style={{ animationDelay: "1.2s" }}
+        className={`absolute inset-0 rounded-full ${ring} opacity-10 animate-ring`}
+        style={{ animationDelay: "1.4s" }}
       />
       <div
-        className={`relative grid place-items-center w-24 h-24 rounded-full bg-gradient-to-b ${glow} text-white shadow-lift animate-breathe`}
+        className={`relative grid place-items-center w-[72px] h-[72px] rounded-[26px] bg-gradient-to-b ${fill} text-white shadow-button animate-breathe`}
       >
         {children}
       </div>

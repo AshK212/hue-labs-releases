@@ -1,7 +1,7 @@
 import { useJourney } from "../journey/JourneyContext";
 import { Reveal } from "../components/Screen";
 import { Pulse } from "../components/Pulse";
-import { HeroStat, Pill } from "../components/Bits";
+import { HeroStat, IconBadge, Pill } from "../components/Bits";
 import { ArrowRightIcon, GaugeIcon } from "../components/Icons";
 
 export function BaselineScreen() {
@@ -9,69 +9,68 @@ export function BaselineScreen() {
 
   if (baselinePhase === "loading") {
     return (
-      <div className="flex flex-col items-center text-center">
+      <div>
         <Pulse>
-          <GaugeIcon className="w-9 h-9" />
+          <GaugeIcon className="w-7 h-7" />
         </Pulse>
-        <h2 className="mt-10 text-2xl font-semibold tracking-tight text-ink-900">
-          Measuring your starting speed
+        <h2 className="mt-9 text-[26px] font-semibold tracking-tight2 text-ink-900">
+          Measuring the speed
         </h2>
-        <p className="mt-2 text-ink-500">Running the same test we’ll use every time…</p>
+        <p className="mt-2.5 text-ink-500">This takes a few seconds.</p>
       </div>
     );
   }
 
   if (baselinePhase === "done" && baseline) {
     return (
-      <div className="flex flex-col items-center text-center">
+      <div>
         <Reveal index={0}>
-          <p className="text-sky-600 text-sm font-semibold uppercase tracking-[0.12em]">
-            Your starting speed
-          </p>
+          <p className="text-[15px] text-ink-500">Here is the speed right now</p>
         </Reveal>
-        <Reveal index={1} className="mt-8">
+        <Reveal index={1} className="mt-4">
           <HeroStat value={baseline.tokens_per_sec.toFixed(1)} unit="tokens per second" />
         </Reveal>
-        <Reveal index={2} className="mt-6">
-          <Pill tone="neutral">Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s</Pill>
+        <Reveal index={2} className="mt-5">
+          <Pill tone="neutral">
+            Default settings, {baseline.output_tokens} tokens in {baseline.total_seconds}s
+          </Pill>
         </Reveal>
         <Reveal index={3} className="mt-9">
           <button className="btn-primary" onClick={next}>
             Continue
-            <ArrowRightIcon className="w-4 h-4" />
+            <ArrowRightIcon className="w-[18px] h-[18px]" />
           </button>
         </Reveal>
       </div>
     );
   }
 
-  // idle / error
   return (
-    <div className="flex flex-col items-center text-center">
+    <div>
       <Reveal index={0}>
-        <div className="grid place-items-center w-16 h-16 rounded-xl3 bg-sky-50 text-sky-500">
-          <GaugeIcon className="w-8 h-8" />
-        </div>
+        <IconBadge>
+          <GaugeIcon className="w-6 h-6" />
+        </IconBadge>
       </Reveal>
       <Reveal index={1} className="mt-6">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tightest text-ink-900">
-          Let’s measure your starting speed
+        <h1 className="text-[32px] leading-tight font-semibold tracking-tight2 text-ink-900">
+          Let's measure the current speed
         </h1>
       </Reveal>
       <Reveal index={2} className="mt-3">
-        <p className="text-ink-500 max-w-md mx-auto text-balance">
-          We send the model the same short prompt every time and measure how fast it
-          replies. This is a real number, reported by the model itself.
+        <p className="text-[17px] leading-relaxed text-ink-500 max-w-[28rem]">
+          We send the model a short prompt and time how fast it replies. It's the same
+          prompt every time, so the numbers stay fair. The model reports the real timing.
         </p>
       </Reveal>
       {baselineError && (
         <Reveal index={3} className="mt-4">
-          <p className="text-amber-600 text-sm">{baselineError}</p>
+          <p className="text-[14px] text-sky-600">{baselineError}</p>
         </Reveal>
       )}
       <Reveal index={3} className="mt-8">
         <button className="btn-primary" onClick={runBaseline}>
-          <GaugeIcon className="w-4 h-4" />
+          <GaugeIcon className="w-[18px] h-[18px]" />
           {baselineError ? "Try again" : "Run the test"}
         </button>
       </Reveal>

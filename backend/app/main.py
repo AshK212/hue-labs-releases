@@ -13,11 +13,15 @@ Endpoints (Milestone 1):
 
 from __future__ import annotations
 
+import json
+import logging
 from contextlib import asynccontextmanager
 
 import httpx
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from app import config, storage
 from app.schemas import (
@@ -27,10 +31,19 @@ from app.schemas import (
     BenchmarkResult,
     HardwareInfo,
     OllamaStatus,
+    PullModelRequest,
     RecommendationResponse,
 )
 from app.services import benchmark, hardware as hardware_service, ollama_client, recommender
+from app.services.ollama_client import OllamaError
 from app.services.optimization import build_optimized_profile
+
+# Make our own logs visible in the backend terminal alongside uvicorn's access log.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("local_ai_optimizer")
 
 
 @asynccontextmanager
@@ -70,8 +83,11 @@ async def ollama_status() -> OllamaStatus:
 
 
 @app.post("/ollama/pull")
-async def ollama_pull(req: ApplyOptimizationRequest) -> dict:
-    """Download a model via Ollama. Blocks until the pull completes."""
+async def ollama_pull(req: PullModelRequest) -> dict:
+    """Download a model via Ollama. Blocks until the pull completes.
+
+    Kept for simple/non-streaming callers. The UI uses /ollama/pull/stream.
+    """
     try:
         await ollama_client.pull_model(req.model)
     except httpx.HTTPError as exc:
@@ -80,6 +96,34 @@ async def ollama_pull(req: ApplyOptimizationRequest) -> dict:
             detail=f"Couldn't download '{req.model}'. Is Ollama running? ({exc})",
         )
     return {"status": "ok", "model": req.model}
+
+
+@app.post("/ollama/pull/stream")
+async def ollama_pull_stream(req: PullModelRequest) -> StreamingResponse:
+    """Download a model and stream real progress as newline-delimited JSON.
+
+    Each line is one progress event: {phase, status?, digest?, total?, completed?}.
+    Byte counts come straight from Ollama. If the client disconnects (Cancel),
+    the generator is closed and the upstream download stream is torn down.
+    """
+
+    async def event_stream():
+        try:
+            async for event in ollama_client.pull_model_stream(req.model):
+                yield json.dumps(event) + "\n"
+        except httpx.HTTPError as exc:
+            yield json.dumps(
+                {
+                    "phase": "error",
+                    "error": f"Couldn't download '{req.model}'. Is Ollama running? ({exc})",
+                }
+            ) + "\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/models/recommend", response_model=RecommendationResponse)
@@ -103,9 +147,22 @@ async def benchmark_run(req: BenchmarkRequest) -> BenchmarkResult:
     hw = hardware_service.detect_hardware()
     try:
         result = await benchmark.run_benchmark(req.model, req.profile, hw)
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Benchmark failed: {exc}")
+    except OllamaError as exc:
+        # Expected, explainable failures (timeout, connection, bad response).
+        logger.warning("Benchmark failed (model=%s profile=%s): %s", req.model, req.profile, exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001 - log everything else with a traceback
+        # Unexpected failure: log the full traceback so it's visible in the terminal.
+        logger.exception("Unexpected error during benchmark (model=%s profile=%s)", req.model, req.profile)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error while benchmarking: {exc.__class__.__name__}: {exc}",
+        )
 
+    logger.info(
+        "Benchmark ok (model=%s profile=%s): %.2f tok/s over %d tokens",
+        req.model, req.profile, result.tokens_per_sec, result.output_tokens,
+    )
     storage.save_benchmark(result)
     return result
 

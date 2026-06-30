@@ -6,6 +6,10 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
+    // Bind to all network interfaces so the app is reachable via the machine's
+    // IP address (e.g. http://192.168.x.x:5173), not just localhost. Vite prints
+    // the Network URL on startup.
+    host: true,
     port: 5173,
     proxy: {
       "/api": {

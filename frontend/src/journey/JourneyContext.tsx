@@ -43,8 +43,6 @@ interface JourneyValue {
   // Phases + errors
   prefetchPhase: Phase;
   prefetchError: string | null;
-  pulling: boolean;
-  pullError: string | null;
   baselinePhase: Phase;
   baselineError: string | null;
   optimizePhase: Phase;
@@ -53,7 +51,6 @@ interface JourneyValue {
   // Actions
   prefetch: () => Promise<void>;
   refreshOllama: () => Promise<void>;
-  pullModel: (model: string) => Promise<void>;
   runBaseline: () => Promise<void>;
   optimizeAndRetest: () => Promise<void>;
 }
@@ -73,8 +70,6 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
 
   const [prefetchPhase, setPrefetchPhase] = useState<Phase>("idle");
   const [prefetchError, setPrefetchError] = useState<string | null>(null);
-  const [pulling, setPulling] = useState(false);
-  const [pullError, setPullError] = useState<string | null>(null);
   const [baselinePhase, setBaselinePhase] = useState<Phase>("idle");
   const [baselineError, setBaselineError] = useState<string | null>(null);
   const [optimizePhase, setOptimizePhase] = useState<Phase>("idle");
@@ -128,26 +123,10 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   const refreshOllama = useCallback(async () => {
     try {
       setOllama(await api.ollamaStatus());
-    } catch (e) {
-      setPullError((e as Error).message);
+    } catch {
+      // A failed status refresh just leaves the previous state in place.
     }
   }, []);
-
-  const pullModel = useCallback(
-    async (model: string) => {
-      setPulling(true);
-      setPullError(null);
-      try {
-        await api.pullModel(model);
-        await refreshOllama();
-      } catch (e) {
-        setPullError((e as Error).message);
-      } finally {
-        setPulling(false);
-      }
-    },
-    [refreshOllama]
-  );
 
   const runBaseline = useCallback(async () => {
     if (!selectedModel) return;
@@ -195,15 +174,12 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
     modelInstalled,
     prefetchPhase,
     prefetchError,
-    pulling,
-    pullError,
     baselinePhase,
     baselineError,
     optimizePhase,
     optimizeError,
     prefetch,
     refreshOllama,
-    pullModel,
     runBaseline,
     optimizeAndRetest,
   };

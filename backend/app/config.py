@@ -33,4 +33,4 @@ BENCHMARK_PROMPT: str = (
 )
 
 # Upper bound on generated tokens so a benchmark run is bounded and repeatable.
-BENCHMARK_NUM_PREDICT: int = 200
+BENCHMARK_NUM_PREDICT: int = 128

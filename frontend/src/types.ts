@@ -58,6 +58,23 @@ export interface BenchmarkResult {
   created_at: string;
 }
 
+export type PullPhase =
+  | "preparing"
+  | "downloading"
+  | "verifying"
+  | "finalizing"
+  | "complete"
+  | "error";
+
+export interface PullEvent {
+  phase: PullPhase;
+  status?: string;
+  digest?: string;
+  total?: number; // bytes, when reported
+  completed?: number; // bytes, when reported
+  error?: string;
+}
+
 export interface OptimizationProfile {
   name: string;
   label: string;

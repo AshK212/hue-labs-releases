@@ -13,68 +13,67 @@ export function ResultsScreen() {
   const aboutSame = Math.abs(pct) < 1;
 
   return (
-    <div className="flex flex-col items-center text-center">
+    <div>
       <Reveal index={0}>
-        <p className="text-sky-600 text-sm font-semibold uppercase tracking-[0.12em]">
-          The result
+        <p className="text-[15px] text-ink-500">
+          {improved ? "Your model is faster now" : "Here is the result"}
         </p>
       </Reveal>
 
-      <Reveal index={1} className="mt-5">
+      <Reveal index={1} className="mt-3">
         {improved ? (
-          <div className="inline-flex items-center gap-2 text-emerald-600 animate-pop-in">
-            <ArrowUpIcon className="w-9 h-9" />
-            <span className="text-6xl font-bold tracking-tightest">+{pct.toFixed(0)}%</span>
+          <div className="inline-flex items-center gap-2 text-sage-600 animate-pop-in">
+            <ArrowUpIcon className="w-8 h-8" />
+            <span className="text-[64px] leading-none font-semibold tracking-tight2">
+              {pct.toFixed(0)}%
+            </span>
           </div>
         ) : (
-          <span className="text-5xl font-bold tracking-tightest text-ink-900 animate-pop-in">
+          <span className="text-[44px] leading-tight font-semibold tracking-tight2 text-ink-900 animate-pop-in">
             {aboutSame ? "About the same" : `${pct.toFixed(0)}%`}
           </span>
         )}
       </Reveal>
 
-      <Reveal index={2} className="mt-3">
-        <p className="text-ink-700 text-lg font-medium">
+      <Reveal index={2} className="mt-2">
+        <p className="text-[17px] text-ink-500">
           {improved
-            ? "faster after tuning"
+            ? "faster than before, measured on your computer"
             : aboutSame
-            ? "and that’s perfectly okay"
+            ? "and that is okay, the gain depends on your machine"
             : "change after tuning"}
         </p>
       </Reveal>
 
-      <Reveal index={3} className="mt-8 w-full">
-        <div className="grid grid-cols-2 gap-3">
+      <Reveal index={3} className="mt-8">
+        <div className="grid grid-cols-2 gap-3 max-w-[24rem]">
           <ResultTile label="Before" value={before.toFixed(1)} />
           <ResultTile label="After" value={after.toFixed(1)} highlight />
         </div>
       </Reveal>
 
       <Reveal index={4} className="mt-4">
-        <p className="text-xs text-ink-400 max-w-sm mx-auto text-balance">
-          Measured on this machine — same prompt, same model, only the runtime settings
-          changed.
+        <p className="text-[13px] text-ink-400 max-w-[28rem] leading-relaxed">
+          Same prompt, same model. We only changed the settings.
         </p>
       </Reveal>
 
       {profile && profile.changed_settings.length > 0 && (
-        <Reveal index={5} className="mt-7 w-full">
-          <div className="glass p-5 text-left">
-            <p className="text-sm font-semibold text-ink-900 mb-3">What we changed</p>
-            <ul className="space-y-2">
-              {profile.changed_settings.map((s) => (
-                <li key={s} className="flex items-start gap-2.5 text-sm text-ink-700">
-                  <CheckIcon className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <Reveal index={5} className="mt-7">
+          <p className="text-[14px] font-semibold text-ink-900 mb-3">What we changed</p>
+          <ul className="space-y-2.5">
+            {profile.changed_settings.map((s) => (
+              <li key={s} className="flex items-start gap-2.5 text-[15px] text-ink-700">
+                <CheckIcon className="w-[18px] h-[18px] text-sage-500 mt-0.5 flex-shrink-0" />
+                {s}
+              </li>
+            ))}
+          </ul>
         </Reveal>
       )}
 
       <Reveal index={6} className="mt-9">
-        <button className="btn-quiet" onClick={reset}>
+        <button className="btn-secondary" onClick={reset}>
           Start over
         </button>
       </Reveal>
@@ -92,17 +91,16 @@ function ResultTile({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={[
-        "rounded-xl2 p-5 border",
-        highlight ? "bg-sky-50/80 border-sky-200" : "bg-white/60 border-white/70",
-      ].join(" ")}
-    >
-      <div className="text-[11px] uppercase tracking-wide text-ink-400">{label}</div>
-      <div className={`text-4xl font-bold tracking-tightest mt-1 ${highlight ? "text-sky-600" : "text-ink-900"}`}>
+    <div className={highlight ? "tile p-5 bg-sky-50/80" : "tile p-5"}>
+      <div className="text-[12px] text-ink-400">{label}</div>
+      <div
+        className={`text-[34px] font-semibold tracking-tight2 mt-1 ${
+          highlight ? "text-sky-600" : "text-ink-900"
+        }`}
+      >
         {value}
       </div>
-      <div className="text-xs text-ink-400 mt-1">tokens/sec</div>
+      <div className="text-[12px] text-ink-400 mt-0.5">tokens/sec</div>
     </div>
   );
 }

@@ -1,18 +1,21 @@
 import type { ReactNode } from "react";
 
 /**
- * A full-height, centered stage for a single journey screen. The caller keys
- * this on the step index so each screen remounts and replays its enter motion.
+ * The stage for a single screen. Content sits in a left-anchored column inside a
+ * wide frame, so the eye lands left and the soft sky breathes on the right. The
+ * caller keys this on the step so each screen replays its enter motion.
  */
 export function Screen({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 py-24">
-      <div className="w-full max-w-xl animate-screen-in">{children}</div>
-    </div>
+    <main className="relative min-h-[100dvh] flex items-center">
+      <div className="w-full max-w-[1120px] mx-auto px-8 sm:px-12 lg:px-20 pt-24 pb-16">
+        <div className="max-w-[33rem] animate-screen-in">{children}</div>
+      </div>
+    </main>
   );
 }
 
-/** A child that fades up in sequence. `index` controls the stagger delay. */
+/** A child that fades up in sequence. `index` sets the stagger (70ms apart). */
 export function Reveal({
   index = 0,
   children,
@@ -25,7 +28,7 @@ export function Reveal({
   return (
     <div
       className={`animate-fade-up ${className}`}
-      style={{ animationDelay: `${index * 80}ms` }}
+      style={{ animationDelay: `${index * 70}ms` }}
     >
       {children}
     </div>

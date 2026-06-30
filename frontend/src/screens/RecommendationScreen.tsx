@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useJourney } from "../journey/JourneyContext";
 import { Reveal } from "../components/Screen";
 import { Pill } from "../components/Bits";
-import { ArrowRightIcon, CheckIcon, GaugeIcon, SparkIcon } from "../components/Icons";
+import { ArrowRightIcon, CheckIcon, SparkIcon } from "../components/Icons";
 import type { ModelRecommendation } from "../types";
 
 export function RecommendationScreen() {
@@ -14,20 +14,21 @@ export function RecommendationScreen() {
   const alt = alternatives[0];
 
   return (
-    <div className="flex flex-col items-center text-center">
+    <div>
       <Reveal index={0}>
-        <p className="text-sky-600 text-sm font-semibold uppercase tracking-[0.12em]">
-          Our recommendation
-        </p>
-      </Reveal>
-
-      <Reveal index={1} className="mt-3">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tightest text-ink-900">
-          We recommend {primary.display_name}
+        <h1 className="text-[34px] leading-tight font-semibold tracking-tight2 text-ink-900">
+          We suggest {primary.display_name}
         </h1>
       </Reveal>
 
-      <Reveal index={2} className="mt-8 w-full">
+      <Reveal index={1} className="mt-3">
+        <p className="text-[17px] leading-relaxed text-ink-500 max-w-[28rem]">
+          It runs well on a computer like yours. You can switch to a smaller one if you
+          prefer.
+        </p>
+      </Reveal>
+
+      <Reveal index={2} className="mt-7">
         <ModelCard
           rec={primary}
           recommended
@@ -37,13 +38,13 @@ export function RecommendationScreen() {
       </Reveal>
 
       {alt && (
-        <Reveal index={3} className="mt-4 w-full">
+        <Reveal index={3} className="mt-3">
           {!showAlt ? (
             <button
-              className="text-sm text-ink-400 hover:text-ink-700 transition-colors"
+              className="text-[14px] text-ink-400 hover:text-ink-700 transition-colors"
               onClick={() => setShowAlt(true)}
             >
-              or choose a lighter model
+              Show a smaller model
             </button>
           ) : (
             <ModelCard
@@ -57,8 +58,8 @@ export function RecommendationScreen() {
 
       <Reveal index={4} className="mt-9">
         <button className="btn-primary" onClick={next} disabled={!selectedModel}>
-          Use this model
-          <ArrowRightIcon className="w-4 h-4" />
+          Continue
+          <ArrowRightIcon className="w-[18px] h-[18px]" />
         </button>
       </Reveal>
     </div>
@@ -80,36 +81,35 @@ function ModelCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-xl2 p-5 transition-all duration-200 border",
+        "w-full text-left rounded-card p-5 transition-all duration-200",
         selected
-          ? "bg-white/80 border-sky-300 shadow-soft ring-1 ring-sky-200"
-          : "bg-white/50 border-white/70 hover:border-sky-200 hover:bg-white/70",
+          ? "bg-white shadow-card ring-1 ring-sky-200"
+          : "bg-white/60 shadow-tile hover:bg-white/80",
       ].join(" ")}
     >
       <div className="flex items-start gap-4">
         <div
           className={[
-            "flex-shrink-0 grid place-items-center w-11 h-11 rounded-xl2 transition-colors",
+            "flex-shrink-0 grid place-items-center w-10 h-10 rounded-tile transition-colors",
             selected ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-500",
           ].join(" ")}
         >
-          {selected ? <CheckIcon className="w-6 h-6" /> : <SparkIcon className="w-6 h-6" />}
+          {selected ? <CheckIcon className="w-5 h-5" /> : <SparkIcon className="w-5 h-5" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-ink-900">{rec.display_name}</h3>
-            {recommended && <Pill tone="good">Best fit</Pill>}
+            {recommended && <Pill tone="good">Suggested</Pill>}
             {rec.already_installed ? (
               <Pill tone="info">Ready</Pill>
             ) : (
               <Pill tone="neutral">{rec.download_size_gb} GB</Pill>
             )}
           </div>
-          <p className="text-sm text-ink-500 mt-1.5 leading-relaxed">{rec.reason}</p>
-          <p className="text-xs text-ink-400 mt-2 inline-flex items-center gap-1.5">
-            <GaugeIcon className="w-3.5 h-3.5" />
-            Around {rec.estimated_tokens_per_sec} · a rough estimate, your benchmark is the
-            real number
+          <p className="text-[14px] text-ink-500 mt-1.5 leading-relaxed">{rec.reason}</p>
+          <p className="text-[13px] text-ink-400 mt-2">
+            Around {rec.estimated_tokens_per_sec}. This is just an estimate. We measure the
+            real speed in a moment.
           </p>
         </div>
       </div>

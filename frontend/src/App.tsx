@@ -1,8 +1,8 @@
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
-import { STEP, BACK_STEPS } from "./journey/steps";
+import { STEP } from "./journey/steps";
 import { Orbs } from "./components/Orbs";
 import { Screen } from "./components/Screen";
-import { ProgressBar, BackButton } from "./components/Chrome";
+import { TopBar } from "./components/TopBar";
 
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 import { ScanningScreen } from "./screens/ScanningScreen";
@@ -38,13 +38,11 @@ function renderScreen(step: number) {
 
 function Journey() {
   const { step, back } = useJourney();
-  const showBack = BACK_STEPS.includes(step as (typeof BACK_STEPS)[number]);
 
   return (
     <>
       <Orbs />
-      <ProgressBar step={step} />
-      {showBack && <BackButton onClick={back} />}
+      <TopBar step={step} onBack={back} />
 
       {/* Keyed on step so each screen remounts and replays its enter motion. */}
       <Screen key={step}>{renderScreen(step)}</Screen>

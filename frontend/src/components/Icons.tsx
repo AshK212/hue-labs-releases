@@ -1,11 +1,11 @@
 // Minimal, calm line icons (no icon-library dependency). 1.7 stroke, rounded.
 
 type IconProps = { className?: string };
-const d = "w-6 h-6";
+const d = "w-5 h-5";
 const common = {
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.7,
+  strokeWidth: 1.6,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
 };

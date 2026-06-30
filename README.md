@@ -40,10 +40,11 @@ cd backend
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Backend runs at <http://localhost:8000> (interactive API docs at `/docs`).
+Backend runs on port 8000 — reachable at <http://localhost:8000> and at
+`http://<your-ip>:8000` (interactive API docs at `/docs`).
 
 ### 2. Frontend (Vite) — terminal B
 
@@ -53,7 +54,17 @@ npm install
 npm run dev
 ```
 
-Frontend runs at <http://localhost:5173> and talks to the backend on port 8000.
+The dev server binds to all network interfaces, so on startup Vite prints both a
+**Local** and a **Network** URL, for example:
+
+```
+➜  Local:   http://localhost:5173/
+➜  Network: http://192.168.1.42:5173/
+```
+
+Open the **Network** URL (your machine's IP address) to reach the app from this or
+another device on the same network. <http://localhost:5173> works too. The frontend
+talks to the backend through a built-in proxy, so you never call port 8000 directly.
 
 ### One command (Windows)
 
@@ -61,7 +72,16 @@ Frontend runs at <http://localhost:5173> and talks to the backend on port 8000.
 scripts\dev.ps1
 ```
 
-Opens both services in separate windows.
+Opens both services in separate windows and prints the IP address URLs to use:
+
+```
+Backend:  http://192.168.1.42:8000  (docs at /docs)
+Frontend: http://192.168.1.42:5173
+```
+
+> To open the app from another device (phone, laptop) on the same Wi‑Fi, use that
+> `http://<your-ip>:5173` address. If it doesn't load, allow Node/Python through
+> Windows Firewall when prompted, or temporarily allow ports 5173 and 8000.
 
 ## Target platform for Milestone 1
 

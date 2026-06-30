@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from app import config
 from app.schemas import BenchmarkResult, HardwareInfo
 from app.services import ollama_client
+from app.services.ollama_client import OllamaError
 from app.services.optimization import options_for_profile
 
 
@@ -34,13 +35,18 @@ async def run_benchmark(
     eval_count = int(response.get("eval_count", 0) or 0)
     eval_duration_ns = int(response.get("eval_duration", 0) or 0)
 
-    if eval_count > 0 and eval_duration_ns > 0:
-        tokens_per_sec = eval_count / (eval_duration_ns / 1e9)
-        total_seconds = eval_duration_ns / 1e9
-    else:
-        # Should not happen on a healthy run; we surface zeros rather than guess.
-        tokens_per_sec = 0.0
-        total_seconds = 0.0
+    # A healthy run always reports tokens and timing. If it doesn't, treat it as a
+    # real failure rather than reporting a misleading 0 tok/s.
+    if eval_count <= 0 or eval_duration_ns <= 0:
+        raise OllamaError(
+            "Ollama finished but reported no generated tokens "
+            f"(eval_count={eval_count}, eval_duration={eval_duration_ns}). "
+            f"Reason given: {response.get('done_reason', 'unknown')}."
+        )
+
+    # tokens/sec = eval_count / (eval_duration_ns / 1_000_000_000)
+    total_seconds = eval_duration_ns / 1e9
+    tokens_per_sec = eval_count / total_seconds
 
     return BenchmarkResult(
         model=model,

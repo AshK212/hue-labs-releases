@@ -11,16 +11,21 @@
 
   body {
     @apply text-ink-700 antialiased;
-    background-color: #f5f8fc;
-    /* A soft, calm sky — the base layer beneath the drifting orbs. */
+    background-color: #f3f5f9;
+    /* A soft sky that lightens toward the top, like an overcast morning. */
     background-image:
-      radial-gradient(1100px 700px at 50% -15%, #e9f2ff 0%, rgba(233, 242, 255, 0) 62%),
-      linear-gradient(180deg, #fcfdff 0%, #eef3fa 100%);
+      radial-gradient(1200px 760px at 72% -12%, #e9f0fb 0%, rgba(233, 240, 251, 0) 58%),
+      linear-gradient(180deg, #fafbfe 0%, #eef1f7 100%);
     background-attachment: fixed;
   }
 
+  /* Calm, considered text rendering. */
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
   :focus-visible {
-    @apply outline-none ring-2 ring-sky-300 ring-offset-2 ring-offset-cloud-50 rounded-2xl;
+    @apply outline-none ring-2 ring-sky-300/70 ring-offset-2 ring-offset-mist-50 rounded-btn;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -35,60 +40,55 @@
 }
 
 @layer components {
-  /* Frosted glass surface used for hero cards. */
-  .glass {
-    @apply rounded-xl3 border border-white/70 bg-white/70 backdrop-blur-xl shadow-glass;
+  /* Surfaces ------------------------------------------------------------- */
+  .card {
+    @apply rounded-card bg-white shadow-card;
   }
 
-  .stat-tile {
-    @apply rounded-xl2 border border-white/70 bg-white/60 backdrop-blur-md p-4 text-left
-           shadow-[0_10px_30px_-20px_rgba(23,34,52,0.35)];
+  .panel {
+    @apply rounded-card bg-white/80 backdrop-blur-md shadow-card;
   }
 
-  .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  .tile {
+    @apply rounded-tile bg-white/70 shadow-tile;
   }
 
-  /* Buttons --------------------------------------------------------------- */
+  /* Buttons: one height (44px), one radius, one easing. ------------------ */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold
-           transition-all duration-200 select-none
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-btn
+           text-[15px] font-medium transition-all duration-200 ease-out select-none
            disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none;
   }
 
   .btn-primary {
-    @apply btn px-8 py-3.5 text-[15px] text-white
-           bg-gradient-to-b from-sky-400 to-sky-500 shadow-lift
-           hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-12px_rgba(63,111,214,0.55)]
-           active:translate-y-0 active:scale-[0.98];
+    @apply btn px-6 text-white bg-sky-500 shadow-button
+           hover:bg-sky-600 hover:-translate-y-px
+           active:translate-y-0 active:scale-[0.99];
   }
 
-  .btn-quiet {
-    @apply btn px-6 py-3 text-sm text-ink-500 bg-white/0
-           hover:text-ink-700 hover:bg-white/60;
+  .btn-secondary {
+    @apply btn bg-mist-100 text-ink-700 hover:bg-mist-200;
   }
 
-  .btn-soft {
-    @apply btn px-6 py-3 text-sm text-sky-600 bg-sky-50 border border-sky-100
-           hover:bg-sky-100;
+  .btn-ghost {
+    @apply btn text-ink-500 hover:text-ink-900 hover:bg-mist-100;
   }
 
-  /* The subtle drifting background orbs. */
-  .orb {
-    @apply pointer-events-none fixed rounded-full blur-3xl opacity-50;
+  /* Badges --------------------------------------------------------------- */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium;
   }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .orb {
+    @apply pointer-events-none fixed rounded-full blur-3xl;
   }
-  /* Soft animated sheen for skeleton/loading surfaces. */
   .sheen {
     background-image: linear-gradient(
       100deg,
       rgba(255, 255, 255, 0) 30%,
-      rgba(255, 255, 255, 0.65) 50%,
+      rgba(255, 255, 255, 0.7) 50%,
       rgba(255, 255, 255, 0) 70%
     );
     background-size: 200% 100%;

@@ -7,49 +7,47 @@ export function WelcomeScreen() {
   const { next } = useJourney();
 
   return (
-    <div className="flex flex-col items-center text-center">
+    <div>
       <Reveal index={0}>
-        <BrandMark size={76} />
+        <BrandMark size={52} />
       </Reveal>
 
-      <Reveal index={1} className="mt-8">
-        <h1 className="text-4xl sm:text-[2.75rem] font-bold tracking-tightest text-ink-900 leading-[1.08] text-balance">
-          Local AI, perfectly tuned
+      <Reveal index={1} className="mt-9">
+        <h1 className="text-[42px] leading-[1.05] font-semibold tracking-tight2 text-ink-900">
+          Run AI on your
           <br />
-          for your computer.
+          own computer.
         </h1>
       </Reveal>
 
       <Reveal index={2} className="mt-5">
-        <p className="text-ink-500 text-lg max-w-md mx-auto text-balance">
-          Run powerful AI models privately on your own machine — and let us make them
-          faster. No setup headaches, no terminal.
+        <p className="text-[18px] leading-relaxed text-ink-500 max-w-[26rem]">
+          It stays on your machine, and we help it run a little faster. There is nothing
+          to configure and no terminal to open.
         </p>
       </Reveal>
 
       <Reveal index={3} className="mt-9">
         <button className="btn-primary" onClick={next}>
           Get started
-          <ArrowRightIcon className="w-4 h-4" />
+          <ArrowRightIcon className="w-[18px] h-[18px]" />
         </button>
       </Reveal>
 
       <Reveal index={4} className="mt-12">
-        <div className="flex items-center gap-6 text-ink-400">
-          <Reassurance icon={<ShieldIcon className="w-4 h-4" />} label="Private" />
-          <span className="w-1 h-1 rounded-full bg-cloud-300" />
-          <Reassurance icon={<TerminalOffIcon className="w-4 h-4" />} label="No terminal" />
-          <span className="w-1 h-1 rounded-full bg-cloud-300" />
-          <Reassurance icon={<GaugeIcon className="w-4 h-4" />} label="Honest results" />
+        <div className="flex items-center gap-7 text-ink-400">
+          <Note icon={<ShieldIcon className="w-[18px] h-[18px]" />} label="Runs offline" />
+          <Note icon={<TerminalOffIcon className="w-[18px] h-[18px]" />} label="No terminal" />
+          <Note icon={<GaugeIcon className="w-[18px] h-[18px]" />} label="Real numbers" />
         </div>
       </Reveal>
     </div>
   );
 }
 
-function Reassurance({ icon, label }: { icon: React.ReactNode; label: string }) {
+function Note({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+    <span className="inline-flex items-center gap-2 text-[13px] font-medium">
       {icon}
       {label}
     </span>
