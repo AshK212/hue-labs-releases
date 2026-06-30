@@ -7,6 +7,14 @@ import { IconBadge, Note } from "../components/Bits";
 import { StatusBadge } from "../components/Badge";
 import { ArrowRightIcon, GaugeIcon } from "../components/Icons";
 
+/** A friendly descriptor for a measured speed (derived from the real number). */
+function performanceLabel(tps: number): string {
+  if (tps >= 60) return "Very fast";
+  if (tps >= 30) return "Fast";
+  if (tps >= 15) return "Comfortable";
+  return "Steady";
+}
+
 export function BaselineScreen() {
   const { baseline, baselinePhase, baselineError, runBaseline, next } = useJourney();
 
@@ -19,22 +27,28 @@ export function BaselineScreen() {
   }
 
   if (baselinePhase === "done" && baseline) {
+    const perf = performanceLabel(baseline.tokens_per_sec);
     return (
       <Column>
         <div className="flex flex-col items-center text-center">
           <Reveal index={0}>
             <p className="text-body text-ink-500">Your speed right now</p>
           </Reveal>
-          <Reveal index={1} className="mt-5">
+          <Reveal index={1} className="mt-4">
             <HeroNumber value={baseline.tokens_per_sec} unit="tokens per second" />
           </Reveal>
-          <Reveal index={2} className="mt-6">
-            <StatusBadge tone="neutral">
-              Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s
+          <Reveal index={2} className="mt-5">
+            <StatusBadge tone="green" dot>
+              {perf}
             </StatusBadge>
           </Reveal>
-          <Reveal index={3} className="mt-9">
-            <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
+          <Reveal index={3} className="mt-4">
+            <p className="text-caption text-ink-400">
+              Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s
+            </p>
+          </Reveal>
+          <Reveal index={4} className="mt-10">
+            <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
               Continue
             </Button>
           </Reveal>

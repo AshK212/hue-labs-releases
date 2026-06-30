@@ -1,6 +1,6 @@
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
-import { IconBadge, StatusCard } from "../components/Bits";
+import { IconBadge } from "../components/Bits";
 import { Button } from "../components/Button";
 import { ModelDownload } from "../components/ModelDownload";
 import { ArrowRightIcon, CheckIcon, CloudIcon } from "../components/Icons";
@@ -36,36 +36,49 @@ export function SetupScreen() {
     );
   }
 
-  // Already installed: two calm status cards.
+  // Already installed: the completion screen.
+  const checklist = [
+    "Ollama is installed and running",
+    `${modelLabel} is installed`,
+    "Everything runs offline on your computer",
+  ];
   return (
     <Column>
-      <Reveal index={0}>
-        <h1 className="text-page font-semibold text-ink-900">Everything is set up</h1>
-      </Reveal>
-      <Reveal index={1} className="mt-2">
-        <p className="text-body text-ink-500">We use Ollama to run the model on your computer.</p>
-      </Reveal>
-      <div className="mt-7 space-y-3">
-        <Reveal index={2}>
-          <StatusCard
-            tone="green"
-            icon={<CheckIcon className="w-5 h-5" />}
-            title="Ollama is installed"
-            subtitle="It is running quietly in the background."
-          />
+      <div className="flex flex-col items-center text-center">
+        <Reveal index={0}>
+          <div className="relative grid place-items-center">
+            <span className="absolute w-24 h-24 rounded-full bg-sage-500/15 animate-breathe" />
+            <div className="relative grid place-items-center w-20 h-20 rounded-card bg-gradient-to-b from-sage-500 to-sage-600 text-white shadow-button animate-pop-in">
+              <CheckIcon className="w-10 h-10" />
+            </div>
+          </div>
         </Reveal>
-        <Reveal index={3}>
-          <StatusCard
-            tone="green"
-            icon={<CheckIcon className="w-5 h-5" />}
-            title={`${modelLabel} is installed`}
-            subtitle="The model is ready to use."
-          />
+        <Reveal index={1} className="mt-7">
+          <h1 className="text-page font-semibold text-ink-900">You're ready!</h1>
+        </Reveal>
+        <Reveal index={2} className="mt-3">
+          <p className="text-body text-ink-500 max-w-[28rem]">
+            Your computer is set up to run AI privately. Here is what is in place.
+          </p>
         </Reveal>
       </div>
-      <Reveal index={4} className="mt-9">
-        <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
-          Continue
+
+      <Reveal index={3} className="mt-8">
+        <div className="surface p-6 space-y-4">
+          {checklist.map((item) => (
+            <div key={item} className="flex items-center gap-3.5">
+              <span className="flex-shrink-0 grid place-items-center w-7 h-7 rounded-full bg-sage-50 text-sage-600">
+                <CheckIcon className="w-4 h-4" />
+              </span>
+              <span className="text-body text-ink-700">{item}</span>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal index={4} className="mt-9 flex justify-center">
+        <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
+          Start using Local AI
         </Button>
       </Reveal>
     </Column>

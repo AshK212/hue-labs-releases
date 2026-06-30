@@ -59,7 +59,7 @@ export function HeroNumber({
   };
   return (
     <div>
-      <div className={`text-[72px] leading-none font-semibold tracking-tight2 tnum ${colors[tone]}`}>
+      <div className={`text-[88px] leading-none font-semibold tracking-tight2 tnum ${colors[tone]}`}>
         {animated.toFixed(decimals)}
       </div>
       <div className="text-body text-ink-400 mt-3">{unit}</div>

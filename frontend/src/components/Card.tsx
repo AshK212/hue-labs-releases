@@ -41,11 +41,11 @@ export function SectionHeader({
   return (
     <div className={align === "center" ? "text-center" : ""}>
       {kicker && (
-        <p className="text-caption font-semibold text-sky-600 mb-2">{kicker}</p>
+        <p className="text-caption font-semibold text-sky-600 mb-3">{kicker}</p>
       )}
       <h1 className="text-page font-semibold text-ink-900">{title}</h1>
       {subtitle && (
-        <p className={`text-body text-ink-500 mt-2 ${align === "center" ? "mx-auto" : ""} max-w-[32rem]`}>
+        <p className={`text-body text-ink-500 mt-3.5 ${align === "center" ? "mx-auto" : ""} max-w-[34rem]`}>
           {subtitle}
         </p>
       )}

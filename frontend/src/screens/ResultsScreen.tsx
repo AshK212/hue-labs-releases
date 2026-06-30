@@ -33,30 +33,30 @@ export function ResultsScreen() {
       <div className="flex flex-col items-center text-center">
         <Reveal index={0}>
           {improved ? (
-            <div className="inline-flex items-center gap-2 text-sage-600">
-              <span className="grid place-items-center w-12 h-12 rounded-card bg-sage-50 animate-pop-in">
-                <ArrowUpIcon className="w-7 h-7" />
+            <div className="inline-flex items-center gap-3 text-sage-600">
+              <span className="grid place-items-center w-16 h-16 rounded-card bg-sage-50 animate-pop-in">
+                <ArrowUpIcon className="w-9 h-9" />
               </span>
-              <span className="text-[72px] leading-none font-semibold tracking-tight2 tnum">
+              <span className="text-[88px] leading-none font-semibold tracking-tight2 tnum">
                 {animatedPct.toFixed(0)}%
               </span>
             </div>
           ) : (
-            <span className="text-section font-semibold tracking-tight2 text-ink-900 animate-pop-in">
+            <span className="text-[56px] leading-none font-semibold tracking-tight2 text-ink-900 animate-pop-in">
               {aboutSame ? "About the same" : `${pct.toFixed(0)}%`}
             </span>
           )}
         </Reveal>
 
-        <Reveal index={1} className="mt-3">
-          <h1 className="text-cardtitle font-semibold text-ink-900">
+        <Reveal index={1} className="mt-5">
+          <h1 className="text-section font-semibold text-ink-900">
             {improved
               ? "Your model is now faster"
               : aboutSame
               ? "Your speed held steady"
               : "Here is the result"}
           </h1>
-          <p className="text-caption text-ink-500 mt-1">
+          <p className="text-body text-ink-500 mt-2">
             {improved
               ? "Measured on your computer, with the same prompt and model."
               : "That is okay. The gain depends on your machine."}
@@ -64,11 +64,16 @@ export function ResultsScreen() {
         </Reveal>
       </div>
 
-      <Reveal index={2} className="mt-9">
+      <Reveal index={2} className="mt-10">
         <div className="grid grid-cols-2 gap-4">
           <MetricCard label="Before" value={before.toFixed(1)} unit="tokens/sec" />
           <MetricCard label="After" value={after.toFixed(1)} unit="tokens/sec" tone={improved ? "green" : "blue"} />
         </div>
+        {improved && (
+          <p className="text-caption text-sage-600 font-medium text-center mt-3">
+            +{(after - before).toFixed(1)} tokens per second faster than before
+          </p>
+        )}
       </Reveal>
 
       {changes.length > 0 && (

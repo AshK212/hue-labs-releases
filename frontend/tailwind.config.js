@@ -46,15 +46,15 @@ export default {
           "sans-serif",
         ],
       },
-      // The single typographic scale for the whole app.
+      // The single typographic scale for the whole app (desktop-scale).
       fontSize: {
-        hero: ["56px", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
-        section: ["40px", { lineHeight: "1.1", letterSpacing: "-0.022em" }],
-        page: ["34px", { lineHeight: "1.14", letterSpacing: "-0.02em" }],
-        cardtitle: ["20px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        body: ["16px", { lineHeight: "1.6" }],
-        caption: ["14px", { lineHeight: "1.5" }],
-        micro: ["12px", { lineHeight: "1.4", letterSpacing: "0.01em" }],
+        hero: ["56px", { lineHeight: "1.04", letterSpacing: "-0.025em" }],
+        section: ["30px", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
+        page: ["42px", { lineHeight: "1.12", letterSpacing: "-0.022em" }],
+        cardtitle: ["22px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+        body: ["17px", { lineHeight: "1.6" }],
+        caption: ["15px", { lineHeight: "1.5" }],
+        micro: ["13px", { lineHeight: "1.4", letterSpacing: "0.01em" }],
       },
       letterSpacing: {
         tight2: "-0.022em",

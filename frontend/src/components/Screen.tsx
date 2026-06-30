@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  */
 export function Screen({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-[100dvh] flex items-center justify-center px-8 sm:px-10 pt-[72px] pb-12">
+    <main className="min-h-[100dvh] flex items-center justify-center px-8 sm:px-12 pt-[84px] pb-16">
       <div className="w-full animate-screen-in">{children}</div>
     </main>
   );
@@ -23,7 +23,7 @@ export function Column({
   children: ReactNode;
 }) {
   const max =
-    width === "wide" ? "max-w-[60rem]" : width === "results" ? "max-w-[48rem]" : "max-w-[34rem]";
+    width === "wide" ? "max-w-[64rem]" : width === "results" ? "max-w-[52rem]" : "max-w-[40rem]";
   return <div className={`mx-auto w-full ${max} ${center ? "text-center" : ""}`}>{children}</div>;
 }
 

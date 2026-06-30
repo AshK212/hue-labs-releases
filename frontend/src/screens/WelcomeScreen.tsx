@@ -17,9 +17,9 @@ export function WelcomeScreen() {
     <section className="relative min-h-[100dvh] w-full flex flex-col bg-gradient-to-b from-[#f6f9fd] via-[#eef3fb] to-[#e7eef7] animate-fade-in">
       {/* Top bar */}
       <header className="w-full">
-        <div className="max-w-[1280px] mx-auto w-full px-8 lg:px-12 h-[72px] flex items-center justify-between">
+        <div className="max-w-[1320px] mx-auto w-full px-8 lg:px-14 h-[84px] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <BrandMark size={32} />
+            <BrandMark size={34} />
             <span className="text-body font-semibold text-ink-700">Local AI Optimizer</span>
           </div>
           <StatusBadge tone="soft" icon={<ShieldIcon className="w-4 h-4 text-sky-500" />}>
@@ -28,12 +28,12 @@ export function WelcomeScreen() {
         </div>
       </header>
 
-      {/* Hero, ~70% of the viewport width */}
+      {/* Hero */}
       <main className="flex-1 flex items-center">
-        <div className="w-[92%] max-w-[1240px] mx-auto py-10">
+        <div className="w-[92%] max-w-[1280px] mx-auto py-10">
           <div className="flex flex-col lg:flex-row items-stretch">
-            {/* Left: workspace image, the laptop is the visual hero */}
-            <div className="lg:w-[54%] rounded-panel overflow-hidden shadow-card min-h-[300px] lg:min-h-[540px]">
+            {/* Left: workspace image (~55%), the laptop is the visual hero */}
+            <div className="lg:w-[55%] rounded-panel overflow-hidden shadow-card min-h-[320px] lg:min-h-[580px]">
               <img
                 src="/background.png"
                 alt="A laptop on a desk with a calm view of clouds and mountains"
@@ -41,17 +41,17 @@ export function WelcomeScreen() {
               />
             </div>
 
-            {/* Right: content panel overlapping with a soft curved seam */}
-            <div className="lg:flex-1 relative z-10 -mt-14 lg:mt-0 lg:-ml-16 mx-4 lg:mx-0 bg-white rounded-panel border border-mist-200 shadow-card px-9 sm:px-12 lg:px-16 py-12 lg:py-16 flex flex-col justify-center">
-              <h1 className="text-[38px] sm:text-[44px] lg:text-hero font-semibold tracking-tight2 text-ink-900">
+            {/* Right: content panel (~45%) overlapping with a soft curved seam */}
+            <div className="lg:flex-1 relative z-10 -mt-14 lg:mt-0 lg:-ml-16 mx-4 lg:mx-0 bg-white rounded-panel border border-mist-200 shadow-card px-10 sm:px-12 lg:px-16 py-14 lg:py-20 flex flex-col justify-center">
+              <h1 className="text-[40px] sm:text-[46px] lg:text-hero font-semibold tracking-tight2 text-ink-900">
                 Run AI on your own computer.
               </h1>
-              <p className="mt-6 text-body lg:text-[18px] leading-relaxed text-ink-500 max-w-[27rem]">
+              <p className="mt-6 text-[18px] leading-relaxed text-ink-500 max-w-[28rem]">
                 Keep everything local, choose the right model, and see real performance
                 numbers without using the terminal.
               </p>
-              <div className="mt-9">
-                <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
+              <div className="mt-10">
+                <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
                   Get started
                 </Button>
               </div>
@@ -59,7 +59,7 @@ export function WelcomeScreen() {
           </div>
 
           {/* Trust cards, larger */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-7">
             <Trust
               icon={<ShieldIcon className="w-6 h-6" />}
               title="Runs offline"

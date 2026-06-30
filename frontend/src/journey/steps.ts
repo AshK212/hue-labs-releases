@@ -25,6 +25,17 @@ export const PROGRESS_STEPS = [
   STEP.Results,
 ];
 
+// The labelled flow used by the desktop step indicator ("Step N of 7 · label").
+export const FLOW_STEPS: { step: number; label: string }[] = [
+  { step: STEP.Scanning, label: "Checking your computer" },
+  { step: STEP.Hardware, label: "Hardware detection" },
+  { step: STEP.Recommend, label: "Choose your model" },
+  { step: STEP.Setup, label: "Set up" },
+  { step: STEP.Baseline, label: "Measure speed" },
+  { step: STEP.Optimize, label: "Optimize" },
+  { step: STEP.Results, label: "Results" },
+];
+
 // Steps that allow a quiet Back affordance.
 export const BACK_STEPS = [
   STEP.Hardware,
