@@ -1,8 +1,9 @@
 import { useJourney } from "../journey/JourneyContext";
-import { Reveal } from "../components/Screen";
-import { Pill, StatTile } from "../components/Bits";
+import { Column, Reveal } from "../components/Screen";
+import { StatTile } from "../components/Bits";
 import {
   ArrowRightIcon,
+  CheckIcon,
   ChipIcon,
   GpuIcon,
   MemoryIcon,
@@ -16,32 +17,34 @@ export function HardwareScreen() {
   const gpu = hardware.gpus[0];
 
   return (
-    <div>
+    <Column>
       <Reveal index={0}>
-        <h1 className="text-[34px] leading-tight font-semibold tracking-tight2 text-ink-900">
+        <h1 className="text-[32px] leading-tight font-semibold tracking-tight2 text-ink-900">
           We found your computer
         </h1>
       </Reveal>
-
-      <Reveal index={1} className="mt-3">
-        <p className="text-[17px] leading-relaxed text-ink-500 max-w-[28rem]">
-          {hardware.summary}
-        </p>
+      <Reveal index={1} className="mt-2">
+        <p className="text-[16px] text-ink-500">Here's what we detected. Everything looks good.</p>
       </Reveal>
 
-      <div className="mt-8 grid grid-cols-2 gap-3">
+      <div className="mt-7 grid grid-cols-2 gap-3">
         <Reveal index={2}>
           <StatTile icon={<MonitorIcon className="w-[18px] h-[18px]" />} label="System" value={hardware.os_name} />
         </Reveal>
         <Reveal index={3}>
-          <StatTile icon={<ChipIcon className="w-[18px] h-[18px]" />} label="Processor" value={hardware.cpu_name} />
+          <StatTile
+            icon={<ChipIcon className="w-[18px] h-[18px]" />}
+            label="Processor"
+            value={hardware.cpu_name}
+            hint={`${hardware.cpu_cores_physical} cores`}
+          />
         </Reveal>
         <Reveal index={4}>
           <StatTile
             icon={<MemoryIcon className="w-[18px] h-[18px]" />}
             label="Memory"
             value={`${hardware.memory_total_gb} GB`}
-            hint={`${hardware.memory_available_gb} GB free right now`}
+            hint={`${hardware.memory_available_gb} GB free`}
           />
         </Reveal>
         <Reveal index={5}>
@@ -49,25 +52,25 @@ export function HardwareScreen() {
             icon={<GpuIcon className="w-[18px] h-[18px]" />}
             label="Graphics"
             value={gpu?.name ?? "Built-in graphics"}
-            hint={gpu?.vram_gb ? `${gpu.vram_gb} GB video memory` : undefined}
+            hint={gpu?.vram_gb ? `${gpu.vram_gb} GB graphics memory` : undefined}
           />
         </Reveal>
       </div>
 
-      <Reveal index={6} className="mt-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Pill tone="neutral">{hardware.cpu_cores_physical} cores</Pill>
-          {hardware.is_apple_silicon && <Pill tone="good">Apple Silicon</Pill>}
-          {hardware.gpus.some((g) => g.vendor === "NVIDIA") && <Pill tone="good">NVIDIA graphics</Pill>}
-        </div>
+      <Reveal index={6} className="mt-6 flex items-center gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-50 text-sage-600 px-3 py-1.5 text-[13px] font-semibold">
+          <CheckIcon className="w-4 h-4" />
+          Great match
+        </span>
+        <span className="text-[14px] text-ink-500">Your computer is ready for local AI.</span>
       </Reveal>
 
-      <Reveal index={7} className="mt-9">
+      <Reveal index={7} className="mt-8">
         <button className="btn-primary" onClick={next}>
           Continue
           <ArrowRightIcon className="w-[18px] h-[18px]" />
         </button>
       </Reveal>
-    </div>
+    </Column>
   );
 }

@@ -1,18 +1,30 @@
 import type { ReactNode } from "react";
 
 /**
- * The stage for a single screen. Content sits in a left-anchored column inside a
- * wide frame, so the eye lands left and the soft sky breathes on the right. The
- * caller keys this on the step so each screen replays its enter motion.
+ * The stage for a single screen: vertically centered, with a consistent
+ * horizontal frame. Screens set their own inner column width (most use the
+ * default ~36rem; Welcome and Results go wider). Keyed on step by the caller so
+ * each screen replays its enter motion.
  */
 export function Screen({ children }: { children: ReactNode }) {
   return (
-    <main className="relative min-h-[100dvh] flex items-center">
-      <div className="w-full max-w-[1120px] mx-auto px-8 sm:px-12 lg:px-20 pt-24 pb-16">
-        <div className="max-w-[33rem] animate-screen-in">{children}</div>
-      </div>
+    <main className="min-h-[100dvh] flex items-center justify-center px-6 sm:px-8 pt-24 pb-16">
+      <div className="w-full animate-screen-in">{children}</div>
     </main>
   );
+}
+
+/** Default centered content column. Text inside stays left-aligned. */
+export function Column({
+  width = "default",
+  children,
+}: {
+  width?: "default" | "wide" | "results";
+  children: ReactNode;
+}) {
+  const max =
+    width === "wide" ? "max-w-[60rem]" : width === "results" ? "max-w-[44rem]" : "max-w-[34rem]";
+  return <div className={`mx-auto w-full ${max}`}>{children}</div>;
 }
 
 /** A child that fades up in sequence. `index` sets the stagger (70ms apart). */

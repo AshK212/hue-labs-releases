@@ -40,17 +40,17 @@
 }
 
 @layer components {
-  /* Surfaces ------------------------------------------------------------- */
+  /* Surfaces: a hairline border plus a soft shadow gives crisp desktop depth. */
   .card {
-    @apply rounded-card bg-white shadow-card;
+    @apply rounded-card bg-white border border-mist-200 shadow-card;
   }
 
   .panel {
-    @apply rounded-card bg-white/80 backdrop-blur-md shadow-card;
+    @apply rounded-card bg-white/85 backdrop-blur-md border border-white/70 shadow-card;
   }
 
   .tile {
-    @apply rounded-tile bg-white/70 shadow-tile;
+    @apply rounded-tile bg-white border border-mist-200 shadow-tile;
   }
 
   /* Buttons: one height (44px), one radius, one easing. ------------------ */

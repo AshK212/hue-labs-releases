@@ -1,6 +1,6 @@
 import { useJourney } from "../journey/JourneyContext";
-import { Reveal } from "../components/Screen";
-import { IconBadge } from "../components/Bits";
+import { Column, Reveal } from "../components/Screen";
+import { IconBadge, StatusCard } from "../components/Bits";
 import { ModelDownload } from "../components/ModelDownload";
 import { ArrowRightIcon, CheckIcon, CloudIcon } from "../components/Icons";
 
@@ -29,41 +29,56 @@ export function SetupScreen() {
 
   if (!modelInstalled && selectedModel) {
     return (
-      <ModelDownload
-        model={selectedModel}
-        label={modelLabel}
-        sizeGb={sizeGb}
-        onComplete={refreshOllama}
-        onContinue={next}
-      />
+      <Column>
+        <ModelDownload
+          model={selectedModel}
+          label={modelLabel}
+          sizeGb={sizeGb}
+          onComplete={refreshOllama}
+          onContinue={next}
+        />
+      </Column>
     );
   }
 
-  // Model already installed (e.g. it was pulled earlier).
+  // Everything is ready: two calm status cards.
   return (
-    <div>
+    <Column>
       <Reveal index={0}>
-        <IconBadge tone="sage">
-          <CheckIcon className="w-6 h-6" />
-        </IconBadge>
-      </Reveal>
-      <Reveal index={1} className="mt-6">
         <h1 className="text-[32px] leading-tight font-semibold tracking-tight2 text-ink-900">
-          You're ready
+          Let's set up Ollama
         </h1>
       </Reveal>
-      <Reveal index={2} className="mt-3">
-        <p className="text-[17px] leading-relaxed text-ink-500 max-w-[26rem]">
-          {modelLabel} is installed and ready to run on your computer.
-        </p>
+      <Reveal index={1} className="mt-2">
+        <p className="text-[16px] text-ink-500">We use Ollama to run the model on your computer.</p>
       </Reveal>
-      <Reveal index={3} className="mt-8">
+
+      <div className="mt-7 space-y-3">
+        <Reveal index={2}>
+          <StatusCard
+            tone="sage"
+            icon={<CheckIcon className="w-5 h-5" />}
+            title="Ollama is installed"
+            subtitle="Ollama is running in the background."
+          />
+        </Reveal>
+        <Reveal index={3}>
+          <StatusCard
+            tone="sage"
+            icon={<CheckIcon className="w-5 h-5" />}
+            title={`${modelLabel} is installed`}
+            subtitle="The model is ready to use."
+          />
+        </Reveal>
+      </div>
+
+      <Reveal index={4} className="mt-8">
         <button className="btn-primary" onClick={next}>
           Continue
           <ArrowRightIcon className="w-[18px] h-[18px]" />
         </button>
       </Reveal>
-    </div>
+    </Column>
   );
 }
 
@@ -74,7 +89,7 @@ function SetupOllama({ onRecheck }: { onRecheck: () => void }) {
     "Come back here and select Check again.",
   ];
   return (
-    <div>
+    <Column>
       <Reveal index={0}>
         <IconBadge>
           <CloudIcon className="w-6 h-6" />
@@ -85,27 +100,29 @@ function SetupOllama({ onRecheck }: { onRecheck: () => void }) {
           Let's set up Ollama
         </h1>
       </Reveal>
-      <Reveal index={2} className="mt-3">
-        <p className="text-[17px] leading-relaxed text-ink-500 max-w-[28rem]">
+      <Reveal index={2} className="mt-2">
+        <p className="text-[16px] leading-relaxed text-ink-500 max-w-[28rem]">
           Ollama is the free app that runs the model on your computer. It takes about a
           minute.
         </p>
       </Reveal>
 
-      <Reveal index={3} className="mt-7">
-        <ol className="space-y-3.5">
-          {steps.map((s, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="flex-shrink-0 grid place-items-center w-6 h-6 rounded-full bg-mist-100 text-ink-500 text-[13px] font-semibold">
-                {i + 1}
-              </span>
-              <p className="text-[15px] text-ink-700 pt-0.5 leading-relaxed">{s}</p>
-            </li>
-          ))}
-        </ol>
+      <Reveal index={3} className="mt-6">
+        <div className="card p-5">
+          <ol className="space-y-4">
+            {steps.map((s, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex-shrink-0 grid place-items-center w-6 h-6 rounded-full bg-mist-100 text-ink-500 text-[13px] font-semibold">
+                  {i + 1}
+                </span>
+                <p className="text-[15px] text-ink-700 pt-0.5 leading-relaxed">{s}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </Reveal>
 
-      <Reveal index={4} className="mt-8 flex items-center gap-3">
+      <Reveal index={4} className="mt-7 flex items-center gap-3">
         <button className="btn-primary" onClick={onRecheck}>
           Check again
         </button>
@@ -113,6 +130,6 @@ function SetupOllama({ onRecheck }: { onRecheck: () => void }) {
           Get Ollama
         </a>
       </Reveal>
-    </div>
+    </Column>
   );
 }

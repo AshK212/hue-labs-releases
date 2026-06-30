@@ -15,13 +15,14 @@ export type StepIndex = (typeof STEP)[keyof typeof STEP];
 
 export const TOTAL_STEPS = 8;
 
-// Steps that show the slim top progress bar (Welcome/Scanning/Results are bare).
+// Steps shown as dots in the top bar (Welcome shows a pill instead).
 export const PROGRESS_STEPS = [
   STEP.Hardware,
   STEP.Recommend,
   STEP.Setup,
   STEP.Baseline,
   STEP.Optimize,
+  STEP.Results,
 ];
 
 // Steps that allow a quiet Back affordance.

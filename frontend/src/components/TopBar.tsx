@@ -1,18 +1,20 @@
-// The quiet app frame: brand on the left, a slim step indicator on the right,
-// and a back control that appears only when going back makes sense.
+// The quiet app frame: brand on the left, a step indicator on the right, and a
+// back control that appears only when going back makes sense. On Welcome we show
+// a small reassurance pill instead of the step dots.
 
 import { BrandMark } from "./Brand";
-import { ArrowLeftIcon } from "./Icons";
-import { PROGRESS_STEPS, BACK_STEPS } from "../journey/steps";
+import { ArrowLeftIcon, ShieldIcon } from "./Icons";
+import { PROGRESS_STEPS, BACK_STEPS, STEP } from "../journey/steps";
 
 export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
   const stepIndex = PROGRESS_STEPS.indexOf(step as (typeof PROGRESS_STEPS)[number]);
   const showBack = BACK_STEPS.includes(step as (typeof BACK_STEPS)[number]);
+  const isWelcome = step === STEP.Welcome;
 
   return (
     <header className="fixed top-0 inset-x-0 z-30 h-16">
-      <div className="h-full max-w-[1120px] mx-auto px-8 sm:px-12 lg:px-20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="h-full max-w-[60rem] mx-auto px-6 sm:px-8 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
           {showBack ? (
             <button
               onClick={onBack}
@@ -23,12 +25,17 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
               <ArrowLeftIcon className="w-[18px] h-[18px]" />
             </button>
           ) : (
-            <BrandMark size={28} />
+            <BrandMark size={26} />
           )}
           <span className="text-[13px] font-medium text-ink-400">Local AI Optimizer</span>
         </div>
 
-        {stepIndex !== -1 && (
+        {isWelcome ? (
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-mist-200 bg-white/70 px-3 py-1 text-[12px] font-medium text-ink-500">
+            <ShieldIcon className="w-3.5 h-3.5 text-sky-500" />
+            Private · No terminal
+          </span>
+        ) : (
           <div className="flex items-center gap-1.5">
             {PROGRESS_STEPS.map((_, i) => (
               <span

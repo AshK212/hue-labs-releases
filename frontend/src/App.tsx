@@ -38,6 +38,13 @@ function renderScreen(step: number) {
 
 function Journey() {
   const { step, back } = useJourney();
+  const isWelcome = step === STEP.Welcome;
+
+  // Welcome is a full-bleed hero: it owns the whole viewport and its own header,
+  // so we skip the centered stage and the standard chrome for it.
+  if (isWelcome) {
+    return <WelcomeScreen />;
+  }
 
   return (
     <>
