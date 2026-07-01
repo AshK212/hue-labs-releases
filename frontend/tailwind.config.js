@@ -35,6 +35,23 @@ export default {
           500: "#46a07a",
           600: "#388665",
         },
+        // Signature accent: a calm blue-violet "iris" that pairs with the sky
+        // blue to form the brand's aurora gradient. This is the memory hook.
+        iris: {
+          50: "#eef0fe",
+          100: "#e1e3fd",
+          200: "#c8c9fb",
+          300: "#a9a6f6",
+          400: "#8b84f2",
+          500: "#6f66ec",
+          600: "#5a4fd6",
+          700: "#493fb0",
+        },
+        // A soft aqua used only as a faint aurora highlight.
+        aqua: {
+          300: "#8fe0ea",
+          400: "#5fd0e0",
+        },
       },
       fontFamily: {
         sans: [
@@ -67,12 +84,14 @@ export default {
         panel: "28px",
       },
       boxShadow: {
-        // Very soft, almost invisible. No harsh drop shadows.
+        // Very soft, almost invisible, with a subtle top sheen for premium depth.
         soft: "0 2px 10px -4px rgba(28, 37, 51, 0.08)",
-        card: "0 1px 2px rgba(28,37,51,0.04), 0 16px 40px -22px rgba(28,37,51,0.16)",
-        tile: "0 1px 2px rgba(28,37,51,0.03), 0 10px 26px -20px rgba(28,37,51,0.18)",
-        button: "0 1px 2px rgba(28,37,51,0.10), 0 10px 22px -12px rgba(72,102,189,0.50)",
-        glow: "0 0 0 1px rgba(92,127,214,0.10), 0 0 60px -10px rgba(92,127,214,0.45)",
+        card: "inset 0 1px 0 0 rgba(255,255,255,0.65), 0 1px 2px rgba(28,37,51,0.04), 0 16px 40px -22px rgba(30,32,60,0.16)",
+        tile: "inset 0 1px 0 0 rgba(255,255,255,0.6), 0 1px 2px rgba(28,37,51,0.03), 0 10px 26px -20px rgba(30,32,60,0.18)",
+        // Signature button glow in the aurora (sky -> iris) tint.
+        button: "0 1px 2px rgba(28,37,51,0.12), 0 12px 26px -12px rgba(111,102,236,0.55)",
+        glow: "0 0 0 1px rgba(111,102,236,0.10), 0 0 60px -10px rgba(111,102,236,0.45)",
+        glowSoft: "0 0 50px -14px rgba(111,102,236,0.40)",
       },
       keyframes: {
         fadeUp: {
@@ -101,6 +120,14 @@ export default {
           "0%, 100%": { transform: "translate(0,0)" },
           "50%": { transform: "translate(30px,-22px)" },
         },
+        auroraA: {
+          "0%, 100%": { transform: "translate(0,0) scale(1)", opacity: "0.55" },
+          "50%": { transform: "translate(40px,-30px) scale(1.12)", opacity: "0.8" },
+        },
+        auroraB: {
+          "0%, 100%": { transform: "translate(0,0) scale(1.05)", opacity: "0.5" },
+          "50%": { transform: "translate(-46px,26px) scale(1)", opacity: "0.72" },
+        },
         shimmer: {
           "0%": { backgroundPosition: "-180% 0" },
           "100%": { backgroundPosition: "180% 0" },
@@ -120,6 +147,8 @@ export default {
         ring: "ring 2.6s cubic-bezier(0.16,1,0.3,1) infinite",
         "spin-slow": "spinSlow 9s linear infinite",
         drift: "drift 24s ease-in-out infinite",
+        "aurora-a": "auroraA 20s ease-in-out infinite",
+        "aurora-b": "auroraB 26s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         "check-pop": "checkPop 0.4s cubic-bezier(0.16,1,0.3,1) both",
       },

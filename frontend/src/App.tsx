@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
-import { Orbs } from "./components/Orbs";
+import { Aurora } from "./components/Aurora";
 import { Screen } from "./components/Screen";
 import { TopBar } from "./components/TopBar";
 import { Dashboard } from "./dashboard/Dashboard";
@@ -48,29 +48,29 @@ const pageMotion = {
 function Journey() {
   const { view, step, back } = useJourney();
 
-  if (view === "dashboard") {
-    return <Dashboard />;
-  }
-
-  if (step === STEP.Welcome) {
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div key="welcome" {...pageMotion}>
-          <WelcomeScreen />
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
   return (
     <>
-      <Orbs />
-      <TopBar step={step} onBack={back} />
-      <AnimatePresence mode="wait">
-        <motion.div key={step} {...pageMotion}>
-          <Screen>{renderScreen(step)}</Screen>
-        </motion.div>
-      </AnimatePresence>
+      {/* Signature ambient background, shared by every screen. */}
+      <Aurora />
+
+      {view === "dashboard" ? (
+        <Dashboard />
+      ) : step === STEP.Welcome ? (
+        <AnimatePresence mode="wait">
+          <motion.div key="welcome" {...pageMotion}>
+            <WelcomeScreen />
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        <>
+          <TopBar step={step} onBack={back} />
+          <AnimatePresence mode="wait">
+            <motion.div key={step} {...pageMotion}>
+              <Screen>{renderScreen(step)}</Screen>
+            </motion.div>
+          </AnimatePresence>
+        </>
+      )}
     </>
   );
 }

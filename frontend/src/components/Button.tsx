@@ -18,10 +18,10 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-sky-500 text-white shadow-button hover:bg-sky-600 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]",
+    "brand-gradient text-white shadow-button hover:-translate-y-[2px] hover:scale-[1.02] hover:shadow-glow active:translate-y-0 active:scale-[0.99]",
   secondary:
-    "bg-white text-ink-700 border border-mist-200 shadow-soft hover:bg-mist-50 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0",
-  ghost: "text-ink-500 hover:text-ink-900 hover:bg-mist-100",
+    "bg-white/90 backdrop-blur text-ink-700 border border-mist-200 shadow-soft hover:bg-white hover:border-iris-200 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0",
+  ghost: "text-ink-500 hover:text-ink-900 hover:bg-iris-50/70",
 };
 
 export function Button({

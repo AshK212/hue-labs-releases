@@ -60,9 +60,9 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-mist-100">
+    <div className="min-h-[100dvh]">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-mist-200 flex flex-col px-4 py-6 z-20">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-white/85 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <BrandMark size={30} />
           <span className="text-body font-semibold text-ink-800">Local AI Optimizer</span>
@@ -77,13 +77,13 @@ export function Dashboard() {
                 onClick={() => setActive(item.id)}
                 className={[
                   "w-full flex items-center gap-3 px-3 h-11 rounded-tile text-body font-medium transition-colors",
-                  on ? "bg-sky-50 text-sky-700" : "text-ink-500 hover:bg-mist-100 hover:text-ink-800",
+                  on ? "bg-iris-50 text-iris-700" : "text-ink-500 hover:bg-mist-100 hover:text-ink-800",
                 ].join(" ")}
               >
-                <span className={on ? "text-sky-600" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
+                <span className={on ? "text-iris-600" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
                 {item.label}
                 {on && (
-                  <motion.span layoutId="navdot" className="ml-auto w-1.5 h-1.5 rounded-full bg-sky-500" />
+                  <motion.span layoutId="navdot" className="ml-auto w-1.5 h-1.5 rounded-full bg-iris-500" />
                 )}
               </button>
             );

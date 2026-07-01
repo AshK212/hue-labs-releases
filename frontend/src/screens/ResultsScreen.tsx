@@ -30,11 +30,21 @@ export function ResultsScreen() {
 
   return (
     <Column width="results">
-      <div className="flex flex-col items-center text-center">
-        <Reveal index={0}>
+      <div className="relative flex flex-col items-center text-center">
+        {/* Elegant celebration glow behind the headline figure */}
+        <div
+          aria-hidden
+          className="absolute -top-10 left-1/2 -translate-x-1/2 w-[420px] h-[280px] blur-3xl animate-breathe pointer-events-none"
+          style={{
+            background: improved
+              ? "radial-gradient(50% 50% at 50% 50%, rgba(70,160,122,0.26), rgba(70,160,122,0) 70%)"
+              : "radial-gradient(50% 50% at 50% 50%, rgba(111,102,236,0.18), rgba(111,102,236,0) 70%)",
+          }}
+        />
+        <Reveal index={0} className="relative">
           {improved ? (
             <div className="inline-flex items-center gap-3 text-sage-600">
-              <span className="grid place-items-center w-16 h-16 rounded-card bg-sage-50 animate-pop-in">
+              <span className="grid place-items-center w-16 h-16 rounded-card bg-gradient-to-br from-sage-50 to-sage-100 ring-1 ring-inset ring-white/70 animate-pop-in">
                 <ArrowUpIcon className="w-9 h-9" />
               </span>
               <span className="text-[88px] leading-none font-semibold tracking-tight2 tnum">

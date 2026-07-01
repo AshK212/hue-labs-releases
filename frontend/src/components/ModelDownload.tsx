@@ -3,7 +3,8 @@ import { Reveal } from "./Screen";
 import { IconBadge } from "./Bits";
 import { Button } from "./Button";
 import { CircularProgress } from "./CircularProgress";
-import { ArrowRightIcon, CheckIcon, DownloadIcon } from "./Icons";
+import { Spot } from "./Spot";
+import { ArrowRightIcon, DownloadIcon } from "./Icons";
 import {
   useModelDownload,
   isDownloadActive,
@@ -153,12 +154,7 @@ function ModelReady({ label, onContinue }: { label: string; onContinue: () => vo
   return (
     <div className="flex flex-col items-center text-center">
       <Reveal index={0}>
-        <div className="relative grid place-items-center">
-          <span className="absolute w-24 h-24 rounded-full bg-sage-500/15 animate-breathe" />
-          <div className="relative grid place-items-center w-20 h-20 rounded-card bg-gradient-to-b from-sage-500 to-sage-600 text-white shadow-button animate-pop-in">
-            <CheckIcon className="w-10 h-10" />
-          </div>
-        </div>
+        <Spot motif="success" tone="green" size={120} />
       </Reveal>
       <Reveal index={1} className="mt-7">
         <h1 className="text-page font-semibold text-ink-900">Your model is ready</h1>

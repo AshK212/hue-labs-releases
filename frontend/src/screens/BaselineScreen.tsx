@@ -3,7 +3,8 @@ import { Column, Reveal } from "../components/Screen";
 import { Button } from "../components/Button";
 import { RunningStages } from "../components/RunningStages";
 import { HeroNumber } from "../components/Metric";
-import { IconBadge, Note } from "../components/Bits";
+import { Note } from "../components/Bits";
+import { Spot } from "../components/Spot";
 import { StatusBadge } from "../components/Badge";
 import { ArrowRightIcon, GaugeIcon } from "../components/Icons";
 
@@ -61,11 +62,9 @@ export function BaselineScreen() {
   return (
     <Column>
       <Reveal index={0}>
-        <IconBadge size="lg">
-          <GaugeIcon className="w-7 h-7" />
-        </IconBadge>
+        <Spot motif="speed" />
       </Reveal>
-      <Reveal index={1} className="mt-6">
+      <Reveal index={1} className="mt-7">
         <h1 className="text-page font-semibold text-ink-900">Let's measure your speed</h1>
       </Reveal>
       <Reveal index={2} className="mt-3">

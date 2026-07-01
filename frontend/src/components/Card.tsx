@@ -15,9 +15,9 @@ export function Card({
   return (
     <div
       className={[
-        "rounded-card bg-white border shadow-card transition-all duration-200",
-        selected ? "border-sky-300 ring-2 ring-sky-100" : "border-mist-200",
-        interactive ? "hover:-translate-y-[2px] hover:shadow-[0_1px_2px_rgba(28,37,51,0.04),0_22px_48px_-22px_rgba(28,37,51,0.20)]" : "",
+        "surface transition-all duration-200",
+        selected ? "!border-iris-300 ring-2 ring-iris-100" : "",
+        interactive ? "hover:-translate-y-[2px] hover:!border-iris-200 hover:shadow-glowSoft" : "",
         className,
       ].join(" ")}
     >

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useJourney } from "../journey/JourneyContext";
-import { BrandMark } from "../components/Brand";
+import { BrandMark, BrandGlyph } from "../components/Brand";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import {
@@ -14,7 +14,7 @@ export function WelcomeScreen() {
   const { next } = useJourney();
 
   return (
-    <section className="relative min-h-[100dvh] w-full flex flex-col bg-gradient-to-b from-[#f6f9fd] via-[#eef3fb] to-[#e7eef7] animate-fade-in">
+    <section className="relative min-h-[100dvh] w-full flex flex-col animate-fade-in">
       {/* Top bar */}
       <header className="w-full">
         <div className="max-w-[1320px] mx-auto w-full px-8 lg:px-14 h-[84px] flex items-center justify-between">
@@ -33,16 +33,30 @@ export function WelcomeScreen() {
         <div className="w-[92%] max-w-[1280px] mx-auto py-10">
           <div className="flex flex-col lg:flex-row items-stretch">
             {/* Left: workspace image (~55%), the laptop is the visual hero */}
-            <div className="lg:w-[55%] rounded-panel overflow-hidden shadow-card min-h-[320px] lg:min-h-[580px]">
-              <img
-                src="/background.png"
-                alt="A laptop on a desk with a calm view of clouds and mountains"
-                className="w-full h-full object-cover object-[center_65%]"
+            <div className="relative lg:w-[55%]">
+              {/* Signature glow behind the hero image */}
+              <div
+                aria-hidden
+                className="absolute -inset-6 rounded-panel blur-2xl opacity-70 animate-breathe"
+                style={{ background: "radial-gradient(60% 60% at 40% 40%, rgba(111,102,236,0.28), rgba(111,102,236,0) 70%)" }}
               />
+              <div className="relative rounded-panel overflow-hidden shadow-card ring-1 ring-white/50 min-h-[320px] lg:min-h-[580px]">
+                <img
+                  src="/background.png"
+                  alt="A laptop on a desk with a calm view of clouds and mountains"
+                  className="w-full h-full object-cover object-[center_65%]"
+                />
+              </div>
             </div>
 
             {/* Right: content panel (~45%) overlapping with a soft curved seam */}
-            <div className="lg:flex-1 relative z-10 -mt-14 lg:mt-0 lg:-ml-16 mx-4 lg:mx-0 bg-white rounded-panel border border-mist-200 shadow-card px-10 sm:px-12 lg:px-16 py-14 lg:py-20 flex flex-col justify-center">
+            <div className="lg:flex-1 relative z-10 -mt-14 lg:mt-0 lg:-ml-16 mx-4 lg:mx-0 bg-white/95 backdrop-blur-sm rounded-panel border border-mist-200 shadow-card px-10 sm:px-12 lg:px-16 py-14 lg:py-20 flex flex-col justify-center">
+              <span className="inline-flex items-center gap-2 self-start rounded-badge bg-iris-50 border border-iris-100 pl-1.5 pr-3 py-1.5 mb-6">
+                <span className="grid place-items-center w-5 h-5 rounded-full brand-gradient">
+                  <BrandGlyph className="w-3.5 h-3.5" />
+                </span>
+                <span className="text-micro font-semibold text-iris-700">Local-first AI, tuned for you</span>
+              </span>
               <h1 className="text-[40px] sm:text-[46px] lg:text-hero font-semibold tracking-tight2 text-ink-900">
                 Run AI on your own computer.
               </h1>
@@ -84,8 +98,8 @@ export function WelcomeScreen() {
 
 function Trust({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
   return (
-    <div className="rounded-card bg-white border border-mist-200 shadow-tile p-6 flex items-center gap-4">
-      <span className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500">
+    <div className="surface-tile p-6 flex items-center gap-4 transition-all duration-200 hover:-translate-y-[2px] hover:border-iris-200 hover:shadow-glowSoft">
+      <span className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70">
         {icon}
       </span>
       <div>

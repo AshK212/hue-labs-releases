@@ -1,9 +1,9 @@
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
-import { IconBadge } from "../components/Bits";
 import { Button } from "../components/Button";
+import { Spot } from "../components/Spot";
 import { ModelDownload } from "../components/ModelDownload";
-import { ArrowRightIcon, CheckIcon, CloudIcon } from "../components/Icons";
+import { ArrowRightIcon, CheckIcon } from "../components/Icons";
 
 export function SetupScreen() {
   const { ollamaReady, modelInstalled, selectedModel, recommendation, refreshOllama, next } =
@@ -46,12 +46,7 @@ export function SetupScreen() {
     <Column>
       <div className="flex flex-col items-center text-center">
         <Reveal index={0}>
-          <div className="relative grid place-items-center">
-            <span className="absolute w-24 h-24 rounded-full bg-sage-500/15 animate-breathe" />
-            <div className="relative grid place-items-center w-20 h-20 rounded-card bg-gradient-to-b from-sage-500 to-sage-600 text-white shadow-button animate-pop-in">
-              <CheckIcon className="w-10 h-10" />
-            </div>
-          </div>
+          <Spot motif="success" tone="green" size={120} />
         </Reveal>
         <Reveal index={1} className="mt-7">
           <h1 className="text-page font-semibold text-ink-900">You're ready!</h1>
@@ -94,11 +89,9 @@ function SetupOllama({ onRecheck }: { onRecheck: () => void }) {
   return (
     <Column>
       <Reveal index={0}>
-        <IconBadge size="lg">
-          <CloudIcon className="w-7 h-7" />
-        </IconBadge>
+        <Spot motif="cloud" />
       </Reveal>
-      <Reveal index={1} className="mt-6">
+      <Reveal index={1} className="mt-7">
         <h1 className="text-page font-semibold text-ink-900">Let's set up Ollama</h1>
       </Reveal>
       <Reveal index={2} className="mt-2">

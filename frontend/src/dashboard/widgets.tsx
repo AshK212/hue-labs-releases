@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { Spot, type SpotMotif } from "../components/Spot";
 
 /** A dashboard panel with an optional header. */
 export function DashCard({
@@ -47,14 +48,32 @@ export function StatLine({ label, value }: { label: string; value: ReactNode }) 
   );
 }
 
+/** An empty-state block with a signature spot illustration. */
+export function EmptyState({
+  motif,
+  title,
+  hint,
+  action,
+}: {
+  motif: SpotMotif;
+  title: string;
+  hint?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center text-center py-8">
+      <Spot motif={motif} size={88} />
+      <p className="text-body font-medium text-ink-700 mt-5">{title}</p>
+      {hint && <p className="text-caption text-ink-400 mt-1 max-w-[22rem]">{hint}</p>}
+      {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
+
 /** A simple, honest bar chart drawn from real benchmark values. */
 export function MiniBarChart({ values, height = 120 }: { values: number[]; height?: number }) {
   if (values.length === 0) {
-    return (
-      <div className="grid place-items-center text-caption text-ink-400" style={{ height }}>
-        No runs yet
-      </div>
-    );
+    return <EmptyState motif="speed" title="No benchmarks yet" hint="Run a benchmark to see your speed here." />;
   }
   const max = Math.max(...values, 1);
   return (
@@ -62,7 +81,7 @@ export function MiniBarChart({ values, height = 120 }: { values: number[]; heigh
       {values.map((v, i) => (
         <motion.div
           key={i}
-          className="flex-1 rounded-t-md bg-gradient-to-t from-sky-400 to-sky-300 min-w-[10px]"
+          className="flex-1 rounded-t-md bg-gradient-to-t from-iris-500 via-iris-400 to-sky-300 min-w-[10px]"
           initial={{ height: 0 }}
           animate={{ height: `${Math.max(6, (v / max) * 100)}%` }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}

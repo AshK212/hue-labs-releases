@@ -4,6 +4,7 @@ import { Column, Reveal } from "../components/Screen";
 import { Button } from "../components/Button";
 import { RunningStages } from "../components/RunningStages";
 import { IconBadge, Note } from "../components/Bits";
+import { Spot } from "../components/Spot";
 import { ArrowRightIcon, CheckIcon, SparkIcon } from "../components/Icons";
 
 const TWEAKS = [
@@ -54,11 +55,9 @@ export function OptimizeScreen() {
   return (
     <Column>
       <Reveal index={0}>
-        <IconBadge size="lg">
-          <SparkIcon className="w-7 h-7" />
-        </IconBadge>
+        <Spot motif="optimize" />
       </Reveal>
-      <Reveal index={1} className="mt-6">
+      <Reveal index={1} className="mt-7">
         <h1 className="text-page font-semibold text-ink-900">Now let's tune it for your computer</h1>
       </Reveal>
       <Reveal index={2} className="mt-3">

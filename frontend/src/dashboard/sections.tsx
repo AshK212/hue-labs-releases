@@ -4,7 +4,7 @@ import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
 import type { BenchmarkRun, OllamaModel } from "../types";
-import { DashCard, MiniBarChart, StatLine } from "./widgets";
+import { DashCard, EmptyState, MiniBarChart, StatLine } from "./widgets";
 import {
   Activity,
   ArrowRight,
@@ -102,7 +102,7 @@ export function OverviewSection({
                 </div>
               )}
             </div>
-            <span className="grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500">
+            <span className="grid place-items-center w-12 h-12 rounded-tile bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70">
               <Gauge className="w-6 h-6" strokeWidth={1.8} />
             </span>
           </div>
@@ -219,7 +219,7 @@ export function ModelsSection({ models }: { models: OllamaModel[] }) {
     <div className="space-y-5">
       <DashCard title="Installed models" icon={<Boxes className="w-5 h-5" strokeWidth={1.8} />}>
         {models.length === 0 ? (
-          <p className="text-caption text-ink-400">No models installed yet.</p>
+          <EmptyState motif="chip" title="No models yet" hint="Choose a model to install it on your computer." />
         ) : (
           <div className="space-y-3">
             {models.map((m) => (
@@ -292,7 +292,7 @@ export function HistorySection({ history }: { history: BenchmarkRun[] }) {
   return (
     <DashCard title="Benchmark history" icon={<Clock className="w-5 h-5" strokeWidth={1.8} />}>
       {history.length === 0 ? (
-        <p className="text-caption text-ink-400">No runs recorded yet.</p>
+        <EmptyState motif="speed" title="No runs recorded yet" hint="Your benchmark runs will appear here." />
       ) : (
         <div className="overflow-hidden">
           <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 text-micro text-ink-400 px-2 pb-2 border-b border-mist-200">

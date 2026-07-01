@@ -11,8 +11,8 @@ export function IconBadge({
   size?: "md" | "lg";
 }) {
   const tones: Record<string, string> = {
-    blue: "bg-sky-50 text-sky-500",
-    green: "bg-sage-50 text-sage-600",
+    blue: "bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70",
+    green: "bg-gradient-to-br from-sage-50 to-sage-100 text-sage-600 ring-1 ring-inset ring-white/70",
   };
   const dims = size === "lg" ? "w-20 h-20 rounded-card" : "w-14 h-14 rounded-tile";
   return <div className={`grid place-items-center ${dims} ${tones[tone]}`}>{children}</div>;
@@ -32,7 +32,7 @@ export function StatTile({
 }) {
   return (
     <div className="surface-tile p-6 flex items-start gap-4">
-      <div className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500">
+      <div className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70">
         {icon}
       </div>
       <div className="min-w-0">
@@ -59,8 +59,8 @@ export function StatusCard({
   subtitle: string;
 }) {
   const tones: Record<string, string> = {
-    blue: "bg-sky-50 text-sky-500",
-    green: "bg-sage-50 text-sage-600",
+    blue: "bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70",
+    green: "bg-gradient-to-br from-sage-50 to-sage-100 text-sage-600 ring-1 ring-inset ring-white/70",
   };
   return (
     <div className="surface p-5 flex items-center gap-4">
