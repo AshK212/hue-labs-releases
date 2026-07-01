@@ -3,8 +3,23 @@
 A friendly control layer on top of [Ollama](https://ollama.com) that makes running and
 optimizing local AI models easy for **non-technical users** — zero terminal required.
 
-> We are **not** replacing Ollama. We are building a calm, polished desktop-style app that
-> sits on top of Ollama and guides a person through the whole workflow with one-click actions.
+> We are **not** replacing Ollama. We are building a calm, polished **native desktop app**
+> that sits on top of Ollama and guides a person through the whole workflow with one-click
+> actions.
+
+**Looking to run or build it?** See **[RunGuide.md](RunGuide.md)**.
+
+## What it is
+
+Local AI Optimizer ships as a **native Windows desktop application** (Electron). The user
+double-clicks one icon; the app starts its own backend, waits until it's ready, and opens a
+single clean window. There is no browser, no URL bar, and nothing to start by hand.
+
+Under the hood it is three parts wrapped in a desktop shell:
+
+- a **FastAPI** service that detects hardware, talks to Ollama, and runs benchmarks,
+- a **React + TypeScript** UI (the calm sky/cloud dashboard), and
+- an **Electron** shell that launches both, hosts the UI, and shuts everything down on exit.
 
 ## The Milestone 1 workflow
 
@@ -17,80 +32,55 @@ Detect hardware → Recommend a model → One-click run (Ollama)
 Everything happens in a clean UI. The only "honest" promise we make is:
 **measured improvement on *this* machine** — no fake numbers.
 
+## How the desktop app starts
+
+When the user launches the app:
+
+```
+Splash screen → Backend starts → Health check → Frontend loads → Main window opens
+```
+
+- **Development:** Vite serves the UI and proxies `/api` to the backend.
+- **Production:** a tiny local server inside the shell serves the built UI and proxies
+  `/api` to the backend — mirroring the dev proxy so the React app's relative `/api` calls
+  (and the streaming model download) work identically with **no frontend changes**.
+
+The backend is terminated automatically whenever the window closes.
+
 ## Repository structure
 
 ```
 .
-├── backend/    FastAPI local service (hardware detection, Ollama bridge, benchmark, optimization)
-├── frontend/   React + TypeScript + Vite + Tailwind UI (the calm sky/cloud dashboard)
-├── docs/       Scope, architecture, and the optimization note for the deliverable
-├── design/     UI direction and product positioning
-└── scripts/    Convenience scripts to run everything locally
+├── backend/     FastAPI local service (hardware detection, Ollama bridge, benchmark, optimization)
+├── frontend/    React + TypeScript + Vite + Tailwind UI (the calm sky/cloud dashboard)
+├── electron/    Desktop shell — main process, window, backend supervisor, prod UI server, preload
+├── scripts/     Dev helpers + the PyInstaller backend-bundling scripts
+├── build/       Application / installer icons (electron-builder buildResources)
+├── docs/        Scope, architecture, and the optimization note for the deliverable
+└── design/      UI direction and product positioning
 ```
 
-## Quick start
+The Electron shell is intentionally thin and declarative — no business logic lives in it.
+See the module headers in [electron/](electron/) for details; ports, window size, and paths
+are all centralized in [electron/config.ts](electron/config.ts).
 
-You need: **Python 3.10+**, **Node 18+**, and (recommended) **[Ollama](https://ollama.com/download)**.
-The app runs fine without Ollama installed — it will detect that and show friendly setup guidance.
+## Window & platform
 
-### 1. Backend (FastAPI) — terminal A
+- **Window:** 1600 × 1000, minimum 1200 × 800, centered, native title bar,
+  title "Local AI Optimizer", background matching the app (`#f5f7fc`).
+- **Target platform for Milestone 1:** **Windows 11.** One platform, one or two models,
+  honest and measurable gains. See [docs/milestone-1-scope.md](docs/milestone-1-scope.md)
+  for the full scope and [docs/optimization-notes.md](docs/optimization-notes.md) for the
+  deliverable note.
 
-```powershell
-cd backend
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+## Ollama
 
-Backend runs on port 8000 — reachable at <http://localhost:8000> and at
-`http://<your-ip>:8000` (interactive API docs at `/docs`).
-
-### 2. Frontend (Vite) — terminal B
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-The dev server binds to all network interfaces, so on startup Vite prints both a
-**Local** and a **Network** URL, for example:
-
-```
-➜  Local:   http://localhost:5173/
-➜  Network: http://192.168.1.42:5173/
-```
-
-Open the **Network** URL (your machine's IP address) to reach the app from this or
-another device on the same network. <http://localhost:5173> works too. The frontend
-talks to the backend through a built-in proxy, so you never call port 8000 directly.
-
-### One command (Windows)
-
-```powershell
-scripts\dev.ps1
-```
-
-Opens both services in separate windows and prints the IP address URLs to use:
-
-```
-Backend:  http://192.168.1.42:8000  (docs at /docs)
-Frontend: http://192.168.1.42:5173
-```
-
-> To open the app from another device (phone, laptop) on the same Wi‑Fi, use that
-> `http://<your-ip>:5173` address. If it doesn't load, allow Node/Python through
-> Windows Firewall when prompted, or temporarily allow ports 5173 and 8000.
-
-## Target platform for Milestone 1
-
-**Windows 11.** One platform, one or two models, honest and measurable gains. See
-[docs/milestone-1-scope.md](docs/milestone-1-scope.md) for the full scope and
-[docs/optimization-notes.md](docs/optimization-notes.md) for the deliverable note.
+**[Ollama](https://ollama.com/download)** is recommended but optional. The app runs fine
+without it installed — it detects that and shows friendly setup guidance instead of failing.
 
 ## Status
 
-This is the **initial working scaffold**. Hardware detection, the Ollama bridge, and the
-benchmark measure **real** values (Ollama reports true `eval_count` / `eval_duration`).
-Any temporary mock data is clearly marked with `MOCK:` in code and never used as final logic.
+This is the **initial working scaffold**, now packaged as a desktop application. Hardware
+detection, the Ollama bridge, and the benchmark measure **real** values (Ollama reports true
+`eval_count` / `eval_duration`). Any temporary mock data is clearly marked with `MOCK:` in
+code and never used as final logic.

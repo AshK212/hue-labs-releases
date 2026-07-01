@@ -17,6 +17,15 @@ frontend/.vite/
 frontend/.tsbuild/
 frontend/*.tsbuildinfo
 
+# Electron desktop shell — build outputs
+node_modules/
+dist-electron/
+release/
+
+# Bundled backend (PyInstaller output)
+backend/dist/
+backend/build/
+
 # Env / secrets
 .env
 *.local

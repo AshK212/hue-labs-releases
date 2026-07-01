@@ -1,0 +1,73 @@
+{
+  "name": "local-ai-optimizer",
+  "productName": "Local AI Optimizer",
+  "version": "0.1.0",
+  "description": "A friendly control layer on top of Ollama that makes running and optimizing local AI easy for non-technical users.",
+  "author": "8KCool <fivestar8859@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "electron:compile": "tsc -p tsconfig.electron.json",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "backend:build": "python scripts/build_backend.py",
+    "desktop:electron": "wait-on http-get://127.0.0.1:5173 && npm run electron:compile && electron .",
+    "desktop": "concurrently -k -n vite,electron -c cyan,green \"npm run frontend:dev\" \"npm run desktop:electron\"",
+    "build": "npm run frontend:build && npm run electron:compile",
+    "dist": "npm run build && npm run backend:build && electron-builder --win",
+    "dist:unpacked": "npm run build && npm run backend:build && electron-builder --win --dir"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.localaioptimizer.desktop",
+    "productName": "Local AI Optimizer",
+    "copyright": "Copyright © 2026 8KCool",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "frontend/dist/**/*",
+      "electron/splash.html",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/dist/lao-backend",
+        "to": "backend",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Local AI Optimizer",
+      "uninstallDisplayName": "Local AI Optimizer",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-Portable.${ext}"
+    }
+  }
+}
