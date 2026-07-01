@@ -1,9 +1,10 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
-import { Aurora } from "./components/Aurora";
+import { BrandBackground } from "./components/BrandBackground";
 import { Screen } from "./components/Screen";
 import { TopBar } from "./components/TopBar";
+import { pageMotion } from "./components/PageTransition";
 import { Dashboard } from "./dashboard/Dashboard";
 
 import { WelcomeScreen } from "./screens/WelcomeScreen";
@@ -38,20 +39,13 @@ function renderScreen(step: number) {
   }
 }
 
-const pageMotion = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
-  transition: { duration: 0.26, ease: [0.16, 1, 0.3, 1] as const },
-};
-
 function Journey() {
   const { view, step, back } = useJourney();
 
   return (
     <>
       {/* Signature ambient background, shared by every screen. */}
-      <Aurora />
+      <BrandBackground glow={view === "dashboard" ? "none" : "top"} />
 
       {view === "dashboard" ? (
         <Dashboard />
@@ -77,8 +71,11 @@ function Journey() {
 
 export default function App() {
   return (
-    <JourneyProvider>
-      <Journey />
-    </JourneyProvider>
+    // Globally honor the OS "reduce motion" setting for every Framer animation.
+    <MotionConfig reducedMotion="user">
+      <JourneyProvider>
+        <Journey />
+      </JourneyProvider>
+    </MotionConfig>
   );
 }

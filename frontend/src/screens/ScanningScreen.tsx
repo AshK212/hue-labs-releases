@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useJourney } from "../journey/JourneyContext";
 import { Column } from "../components/Screen";
-import { Pulse } from "../components/Pulse";
 import { Button } from "../components/Button";
+import { BrandProgressRing } from "../components/BrandKit";
 import { CheckIcon, ChipIcon, GpuIcon, MemoryIcon, CloudIcon, Spinner } from "../components/Icons";
 
 const MIN_DWELL_MS = 2600;
@@ -67,55 +68,68 @@ export function ScanningScreen() {
     },
   ];
 
-  return (
-    <Column>
-      <div className="flex flex-col items-center text-center">
-        <Pulse>
-          <ChipIcon className="w-7 h-7" />
-        </Pulse>
-        <h2 className="mt-8 text-page font-semibold text-ink-900">Getting to know your computer</h2>
-        <p className="mt-2 text-body text-ink-500">This only takes a moment.</p>
-      </div>
+  // Honest progress: fraction of scan steps completed (never a fake number).
+  const doneCount = items.filter((it, i) => i < revealed && !!it.value).length;
+  const pct = Math.round((doneCount / items.length) * 100);
 
-      <div className="mt-8 surface p-2.5 divide-y divide-mist-200">
-        {items.map((it, i) => {
-          const done = i < revealed && !!it.value;
-          const current = i === revealed && !done;
-          return (
-            <div key={it.label} className="flex items-center justify-between px-4 py-4">
-              <div className="flex items-center gap-3.5">
-                <span
-                  className={[
-                    "grid place-items-center w-9 h-9 rounded-tile transition-colors duration-300",
-                    done ? "bg-sage-50 text-sage-600" : "bg-mist-100 text-ink-400",
-                  ].join(" ")}
-                >
-                  {done ? (
-                    <span className="animate-check-pop">
-                      <CheckIcon className="w-5 h-5" />
-                    </span>
-                  ) : current ? (
-                    <Spinner className="w-4 h-4 text-sky-500" />
-                  ) : (
-                    it.icon
-                  )}
-                </span>
-                <span className="text-body font-medium text-ink-700">
-                  {done ? `${it.label} detected` : current ? `Checking ${it.label.toLowerCase()}` : it.label}
-                </span>
+  return (
+    <Column width="wide">
+      <div className="grid lg:grid-cols-[auto_1fr] gap-10 lg:gap-14 items-center">
+        {/* Left — scan ring */}
+        <div className="flex flex-col items-center text-center mx-auto">
+          <BrandProgressRing percent={pct} size={208} stroke={10}>
+            <div>
+              <div className="text-[40px] leading-none font-semibold font-mono text-ink-900 tnum">
+                {pct}
+                <span className="text-cardtitle text-ink-400">%</span>
               </div>
-              <span
-                className={[
-                  "text-caption text-ink-500 max-w-[48%] truncate transition-opacity duration-500",
-                  done ? "opacity-100" : "opacity-0",
-                ].join(" ")}
-                title={it.value}
-              >
-                {it.value}
-              </span>
+              <div className="mt-2 text-micro font-mono uppercase tracking-wider text-sky-600">
+                Scanning
+              </div>
             </div>
-          );
-        })}
+          </BrandProgressRing>
+          <h2 className="mt-7 text-cardtitle font-semibold text-ink-900">Reading your computer</h2>
+          <p className="mt-1.5 text-caption text-ink-500">This only takes a moment.</p>
+        </div>
+
+        {/* Right — detected checklist */}
+        <div className="surface p-2.5 divide-y divide-mist-200">
+          {items.map((it, i) => {
+            const done = i < revealed && !!it.value;
+            const current = i === revealed && !done;
+            return (
+              <div key={it.label} className="flex items-center justify-between px-4 py-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span
+                    className={[
+                      "grid place-items-center w-9 h-9 rounded-tile transition-colors duration-300 flex-shrink-0",
+                      done ? "bg-sage-50 text-sage-500 ring-1 ring-inset ring-sky-100" : "bg-mist-100 text-ink-400",
+                    ].join(" ")}
+                  >
+                    {done ? (
+                      <motion.span initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+                        <CheckIcon className="w-5 h-5" />
+                      </motion.span>
+                    ) : current ? (
+                      <Spinner className="w-4 h-4 text-sky-500" />
+                    ) : (
+                      it.icon
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-micro font-mono uppercase tracking-wide text-ink-400">{it.label}</div>
+                    <div className="text-body font-medium text-ink-800 truncate" title={it.value}>
+                      {done ? it.value : current ? "Checking…" : "—"}
+                    </div>
+                  </div>
+                </div>
+                {done && (
+                  <span className="text-micro font-mono uppercase tracking-wide text-sage-500">OK</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Column>
   );

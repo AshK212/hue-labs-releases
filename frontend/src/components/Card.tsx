@@ -1,30 +1,5 @@
-import type { ReactNode } from "react";
-
-/** The single surface primitive. `interactive` adds a calm hover lift. */
-export function Card({
-  children,
-  className = "",
-  interactive = false,
-  selected = false,
-}: {
-  children: ReactNode;
-  className?: string;
-  interactive?: boolean;
-  selected?: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "surface transition-all duration-200",
-        selected ? "!border-iris-300 ring-2 ring-iris-100" : "",
-        interactive ? "hover:-translate-y-[2px] hover:!border-iris-200 hover:shadow-glowSoft" : "",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </div>
-  );
-}
+// The surface primitive now lives in the Brand kit; SectionHeader stays here.
+export { BrandCard as Card } from "./BrandKit";
 
 /** A consistent page/section heading block. */
 export function SectionHeader({
@@ -41,7 +16,7 @@ export function SectionHeader({
   return (
     <div className={align === "center" ? "text-center" : ""}>
       {kicker && (
-        <p className="text-caption font-semibold text-sky-600 mb-3">{kicker}</p>
+        <p className="text-micro font-mono uppercase tracking-wider text-sky-600 mb-3">{kicker}</p>
       )}
       <h1 className="text-page font-semibold text-ink-900">{title}</h1>
       {subtitle && (

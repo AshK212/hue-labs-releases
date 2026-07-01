@@ -71,7 +71,7 @@ export function ModelDownload({ model, label, sizeGb, onComplete, onContinue }: 
           <CircularProgress percent={dl.percent}>
             {dl.percent !== null ? (
               <div>
-                <div className="text-[44px] leading-none font-semibold text-ink-900 tnum">
+                <div className="text-[44px] leading-none font-semibold font-mono text-ink-900 tnum">
                   {Math.round(dl.percent)}
                   <span className="text-cardtitle text-ink-400">%</span>
                 </div>
@@ -144,8 +144,8 @@ export function ModelDownload({ model, label, sizeGb, onComplete, onContinue }: 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="surface-quiet px-4 py-3 text-left">
-      <div className="text-micro text-ink-400">{label}</div>
-      <div className="text-body font-semibold text-ink-900 mt-0.5 tnum">{value}</div>
+      <div className="text-micro font-mono uppercase tracking-wide text-ink-400">{label}</div>
+      <div className="text-body font-semibold font-mono text-ink-900 mt-0.5 tnum">{value}</div>
     </div>
   );
 }

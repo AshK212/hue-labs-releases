@@ -46,12 +46,13 @@ export function Spot({
 }) {
   const Glyph = GLYPH[motif];
   const green = tone === "green";
+  // Both tones now read in the signal-green family; "green" is a touch brighter.
   const aura = green
-    ? "radial-gradient(circle, rgba(70,160,122,0.34) 0%, rgba(70,160,122,0) 70%)"
-    : "radial-gradient(circle, rgba(111,102,236,0.34) 0%, rgba(111,102,236,0) 70%)";
+    ? "radial-gradient(circle, rgba(184,242,92,0.34) 0%, rgba(184,242,92,0) 70%)"
+    : "radial-gradient(circle, rgba(147,210,74,0.28) 0%, rgba(147,210,74,0) 70%)";
   const wash = green
-    ? "linear-gradient(135deg, #46a07a 0%, #388665 100%)"
-    : "linear-gradient(135deg, #5c7fd6 0%, #6f66ec 55%, #8b84f2 100%)";
+    ? "linear-gradient(135deg, #b8f25c 0%, #93d24a 100%)"
+    : "linear-gradient(135deg, #93d24a 0%, #6f9a2f 100%)";
 
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }}>
@@ -72,7 +73,7 @@ export function Spot({
         />
         {/* central gradient disc + glyph */}
         <div
-          className="relative grid place-items-center rounded-full text-white shadow-button"
+          className="relative grid place-items-center rounded-full text-carbon shadow-button"
           style={{ width: "46%", height: "46%", backgroundImage: wash }}
         >
           <Glyph className="w-[52%] h-[52%]" strokeWidth={2} />

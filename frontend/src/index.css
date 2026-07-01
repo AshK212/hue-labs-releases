@@ -11,12 +11,12 @@
 
   body {
     @apply text-ink-700 antialiased;
-    background-color: #f5f7fc;
-    /* Signature dawn sky: a warm iris glow at top-right melting into a cool base. */
+    background-color: #0c0d0e;
+    /* Carbon base with two faint signal-green auras — calm, dark, precise. */
     background-image:
-      radial-gradient(1000px 680px at 80% -12%, rgba(139, 132, 242, 0.14) 0%, rgba(139, 132, 242, 0) 55%),
-      radial-gradient(1100px 720px at 12% 4%, rgba(122, 156, 226, 0.14) 0%, rgba(122, 156, 226, 0) 52%),
-      linear-gradient(180deg, #fbfcfe 0%, #eef1f9 100%);
+      radial-gradient(1000px 680px at 82% -14%, rgba(184, 242, 92, 0.06) 0%, rgba(184, 242, 92, 0) 55%),
+      radial-gradient(1100px 720px at 8% 6%, rgba(184, 242, 92, 0.05) 0%, rgba(184, 242, 92, 0) 52%),
+      linear-gradient(180deg, #0d0e10 0%, #0a0b0c 100%);
     background-attachment: fixed;
     font-feature-settings: "cv11", "ss01";
   }
@@ -26,7 +26,12 @@
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-sky-300/70 ring-offset-2 ring-offset-mist-50 rounded-btn;
+    @apply outline-none ring-2 ring-sky-400/60 ring-offset-2 ring-offset-carbon rounded-btn;
+  }
+
+  ::selection {
+    background-color: rgba(184, 242, 92, 0.24);
+    color: #f1f0eb;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -39,18 +44,19 @@
 }
 
 @layer components {
-  /* Surfaces: a whisper of gradient + a top sheen give quiet, premium depth. */
+  /* Surfaces: soft panels a touch lighter than carbon, a thin muted hairline
+     border, and a faint top sheen for quiet, machined depth. */
   .surface {
     @apply rounded-card border border-mist-200 shadow-card;
-    background-image: linear-gradient(180deg, #ffffff 0%, #fcfcfe 100%);
+    background-image: linear-gradient(180deg, #17191c 0%, #131417 100%);
   }
   .surface-tile {
     @apply rounded-tile border border-mist-200 shadow-tile;
-    background-image: linear-gradient(180deg, #ffffff 0%, #fcfcfe 100%);
+    background-image: linear-gradient(180deg, #17191c 0%, #131417 100%);
   }
   .surface-quiet {
     @apply rounded-tile border border-mist-200;
-    background-image: linear-gradient(180deg, #f8f9fd 0%, #f3f5fb 100%);
+    background-image: linear-gradient(180deg, #121315 0%, #0f1012 100%);
   }
 
   /* Badges --------------------------------------------------------------- */
@@ -58,9 +64,9 @@
     @apply inline-flex items-center gap-1.5 rounded-badge px-3 py-1 text-micro font-semibold;
   }
 
-  /* Signature brand gradient (the aurora): sky -> iris. */
+  /* Signature brand gradient (the signal): a precise green wash. */
   .brand-gradient {
-    background-image: linear-gradient(135deg, #5c7fd6 0%, #6f66ec 55%, #8b84f2 100%);
+    background-image: linear-gradient(135deg, #b8f25c 0%, #93d24a 100%);
   }
 }
 
@@ -72,7 +78,7 @@
     background-image: linear-gradient(
       100deg,
       rgba(255, 255, 255, 0) 30%,
-      rgba(255, 255, 255, 0.7) 50%,
+      rgba(184, 242, 92, 0.14) 50%,
       rgba(255, 255, 255, 0) 70%
     );
     background-size: 200% 100%;
@@ -80,14 +86,21 @@
   .tnum {
     font-variant-numeric: tabular-nums;
   }
-  /* Signature pattern language: a faint dot mesh for gentle texture. */
+  /* Signature pattern language: a faint precision dot mesh. */
   .pattern-dots {
-    background-image: radial-gradient(rgba(111, 102, 236, 0.12) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(184, 242, 92, 0.10) 1px, transparent 1px);
     background-size: 24px 24px;
   }
-  /* Signature gradient text, used sparingly for brand emphasis. */
+  /* A fine technical grid — the precision-tool texture. */
+  .pattern-grid {
+    background-image:
+      linear-gradient(rgba(184, 242, 92, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(184, 242, 92, 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  /* Signal-green gradient text, used sparingly for brand emphasis. */
   .text-brand {
-    background-image: linear-gradient(120deg, #5c7fd6 0%, #6f66ec 60%, #8b84f2 100%);
+    background-image: linear-gradient(120deg, #b8f25c 0%, #d6fa95 60%, #93d24a 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

@@ -79,15 +79,15 @@ function PrimaryCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-card p-7 border transition-all duration-200",
-        selected ? "bg-white border-sky-300 ring-2 ring-sky-100 shadow-card" : "bg-white border-mist-200 shadow-tile hover:border-sky-200",
+        "w-full text-left rounded-card p-7 border transition-all duration-200 surface",
+        selected ? "!border-sky-300 ring-2 ring-sky-100 shadow-glowSoft" : "hover:!border-sky-300/60 hover:-translate-y-[2px]",
       ].join(" ")}
     >
       <div className="flex items-start gap-5">
         <div
           className={[
             "flex-shrink-0 grid place-items-center w-14 h-14 rounded-card transition-colors",
-            selected ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-500",
+            selected ? "bg-sky-500 text-carbon shadow-button" : "bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100",
           ].join(" ")}
         >
           {selected ? <CheckIcon className="w-7 h-7" /> : <SparkIcon className="w-7 h-7" />}
@@ -123,9 +123,9 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
     <div className="surface-quiet px-4 py-3">
       <div className="flex items-center gap-1.5 text-ink-400">
         <span className="text-sky-500">{icon}</span>
-        <span className="text-micro">{label}</span>
+        <span className="text-micro font-mono uppercase tracking-wide">{label}</span>
       </div>
-      <div className="text-body font-semibold text-ink-900 mt-1">{value}</div>
+      <div className="text-body font-semibold font-mono text-ink-900 mt-1 tnum">{value}</div>
     </div>
   );
 }
@@ -143,14 +143,14 @@ function AltCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-center gap-4",
-        selected ? "bg-white border-sky-300 ring-2 ring-sky-100 shadow-card" : "bg-white border-mist-200 shadow-tile hover:border-sky-200",
+        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-center gap-4 surface-quiet",
+        selected ? "!border-sky-300 ring-2 ring-sky-100" : "hover:!border-sky-300/60",
       ].join(" ")}
     >
       <div
         className={[
           "flex-shrink-0 grid place-items-center w-11 h-11 rounded-tile",
-          selected ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-500",
+          selected ? "bg-sky-500 text-carbon" : "bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100",
         ].join(" ")}
       >
         {selected ? <CheckIcon className="w-5 h-5" /> : <SparkIcon className="w-5 h-5" />}

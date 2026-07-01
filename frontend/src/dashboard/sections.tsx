@@ -4,7 +4,9 @@ import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
 import type { BenchmarkRun, OllamaModel } from "../types";
-import { DashCard, EmptyState, MiniBarChart, StatLine } from "./widgets";
+import { DashCard, EmptyState, StatLine } from "./widgets";
+import { BrandLineChart, ChartLegend, type ChartPoint } from "../components/BrandChart";
+import { TechnicalDetails } from "../components/TechnicalDetails";
 import {
   Activity,
   ArrowRight,
@@ -48,8 +50,16 @@ function fmtDate(iso: string): string {
     return iso;
   }
 }
-function chartValues(history: BenchmarkRun[]): number[] {
-  return history.slice(0, 12).reverse().map((r) => r.tokens_per_sec);
+function chartPoints(history: BenchmarkRun[]): ChartPoint[] {
+  // Oldest → newest so the line reads left-to-right through real runs.
+  return history
+    .slice(0, 14)
+    .reverse()
+    .map((r) => ({
+      value: r.tokens_per_sec,
+      tone: r.profile === "optimized" ? "signal" : "gray",
+      title: `${r.tokens_per_sec.toFixed(1)} tok/s · ${r.profile}`,
+    }));
 }
 
 function useModelLabel(): string {
@@ -87,12 +97,12 @@ export function OverviewSection({
         <DashCard className="lg:col-span-2" index={0}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-caption text-ink-500">Current speed</p>
+              <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Current speed</p>
               <div className="mt-2 flex items-end gap-3">
-                <span className="text-[64px] leading-none font-semibold tracking-tight2 text-ink-900 tnum">
+                <span className="text-[64px] leading-none font-semibold font-mono tracking-tight2 text-ink-900 tnum">
                   {current.toFixed(1)}
                 </span>
-                <span className="text-body text-ink-400 pb-2">tokens/sec</span>
+                <span className="text-caption font-mono text-ink-400 pb-2">tokens/sec</span>
               </div>
               {current > 0 && (
                 <div className="mt-3">
@@ -102,7 +112,7 @@ export function OverviewSection({
                 </div>
               )}
             </div>
-            <span className="grid place-items-center w-12 h-12 rounded-tile bg-gradient-to-br from-sky-50 to-iris-100 text-sky-600 ring-1 ring-inset ring-white/70">
+            <span className="grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100">
               <Gauge className="w-6 h-6" strokeWidth={1.8} />
             </span>
           </div>
@@ -186,12 +196,18 @@ export function OverviewSection({
         }
         index={5}
       >
-        <MiniBarChart values={chartValues(history)} />
+        <BrandLineChart points={chartPoints(history)} height={150} />
         {history.length > 0 && (
-          <p className="text-micro text-ink-400 mt-3">
-            {history.length} run{history.length === 1 ? "" : "s"} recorded · latest{" "}
-            {history[0].tokens_per_sec.toFixed(1)} tok/s
-          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <ChartLegend tone="signal" label="Optimized" />
+              <ChartLegend tone="gray" label="Baseline" />
+            </div>
+            <p className="text-micro font-mono text-ink-400">
+              {history.length} run{history.length === 1 ? "" : "s"} · latest{" "}
+              {history[0].tokens_per_sec.toFixed(1)} tok/s
+            </p>
+          </div>
         )}
       </DashCard>
     </div>
@@ -202,11 +218,11 @@ function QuickAction({ icon, label, onClick }: { icon: React.ReactNode; label: s
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 rounded-tile bg-mist-50 border border-mist-200 text-body font-medium text-ink-700 hover:bg-white hover:border-sky-200 hover:-translate-y-[1px] transition-all duration-200"
+      className="w-full flex items-center gap-3 px-4 py-3 rounded-tile bg-mist-50 border border-mist-200 text-body font-medium text-ink-700 hover:bg-mist-100 hover:border-sky-300/60 hover:text-ink-900 hover:-translate-y-[1px] transition-all duration-200"
     >
       <span className="text-sky-500">{icon}</span>
       {label}
-      <ArrowRight className="w-4 h-4 ml-auto text-ink-300" strokeWidth={2} />
+      <ArrowRight className="w-4 h-4 ml-auto text-ink-400" strokeWidth={2} />
     </button>
   );
 }
@@ -264,23 +280,29 @@ export function PerformanceSection({ history }: { history: BenchmarkRun[] }) {
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <DashCard index={0}>
-          <p className="text-caption text-ink-500">Latest</p>
-          <div className="text-[34px] font-semibold text-ink-900 tnum mt-1">{latest.toFixed(1)}</div>
-          <p className="text-micro text-ink-400">tokens/sec</p>
+          <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Latest</p>
+          <div className="text-[34px] font-semibold font-mono text-ink-900 tnum mt-1">{latest.toFixed(1)}</div>
+          <p className="text-micro font-mono text-ink-400">tokens/sec</p>
         </DashCard>
         <DashCard index={1}>
-          <p className="text-caption text-ink-500">Best</p>
-          <div className="text-[34px] font-semibold text-sage-600 tnum mt-1">{best.toFixed(1)}</div>
-          <p className="text-micro text-ink-400">tokens/sec</p>
+          <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Best</p>
+          <div className="text-[34px] font-semibold font-mono text-sage-600 tnum mt-1">{best.toFixed(1)}</div>
+          <p className="text-micro font-mono text-ink-400">tokens/sec</p>
         </DashCard>
         <DashCard index={2}>
-          <p className="text-caption text-ink-500">Average</p>
-          <div className="text-[34px] font-semibold text-ink-900 tnum mt-1">{avg.toFixed(1)}</div>
-          <p className="text-micro text-ink-400">tokens/sec</p>
+          <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Average</p>
+          <div className="text-[34px] font-semibold font-mono text-ink-900 tnum mt-1">{avg.toFixed(1)}</div>
+          <p className="text-micro font-mono text-ink-400">tokens/sec</p>
         </DashCard>
       </div>
       <DashCard title="Speed over time" icon={<Activity className="w-5 h-5" strokeWidth={1.8} />} index={3}>
-        <MiniBarChart values={chartValues(history)} height={180} />
+        <BrandLineChart points={chartPoints(history)} height={200} />
+        {history.length > 0 && (
+          <div className="mt-4 flex items-center gap-5">
+            <ChartLegend tone="signal" label="Optimized" />
+            <ChartLegend tone="gray" label="Baseline" />
+          </div>
+        )}
       </DashCard>
     </div>
   );
@@ -295,7 +317,7 @@ export function HistorySection({ history }: { history: BenchmarkRun[] }) {
         <EmptyState motif="speed" title="No runs recorded yet" hint="Your benchmark runs will appear here." />
       ) : (
         <div className="overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 text-micro text-ink-400 px-2 pb-2 border-b border-mist-200">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 text-micro font-mono uppercase tracking-wide text-ink-400 px-2 pb-2 border-b border-mist-200">
             <span>Model</span>
             <span>Profile</span>
             <span className="text-right">Speed</span>
@@ -304,14 +326,14 @@ export function HistorySection({ history }: { history: BenchmarkRun[] }) {
           {history.map((r) => (
             <div
               key={r.id}
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center px-2 py-3 border-b border-mist-200 last:border-0"
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center px-2 py-3 border-b border-mist-200 last:border-0 hover:bg-mist-50 rounded-md transition-colors"
             >
               <span className="text-caption font-medium text-ink-900 truncate">{r.model}</span>
-              <span className="text-caption text-ink-500 capitalize">{r.profile}</span>
-              <span className="text-caption font-semibold text-ink-900 text-right tnum">
+              <span className="text-caption font-mono text-ink-500 capitalize">{r.profile}</span>
+              <span className="text-caption font-semibold font-mono text-sky-600 text-right tnum">
                 {r.tokens_per_sec.toFixed(1)} tok/s
               </span>
-              <span className="text-caption text-ink-400 text-right">{fmtDate(r.created_at)}</span>
+              <span className="text-caption font-mono text-ink-400 text-right">{fmtDate(r.created_at)}</span>
             </div>
           ))}
         </div>
@@ -328,16 +350,16 @@ export function BenchmarkSection() {
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <DashCard title="Baseline" icon={<Gauge className="w-5 h-5" strokeWidth={1.8} />} index={0}>
-          <div className="text-[40px] font-semibold text-ink-900 tnum">
+          <div className="text-[40px] font-semibold font-mono text-ink-900 tnum">
             {baseline ? baseline.tokens_per_sec.toFixed(1) : "—"}
           </div>
-          <p className="text-micro text-ink-400">tokens/sec · default settings</p>
+          <p className="text-micro font-mono text-ink-400">tokens/sec · default settings</p>
         </DashCard>
         <DashCard title="Optimized" icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />} index={1}>
-          <div className="text-[40px] font-semibold text-sage-600 tnum">
+          <div className="text-[40px] font-semibold font-mono text-sage-600 tnum">
             {optimized ? optimized.tokens_per_sec.toFixed(1) : "—"}
           </div>
-          <p className="text-micro text-ink-400">tokens/sec · tuned settings</p>
+          <p className="text-micro font-mono text-ink-400">tokens/sec · tuned settings</p>
         </DashCard>
       </div>
       <Button onClick={restartBenchmarks} leftIcon={<RefreshCw className="w-[18px] h-[18px]" />}>
@@ -361,12 +383,17 @@ export function OptimizationSection() {
           <div className="space-y-3">
             {changes.map((c) => (
               <div key={c} className="flex items-center gap-3 p-3.5 rounded-tile bg-mist-50 border border-mist-200">
-                <span className="grid place-items-center w-9 h-9 rounded-tile bg-sage-50 text-sage-600">
+                <span className="grid place-items-center w-9 h-9 rounded-tile bg-sage-50 text-sage-500 ring-1 ring-inset ring-sky-100">
                   <Zap className="w-[18px] h-[18px]" strokeWidth={2} />
                 </span>
                 <span className="text-body text-ink-700">{c}</span>
               </div>
             ))}
+          </div>
+        )}
+        {profile?.options && (
+          <div className="mt-4">
+            <TechnicalDetails options={profile.options} />
           </div>
         )}
       </DashCard>

@@ -62,7 +62,7 @@ export function Dashboard() {
   return (
     <div className="min-h-[100dvh]">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white/85 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-[#0f1012]/90 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <BrandMark size={30} />
           <span className="text-body font-semibold text-ink-800">Local AI Optimizer</span>
@@ -76,14 +76,20 @@ export function Dashboard() {
                 key={item.id}
                 onClick={() => setActive(item.id)}
                 className={[
-                  "w-full flex items-center gap-3 px-3 h-11 rounded-tile text-body font-medium transition-colors",
-                  on ? "bg-iris-50 text-iris-700" : "text-ink-500 hover:bg-mist-100 hover:text-ink-800",
+                  "relative w-full flex items-center gap-3 px-3 h-11 rounded-tile text-body font-medium transition-colors",
+                  on ? "bg-sky-50 text-sky-600" : "text-ink-500 hover:bg-mist-100 hover:text-ink-800",
                 ].join(" ")}
               >
-                <span className={on ? "text-iris-600" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
+                {on && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-signal shadow-[0_0_10px_rgba(184,242,92,0.8)]"
+                  />
+                )}
+                <span className={on ? "text-sky-500" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
                 {item.label}
                 {on && (
-                  <motion.span layoutId="navdot" className="ml-auto w-1.5 h-1.5 rounded-full bg-iris-500" />
+                  <motion.span layoutId="navdot" className="ml-auto w-1.5 h-1.5 rounded-full bg-signal" />
                 )}
               </button>
             );
@@ -92,22 +98,22 @@ export function Dashboard() {
 
         <div className="px-2 pt-4 border-t border-mist-200">
           <StatusBadge tone="green" dot>
-            Private · Local only
+            <span className="font-mono uppercase tracking-wide">Private · Local only</span>
           </StatusBadge>
         </div>
       </aside>
 
       {/* Main */}
       <div className="ml-64 min-w-0">
-        <header className="sticky top-0 z-10 h-[72px] bg-white/80 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8">
+        <header className="sticky top-0 z-10 h-[72px] bg-[#0d0e10]/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8">
           <div>
             <h1 className="text-cardtitle font-semibold text-ink-900 leading-tight">
               {TITLE[active].title}
             </h1>
-            <p className="text-micro text-ink-400">{TITLE[active].subtitle}</p>
+            <p className="text-micro font-mono uppercase tracking-wide text-ink-400">{TITLE[active].subtitle}</p>
           </div>
           <StatusBadge tone="soft" icon={<ShieldCheck className="w-4 h-4 text-sky-500" strokeWidth={1.8} />}>
-            Private · Local only
+            <span className="font-mono uppercase tracking-wide">Private · Local only</span>
           </StatusBadge>
         </header>
 

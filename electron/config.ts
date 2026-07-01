@@ -37,8 +37,8 @@ export const WINDOW = {
   minWidth: 1200,
   minHeight: 800,
 };
-/** Matches the application background (body base colour in index.css). */
-export const BACKGROUND_COLOR = "#f5f7fc";
+/** Matches the application background (carbon base colour in index.css). */
+export const BACKGROUND_COLOR = "#0C0D0E";
 export const WINDOW_TITLE = "Local AI Optimizer";
 
 // --- Paths ---------------------------------------------------------------

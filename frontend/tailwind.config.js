@@ -4,53 +4,70 @@ export default {
   theme: {
     extend: {
       colors: {
-        // White, very light blue, soft blue, accent blue, soft green, dark gray.
+        // ── Brand board ──────────────────────────────────────────────────
+        // Carbon black background, paper off-white text, signal green accent,
+        // instrument gray secondary. Named tokens for direct, intentional use.
+        carbon: "#0C0D0E",
+        paper: "#F1F0EB",
+        signal: "#B8F25C",
+        instrument: "#878C89",
+
+        // ── Semantic scales (names kept from the original light theme so the
+        // whole app inherits the dark identity through the shared classes) ──
+
+        // Surfaces & borders: near-carbon panels, slightly lighter than the
+        // background, with a subtle muted-gray hairline (mist-200 is THE border).
         mist: {
-          50: "#fbfcfe",
-          100: "#f4f7fb",
-          200: "#eaeef5",
-          300: "#dde3ed",
-          400: "#c5cdda",
+          50: "#141517", // quiet fill
+          100: "#1A1C1F", // fill / hover
+          200: "#282B2E", // subtle border
+          300: "#33373A",
+          400: "#454A4D",
         },
+        // Text: inverted so the darkest name is now the brightest (paper).
         ink: {
-          900: "#1c2533", // darkest text (dark gray, never pure black)
-          700: "#3b4453",
-          500: "#667083",
-          400: "#949db0",
-          300: "#b8c0cf",
+          900: "#F1F0EB", // paper — headings / primary
+          800: "#E7E7E1", // near-paper
+          700: "#CFD1CB", // high-contrast body
+          500: "#878C89", // instrument gray — secondary
+          400: "#6C716E", // dimmer gray — captions / hints
+          300: "#4C514E", // dimmest — inactive / disabled
         },
+        // Primary accent → signal green (with dark green-tinted surfaces low,
+        // bright signal high). Was the blue "sky" scale.
         sky: {
-          50: "#eff4fd",
-          100: "#e0e9fb",
-          200: "#c6d7f5",
-          300: "#9fbcec",
-          400: "#7a9ce2",
-          500: "#5c7fd6", // accent blue
-          600: "#4866bd",
-          700: "#3a539c",
+          50: "#18220F", // deep green-black chip surface
+          100: "#22301A", // soft border
+          200: "#39511F", // hover border
+          300: "#5C8A32", // ring / active border
+          400: "#93D24A",
+          500: "#B8F25C", // signal green
+          600: "#C7F776", // bright green text on dark
+          700: "#D6FA95",
         },
-        sage: {
-          50: "#edf7f1",
-          100: "#d9efe2",
-          500: "#46a07a",
-          600: "#388665",
-        },
-        // Signature accent: a calm blue-violet "iris" that pairs with the sky
-        // blue to form the brand's aurora gradient. This is the memory hook.
+        // Secondary brand accent → unified onto signal green (was violet "iris").
         iris: {
-          50: "#eef0fe",
-          100: "#e1e3fd",
-          200: "#c8c9fb",
-          300: "#a9a6f6",
-          400: "#8b84f2",
-          500: "#6f66ec",
-          600: "#5a4fd6",
-          700: "#493fb0",
+          50: "#18220F",
+          100: "#22301A",
+          200: "#39511F",
+          300: "#5C8A32",
+          400: "#93D24A",
+          500: "#B8F25C",
+          600: "#C7F776",
+          700: "#D6FA95",
         },
-        // A soft aqua used only as a faint aurora highlight.
+        // Success → signal green family.
+        sage: {
+          50: "#16220E",
+          100: "#1E3015",
+          400: "#93D24A",
+          500: "#B8F25C",
+          600: "#C7F776",
+        },
+        // Faint highlight, greened.
         aqua: {
-          300: "#8fe0ea",
-          400: "#5fd0e0",
+          300: "#5C8A32",
+          400: "#93D24A",
         },
       },
       fontFamily: {
@@ -61,6 +78,15 @@ export default {
           "-apple-system",
           "Segoe UI",
           "sans-serif",
+        ],
+        // Monospace accent for technical labels, metrics, captions, timestamps.
+        mono: [
+          "IBM Plex Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Consolas",
+          "monospace",
         ],
       },
       // The single typographic scale for the whole app (desktop-scale).
@@ -78,20 +104,21 @@ export default {
       },
       borderRadius: {
         badge: "999px",
-        btn: "16px",
-        tile: "18px",
-        card: "24px",
-        panel: "28px",
+        btn: "14px",
+        tile: "16px",
+        card: "20px",
+        panel: "26px",
       },
       boxShadow: {
-        // Very soft, almost invisible, with a subtle top sheen for premium depth.
-        soft: "0 2px 10px -4px rgba(28, 37, 51, 0.08)",
-        card: "inset 0 1px 0 0 rgba(255,255,255,0.65), 0 1px 2px rgba(28,37,51,0.04), 0 16px 40px -22px rgba(30,32,60,0.16)",
-        tile: "inset 0 1px 0 0 rgba(255,255,255,0.6), 0 1px 2px rgba(28,37,51,0.03), 0 10px 26px -20px rgba(30,32,60,0.18)",
-        // Signature button glow in the aurora (sky -> iris) tint.
-        button: "0 1px 2px rgba(28,37,51,0.12), 0 12px 26px -12px rgba(111,102,236,0.55)",
-        glow: "0 0 0 1px rgba(111,102,236,0.10), 0 0 60px -10px rgba(111,102,236,0.45)",
-        glowSoft: "0 0 50px -14px rgba(111,102,236,0.40)",
+        // Dark, precise depth: deep drop shadow + a whisper of top light for a
+        // machined bevel. Glows carry the signal-green accent, used sparingly.
+        soft: "0 2px 10px -4px rgba(0,0,0,0.55)",
+        card: "inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.5), 0 22px 50px -26px rgba(0,0,0,0.8)",
+        tile: "inset 0 1px 0 0 rgba(255,255,255,0.03), 0 1px 2px rgba(0,0,0,0.45), 0 14px 34px -24px rgba(0,0,0,0.75)",
+        // Signature signal-green glow for primary actions.
+        button: "0 1px 2px rgba(0,0,0,0.45), 0 14px 32px -14px rgba(184,242,92,0.4)",
+        glow: "0 0 0 1px rgba(184,242,92,0.16), 0 0 60px -10px rgba(184,242,92,0.42)",
+        glowSoft: "0 0 46px -14px rgba(184,242,92,0.34)",
       },
       keyframes: {
         fadeUp: {
@@ -108,7 +135,7 @@ export default {
           "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
         },
         breathe: {
-          "0%, 100%": { opacity: "0.75", transform: "scale(1)" },
+          "0%, 100%": { opacity: "0.7", transform: "scale(1)" },
           "50%": { opacity: "1", transform: "scale(1.03)" },
         },
         ring: {
@@ -121,12 +148,12 @@ export default {
           "50%": { transform: "translate(30px,-22px)" },
         },
         auroraA: {
-          "0%, 100%": { transform: "translate(0,0) scale(1)", opacity: "0.55" },
-          "50%": { transform: "translate(40px,-30px) scale(1.12)", opacity: "0.8" },
+          "0%, 100%": { transform: "translate(0,0) scale(1)", opacity: "0.5" },
+          "50%": { transform: "translate(40px,-30px) scale(1.12)", opacity: "0.72" },
         },
         auroraB: {
-          "0%, 100%": { transform: "translate(0,0) scale(1.05)", opacity: "0.5" },
-          "50%": { transform: "translate(-46px,26px) scale(1)", opacity: "0.72" },
+          "0%, 100%": { transform: "translate(0,0) scale(1.05)", opacity: "0.42" },
+          "50%": { transform: "translate(-46px,26px) scale(1)", opacity: "0.64" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-180% 0" },
@@ -137,20 +164,25 @@ export default {
           "70%": { opacity: "1", transform: "scale(1.12)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        gridPan: {
+          "0%": { backgroundPosition: "0 0" },
+          "100%": { backgroundPosition: "44px 44px" },
+        },
       },
       animation: {
         "fade-up": "fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both",
         "screen-in": "screenIn 0.25s cubic-bezier(0.16,1,0.3,1) both",
         "fade-in": "fadeIn 0.4s ease-out both",
         "pop-in": "popIn 0.5s cubic-bezier(0.16,1,0.3,1) both",
-        breathe: "breathe 2.8s ease-in-out infinite",
+        breathe: "breathe 3.4s ease-in-out infinite",
         ring: "ring 2.6s cubic-bezier(0.16,1,0.3,1) infinite",
         "spin-slow": "spinSlow 9s linear infinite",
         drift: "drift 24s ease-in-out infinite",
-        "aurora-a": "auroraA 20s ease-in-out infinite",
-        "aurora-b": "auroraB 26s ease-in-out infinite",
+        "aurora-a": "auroraA 22s ease-in-out infinite",
+        "aurora-b": "auroraB 28s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         "check-pop": "checkPop 0.4s cubic-bezier(0.16,1,0.3,1) both",
+        "grid-pan": "gridPan 8s linear infinite",
       },
     },
   },

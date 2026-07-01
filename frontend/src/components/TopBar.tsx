@@ -16,9 +16,9 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
     <>
       {/* Slim animated progress bar across the very top */}
       {flowIndex !== -1 && (
-        <div className="fixed top-0 inset-x-0 z-40 h-[3px] bg-mist-200/70">
+        <div className="fixed top-0 inset-x-0 z-40 h-[2px] bg-mist-200">
           <div
-            className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-r-full transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-r-full shadow-[0_0_12px_rgba(184,242,92,0.6)] transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -46,10 +46,10 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
 
           {flowIndex !== -1 && (
             <div className="text-right">
-              <div className="text-micro font-medium text-ink-400">
-                Step {current + 1} of {total}
+              <div className="text-micro font-mono uppercase tracking-wider text-sky-600">
+                Step {String(current + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
               </div>
-              <div className="text-caption font-semibold text-ink-700 mt-0.5">
+              <div className="text-caption font-semibold text-ink-800 mt-0.5">
                 {FLOW_STEPS[current].label}
               </div>
             </div>
