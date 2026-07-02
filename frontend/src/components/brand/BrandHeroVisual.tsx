@@ -1,15 +1,16 @@
 import { motion, useReducedMotion } from "framer-motion";
-import type { CSSProperties } from "react";
 
 /**
- * The Welcome hero: a realistic isometric glass cube floating above a lifted,
- * tilted ring of radar scans. Realism comes from real light logic, not paint:
- *   · the top face catches faint ambient sky light, the side faces sit in shadow,
- *     and the base is uplit by the scan point's glow bleeding through the glass;
- *   · edges vary in brightness by depth — the near/front edges are brightest and
- *     bloom softly, the far edges are dim;
- *   · the whole thing floats straight up/down (never rotates) so its centre edge
- *     stays aligned with the scan point and rings.
+ * The Welcome hero: a realistic isometric glass cube floating above a deep floor
+ * of concentric scan rings. Realism comes from real light logic, not paint:
+ *   · the top face catches faint ambient sky light, the sides sit in shadow, and
+ *     the base is uplit by the scan point's glow bleeding through the glass;
+ *   · the hidden back edges are drawn faintly so the cube reads as transparent;
+ *   · edges vary in brightness by depth — near/front brightest, far edges dim;
+ *   · a full radar floor of many rings (with distinct, receding heights) sits
+ *     under a bright scan point, threaded by faint vertical light beams;
+ *   · it floats straight up/down (never rotates) so the centre edge stays aligned
+ *     with the scan point and rings.
  * Pure SVG + Framer Motion — crisp, calm, still under prefers-reduced-motion.
  *
  * Brand: Carbon #0C0D0E · Paper #F1F0EB · Signal Green #B8F25C · Instrument #878C89
@@ -29,13 +30,15 @@ const C = P(240, 168); // front-top (top of the middle vertical edge)
 const BL = P(128, 262); // bottom-left
 const BR = P(352, 262); // bottom-right
 const BC = P(240, 318); // front-bottom
+const BB = P(240, 206); // back-bottom (hidden — drawn faint for the glass look)
 
-// Scan point lifted off the floor and its rings tilted more upright.
-const SCAN = P(240, 366);
-const FLOOR_Y = 370;
-const RATIO = 0.22; // ry / rx — larger = more upright/lifted rings
+const SCAN = P(240, 384);
+const FLOOR_Y = 388;
+const RATIO = 0.34; // ry / rx — tilt of the floor rings (higher = more forward)
+const CONE = 48; // descent as a ring grows — a visible but gentle height step
 
 const poly = (...pts: Pt[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
+const ln = (a: Pt, b: Pt) => ({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
 
 // Inner grid lines for a parallelogram face defined by corner O and edges u, v.
 function faceGrid(O: Pt, u: Pt, v: Pt, n = 4): [Pt, Pt][] {
@@ -52,11 +55,20 @@ const leftGrid = faceGrid(L, sub(C, L), sub(BL, L));
 const rightGrid = faceGrid(R, sub(C, R), sub(BR, R));
 
 const NODES = [T, L, R, C, BL, BR, BC];
-const GUIDES = [170, 205, 240, 275, 310];
 
-const RIPPLE_COUNT = 5;
+// The floor is a radar sweep: rings continuously expanding out from the centre
+// (no static/paused rings), all at one constant speed.
+const RIPPLE_COUNT = 7;
 const RIPPLE_DUR = 9;
-const STATIC_RINGS = [52, 100, 150, 198, 235];
+// Static fallback for reduced-motion only — rings descend as they widen (cone).
+const STATIC_RINGS = Array.from({ length: 7 }, (_, i) => {
+  const t = i / 6;
+  const rx = 20 + i * 34;
+  return { rx, ry: rx * RATIO, cy: FLOOR_Y - 4 + t * CONE, opacity: 0.44 - i * 0.05 };
+});
+
+// Faint vertical light beams threading down to the floor (main beam is separate).
+const GUIDES = Array.from({ length: 11 }, (_, i) => 132 + i * 21.6); // 132..348
 const PARTICLES = [
   { x: 150, y: 150, r: 1.7, d: 0 },
   { x: 352, y: 132, r: 1.4, d: 0.8 },
@@ -67,28 +79,28 @@ const PARTICLES = [
 
 const GREEN = "#B8F25C";
 
-// One edge line with depth-based brightness. `glow` adds a soft bloom.
-function Edge({ a, b, w = 1.2, o = 0.7, glow = false, color = GREEN }: {
-  a: Pt; b: Pt; w?: number; o?: number; glow?: boolean; color?: string;
-}) {
-  const style: CSSProperties = glow
-    ? { filter: `drop-shadow(0 0 4px ${color === GREEN ? "rgba(184,242,92,0.85)" : "rgba(241,240,235,0.3)"})` }
-    : {};
-  return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={w} strokeLinecap="round" opacity={o} style={style} />;
-}
-
-/** One radar ripple: born at the scan point, spreads wide across the (lifted,
- *  tilted) perspective floor, and fades as it extends outward. */
+// One ring, born at the centre and expanding outward at a CONSTANT speed
+// (rx/ry/cy interpolate linearly across the whole duration); opacity fades in
+// then out on its own timeline so the steady expansion is never interrupted.
 function Ripple({ delay }: { delay: number }) {
   return (
     <motion.ellipse
       cx={SCAN.x}
       fill="none"
       stroke={GREEN}
-      strokeWidth={1.1}
+      strokeWidth={0.9}
+      style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.4))" }}
       initial={{ rx: 8, ry: 8 * RATIO, cy: FLOOR_Y - 4, opacity: 0 }}
-      animate={{ rx: [8, 52, 235], ry: [8 * RATIO, 52 * RATIO, 235 * RATIO], cy: [FLOOR_Y - 4, FLOOR_Y + 1, FLOOR_Y + 26], opacity: [0, 0.5, 0] }}
-      transition={{ duration: RIPPLE_DUR, delay, repeat: Infinity, ease: "easeOut", times: [0, 0.14, 1] }}
+      animate={{
+        // born small at the high centre and visible from the start, expanding
+        // outward at a constant speed while descending only slightly, then
+        // fading as it reaches the rim. Kept faint + softly glowing.
+        rx: [8, 250],
+        ry: [8 * RATIO, 250 * RATIO],
+        cy: [FLOOR_Y - 4, FLOOR_Y - 4 + CONE],
+        opacity: [0.28, 0.26, 0.13, 0],
+      }}
+      transition={{ duration: RIPPLE_DUR, delay, repeat: Infinity, ease: "linear" }}
     />
   );
 }
@@ -100,19 +112,16 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
     <div className={`relative w-full max-w-[540px] mx-auto ${className}`}>
       <svg viewBox="0 0 480 520" className="w-full h-auto" fill="none">
         <defs>
-          {/* top face — ambient sky light catching the back edge, dark toward front */}
           <linearGradient id="faceTop" x1="0.32" y1="0" x2="0.55" y2="1">
             <stop offset="0%" stopColor="rgba(241,240,235,0.09)" />
             <stop offset="42%" stopColor="rgba(22,25,26,0.5)" />
             <stop offset="100%" stopColor="rgba(12,13,14,0.5)" />
           </linearGradient>
-          {/* left face — shadow side, darkest, a whisper of uplight at the base */}
           <linearGradient id="faceLeft" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(8,9,10,0.66)" />
             <stop offset="72%" stopColor="rgba(11,13,12,0.54)" />
             <stop offset="100%" stopColor="rgba(120,168,72,0.06)" />
           </linearGradient>
-          {/* right face — catches a little more light, more uplight at the base */}
           <linearGradient id="faceRight" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(12,14,14,0.52)" />
             <stop offset="66%" stopColor="rgba(15,18,15,0.46)" />
@@ -134,19 +143,31 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           </linearGradient>
           <linearGradient id="guide" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(184,242,92,0)" />
-            <stop offset="55%" stopColor="rgba(184,242,92,0.1)" />
+            <stop offset="52%" stopColor="rgba(184,242,92,0.1)" />
             <stop offset="100%" stopColor="rgba(184,242,92,0)" />
           </linearGradient>
+          {/* soft bloom so the wireframe reads as a glowing hologram, not hard lines */}
+          <filter id="edgeGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.6" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
         {/* the scan-point light, spreading up to naturally light the cube base */}
         <ellipse cx={SCAN.x} cy={SCAN.y - 4} rx={148} ry={150} fill="url(#baseLight)" />
 
-        {/* faint vertical guide lines fanning to the floor */}
-        {GUIDES.map((x, i) => (
-          <line key={x} x1={x} y1={214 + Math.abs(x - 240) * 0.18} x2={x} y2={FLOOR_Y + 24}
-            stroke="url(#guide)" strokeWidth={i === 2 ? 1 : 0.7} />
-        ))}
+        {/* faint vertical light beams threading down to the floor */}
+        {GUIDES.map((x, i) => {
+          const mid = Math.abs(x - 240) / 120; // 0 at center, 1 at edges
+          return (
+            <line key={x} x1={x} y1={196 + mid * 26} x2={x} y2={FLOOR_Y + 22}
+              stroke="url(#guide)" strokeWidth={i % 2 ? 0.6 : 0.8} opacity={1 - mid * 0.45} />
+          );
+        })}
 
         {/* drifting particles */}
         {PARTICLES.map((p, i) => (
@@ -157,11 +178,13 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
             transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: p.d }} />
         ))}
 
-        {/* ── floor: lifted, tilted, wide + slow radar ripples ───────────── */}
+        {/* ── floor: a dense field of rings expanding outward from the centre
+             (static fallback under reduced-motion) ─────────────────────────── */}
         {reduce
-          ? STATIC_RINGS.map((rx, i) => (
-              <ellipse key={rx} cx={SCAN.x} cy={FLOOR_Y + i * 8} rx={rx} ry={rx * RATIO}
-                fill="none" stroke={GREEN} strokeWidth="1" opacity={0.42 - i * 0.07} />
+          ? STATIC_RINGS.map((r, i) => (
+              <ellipse key={i} cx={SCAN.x} cy={r.cy} rx={r.rx} ry={r.ry}
+                fill="none" stroke={GREEN} strokeWidth={0.9} opacity={r.opacity * 0.6}
+                style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.4))" }} />
             ))
           : Array.from({ length: RIPPLE_COUNT }, (_, i) => (
               <Ripple key={i} delay={(i * RIPPLE_DUR) / RIPPLE_COUNT} />
@@ -170,10 +193,12 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
         {/* light beam from the cube base down to the scan point (always centered) */}
         <rect x={BC.x - 1.5} y={300} width="3" height={SCAN.y - 300} fill="url(#beam)" style={{ filter: "blur(0.6px)" }} />
         {!reduce && (
-          <motion.circle cx={BC.x} r={3.6} fill="rgba(224,252,168,0.85)" style={{ filter: "blur(2px)" }}
+          <motion.circle cx={BC.x} r={3.6} fill="rgba(224,252,168,0.9)" style={{ filter: "blur(2px)" }}
             initial={{ cy: SCAN.y, opacity: 0 }}
-            animate={{ cy: [SCAN.y, 306], opacity: [0.7, 0] }}
-            transition={{ duration: 3.4, repeat: Infinity, ease: "easeOut" }} />
+            // starts at the scan point (where the rings begin) and rises at a
+            // constant speed up to the cube base, fading as it goes.
+            animate={{ cy: [SCAN.y, BC.y], opacity: [0.9, 0.9, 0] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "linear" }} />
         )}
 
         {/* the bright scan point */}
@@ -182,15 +207,23 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
           style={{ transformOrigin: `${SCAN.x}px ${SCAN.y}px` }}
         >
-          <ellipse cx={SCAN.x} cy={SCAN.y} rx="50" ry={50 * RATIO} fill="url(#scanGlow)" />
+          <ellipse cx={SCAN.x} cy={SCAN.y} rx="52" ry={52 * RATIO} fill="url(#scanGlow)" />
           <circle cx={SCAN.x} cy={SCAN.y} r="3.4" fill="#EAFCB0" style={{ filter: "drop-shadow(0 0 6px rgba(184,242,92,0.95))" }} />
         </motion.g>
 
-        {/* ── the floating cube (vertical float only — never rotates) ────── */}
+        {/* ── the floating cube (vertical float only) ─────────────────────── */}
         <motion.g
           animate={reduce ? undefined : { y: [-6, 6, -6] }}
           transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
         >
+          {/* hidden back edges — faint, so the cube reads as transparent glass */}
+          <g stroke={GREEN} strokeWidth="0.9" strokeLinecap="round" opacity="0.2">
+            <line {...ln(BB, T)} />
+            <line {...ln(BB, BL)} />
+            <line {...ln(BB, BR)} />
+          </g>
+          <circle cx={BB.x} cy={BB.y} r="1.8" fill={GREEN} opacity="0.35" />
+
           {/* light-shaded glass faces (top ambient, sides shadowed, base uplit) */}
           <polygon points={poly(T, R, C, L)} fill="url(#faceTop)" />
           <polygon points={poly(L, C, BC, BL)} fill="url(#faceLeft)" />
@@ -199,38 +232,40 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           {/* very faint inner grids */}
           <g stroke={GREEN} strokeWidth="0.5" opacity="0.08">
             {[...topGrid, ...leftGrid, ...rightGrid].map(([a, b], i) => (
-              <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+              <line key={i} {...ln(a, b)} />
             ))}
           </g>
 
-          {/* edges — brightness varies with depth for real dimensionality */}
-          {/* far/back top edges: paper highlight (ambient sky) */}
-          <Edge a={L} b={T} w={1.3} o={0.8} glow color="#F1F0EB" />
-          <Edge a={T} b={R} w={1.3} o={0.68} glow color="#F1F0EB" />
-          {/* top-front edges: mid-bright */}
-          <Edge a={R} b={C} o={0.85} />
-          <Edge a={C} b={L} o={0.8} />
-          {/* side verticals: left in shadow (dim), right lit (brighter) */}
-          <Edge a={L} b={BL} o={0.62} />
-          <Edge a={R} b={BR} o={0.82} />
-          {/* near bottom-front edges: brightest, soft bloom */}
-          <Edge a={BL} b={BC} w={1.4} o={0.95} glow />
-          <Edge a={BC} b={BR} w={1.4} o={0.95} glow />
-          {/* front vertical center edge — brightest, living glow */}
-          <motion.line
-            x1={C.x} y1={C.y} x2={BC.x} y2={BC.y} stroke={GREEN} strokeWidth="2.2" strokeLinecap="round"
-            style={{ filter: "drop-shadow(0 0 4px rgba(184,242,92,0.9))" }}
-            animate={reduce ? undefined : { opacity: [0.82, 1, 0.82] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+          {/* paper highlights on the top-back edges (soft) */}
+          <g stroke="#F1F0EB" strokeWidth="1.1" strokeLinecap="round" opacity="0.7"
+            style={{ filter: "drop-shadow(0 0 3px rgba(241,240,235,0.28))" }}>
+            <line {...ln(L, T)} />
+            <line {...ln(T, R)} />
+          </g>
 
-          {/* corner nodes — brighter near the viewer, dimmer at the back */}
+          {/* green edges, all under one soft bloom → a glowing hologram, not hard
+              lines. Depth still reads via per-edge opacity. */}
+          <g filter="url(#edgeGlow)" strokeLinecap="round">
+            <line {...ln(R, C)} stroke={GREEN} strokeWidth="1.1" opacity="0.72" />
+            <line {...ln(C, L)} stroke={GREEN} strokeWidth="1.1" opacity="0.66" />
+            <line {...ln(L, BL)} stroke={GREEN} strokeWidth="1.1" opacity="0.5" />
+            <line {...ln(R, BR)} stroke={GREEN} strokeWidth="1.1" opacity="0.68" />
+            <line {...ln(BL, BC)} stroke={GREEN} strokeWidth="1.2" opacity="0.82" />
+            <line {...ln(BC, BR)} stroke={GREEN} strokeWidth="1.2" opacity="0.82" />
+            <motion.line
+              x1={C.x} y1={C.y} x2={BC.x} y2={BC.y} stroke={GREEN} strokeWidth="1.8"
+              animate={reduce ? undefined : { opacity: [0.78, 0.95, 0.78] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
+          </g>
+
+          {/* corner nodes — soft, brighter near the viewer, dimmer at the back */}
           {NODES.map((n, i) => {
-            const near = n.y > 200 ? 0.9 : 0.6;
+            const near = n.y > 200 ? 0.75 : 0.45;
             return (
               <motion.circle key={i} cx={n.x} cy={n.y} fill="#EAFCB0"
-                style={{ filter: "drop-shadow(0 0 4px rgba(184,242,92,0.8))" }}
-                initial={{ r: 2.2, opacity: near * 0.6 }}
-                animate={reduce ? { r: 2.2, opacity: near } : { opacity: [near * 0.6, near, near * 0.6], r: [1.9, 2.5, 1.9] }}
+                style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.7))" }}
+                initial={{ r: 2, opacity: near * 0.6 }}
+                animate={reduce ? { r: 2, opacity: near } : { opacity: [near * 0.55, near, near * 0.55], r: [1.7, 2.2, 1.7] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.28 }} />
             );
           })}
