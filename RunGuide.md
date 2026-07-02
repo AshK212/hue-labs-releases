@@ -1,6 +1,6 @@
 # Run & Build Guide
 
-How to run, develop, and package **Local AI Optimizer**. For what the app *is*, see
+How to run, develop, and package **Hue Labs**. For what the app *is*, see
 [README.md](README.md).
 
 ---
@@ -108,8 +108,8 @@ This runs the complete pipeline:
 
 | File | What it is |
 |------|-----------|
-| `Local AI Optimizer-0.1.0-Setup.exe` | NSIS installer (desktop + Start Menu shortcuts, choose install dir) |
-| `Local AI Optimizer-0.1.0-Portable.exe` | Single-file portable executable |
+| `Hue Labs-0.1.0-Setup.exe` | NSIS installer (desktop + Start Menu shortcuts, choose install dir) |
+| `Hue Labs-0.1.0-Portable.exe` | Single-file portable executable |
 | `win-unpacked/` | The unpacked app (useful for quick testing) |
 
 To produce just the unpacked app (faster, skips the installer step):
@@ -121,8 +121,8 @@ npm run dist:unpacked
 ### In production, where does data go?
 
 The bundled backend's benchmark history DB is written to a per-user, writable location:
-`%APPDATA%\Local AI Optimizer\data\` (the install directory stays read-only). Desktop shell
-logs go to `%APPDATA%\Local AI Optimizer\logs\desktop.log`.
+`%APPDATA%\Hue Labs\data\` (the install directory stays read-only). Desktop shell
+logs go to `%APPDATA%\Hue Labs\logs\desktop.log`.
 
 ---
 
@@ -168,7 +168,7 @@ This is a standard electron-builder-on-Windows requirement and is unrelated to t
 | Symptom | Cause / Fix |
 |---------|-------------|
 | `Cannot create symbolic link … privilege` during `npm run dist` | See **section 5** — enable Developer Mode or run elevated. |
-| Window opens but startup fails / "Backend did not become healthy" | The dev backend uses `backend/.venv`. Recreate it (section 2c). Check `%APPDATA%\Local AI Optimizer\logs\desktop.log`. |
+| Window opens but startup fails / "Backend did not become healthy" | The dev backend uses `backend/.venv`. Recreate it (section 2c). Check `%APPDATA%\Hue Labs\logs\desktop.log`. |
 | `Port 5173 is in use` / app loads the wrong UI | A previous Vite server is still running. Close it (or `Stop-Process` the stale `node`/`vite`), then relaunch. |
 | Benchmarks fail with "Couldn't reach Ollama" | Ollama isn't running. Start Ollama (or install it); the rest of the app still works without it. |
 | Icon/metadata not updating in a rebuild | Delete `release/` and rebuild so electron-builder re-stamps the executable. |

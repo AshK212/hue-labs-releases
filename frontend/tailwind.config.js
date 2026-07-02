@@ -7,33 +7,35 @@ export default {
         // ── Brand board ──────────────────────────────────────────────────
         // Carbon black background, paper off-white text, signal green accent,
         // instrument gray secondary. Named tokens for direct, intentional use.
-        carbon: "#0C0D0E",
-        paper: "#F1F0EB",
-        // Accent (was signal green): now theme-driven. Carbon White is the
-        // default; Signal Green is preserved. Driven by CSS vars in index.css.
+        // Base + text are now fully theme-driven (CSS vars in index.css) so a
+        // theme can restyle the whole neutral palette, not just the accent.
+        // Hue Labs (warm charcoal) is the default; Carbon / Signal Green remain.
+        carbon: "rgb(var(--bg) / <alpha-value>)",
+        paper: "rgb(var(--paper) / <alpha-value>)",
+        // Accent: theme-driven. White for Hue Labs / Carbon, green for Signal.
         signal: "rgb(var(--a500) / <alpha-value>)",
-        instrument: "#878C89",
+        instrument: "rgb(var(--k500) / <alpha-value>)",
 
-        // ── Semantic scales (names kept from the original light theme so the
-        // whole app inherits the dark identity through the shared classes) ──
+        // ── Semantic scales (names kept from the original palette so the whole
+        // app inherits the active theme through the shared classes) ──
 
-        // Surfaces & borders: near-carbon panels, slightly lighter than the
-        // background, with a subtle muted-gray hairline (mist-200 is THE border).
+        // Surfaces & borders: panels a touch lighter than the background, with a
+        // subtle hairline (mist-200 is THE border). Theme-driven.
         mist: {
-          50: "#141517", // quiet fill
-          100: "#1A1C1F", // fill / hover
-          200: "#282B2E", // subtle border
-          300: "#33373A",
-          400: "#454A4D",
+          50: "rgb(var(--m50) / <alpha-value>)", // quiet fill
+          100: "rgb(var(--m100) / <alpha-value>)", // fill / hover
+          200: "rgb(var(--m200) / <alpha-value>)", // subtle border
+          300: "rgb(var(--m300) / <alpha-value>)",
+          400: "rgb(var(--m400) / <alpha-value>)",
         },
-        // Text: inverted so the darkest name is now the brightest (paper).
+        // Text: brightest name is the primary paper text. Theme-driven.
         ink: {
-          900: "#F1F0EB", // paper — headings / primary
-          800: "#E7E7E1", // near-paper
-          700: "#CFD1CB", // high-contrast body
-          500: "#878C89", // instrument gray — secondary
-          400: "#6C716E", // dimmer gray — captions / hints
-          300: "#4C514E", // dimmest — inactive / disabled
+          900: "rgb(var(--k900) / <alpha-value>)", // headings / primary
+          800: "rgb(var(--k800) / <alpha-value>)", // near-paper
+          700: "rgb(var(--k700) / <alpha-value>)", // high-contrast body
+          500: "rgb(var(--k500) / <alpha-value>)", // secondary
+          400: "rgb(var(--k400) / <alpha-value>)", // captions / hints
+          300: "rgb(var(--k300) / <alpha-value>)", // inactive / disabled
         },
         // Primary accent → theme accent (Carbon White default, Signal Green
         // preserved). Every step maps to a CSS var so the whole app re-tints
@@ -74,6 +76,15 @@ export default {
         },
       },
       fontFamily: {
+        // Editorial display serif (Hue Labs). Applied to h1/h2 via index.css.
+        serif: [
+          "Fraunces",
+          "ui-serif",
+          "Georgia",
+          "Cambria",
+          "Times New Roman",
+          "serif",
+        ],
         sans: [
           "Inter",
           "ui-sans-serif",

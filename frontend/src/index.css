@@ -3,37 +3,102 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Theme accent tokens ────────────────────────────────────────────────
-   * The whole app's accent (formerly signal green) is driven by these CSS
-   * variables, expressed as raw RGB triplets so Tailwind can apply opacity via
-   * rgb(var(--aXXX) / <alpha-value>). Switching `data-theme` on <html> re-tints
-   * the entire UI — buttons, charts, glows, rings, icons, everything.
+  /* ── Theme tokens ────────────────────────────────────────────────────────
+   * The whole app's palette is driven by CSS variables (raw RGB triplets so
+   * Tailwind can apply opacity via rgb(var(--x) / <alpha-value>)). A theme sets
+   * the neutral base (bg / surfaces / borders / text) AND the accent, so a
+   * theme can restyle everything, not just the accent color.
    *
-   * Carbon White is the default; Signal Green preserves the original look.
-   * Only the accent changes; the dark carbon base/surfaces stay identical. */
+   *   • Hue Labs  — warm charcoal, editorial serif, white accent. DEFAULT.
+   *   • Carbon    — cool near-black, white accent. (development)
+   *   • Signal    — cool near-black, signal-green accent. (development)
+   *
+   * :root holds Hue Labs so the very first paint (before JS sets data-theme)
+   * is already the default theme. */
   :root,
-  [data-theme="carbon"] {
+  [data-theme="huelabs"] {
     --vph: 100dvh;
 
+    /* neutrals — warm charcoal */
+    --bg: 26 23 21;          /* #1A1715 base */
+    --bg-top: 30 26 24;      /* #1E1A18 */
+    --bg-bottom: 20 18 16;   /* #141210 */
+    --surface1: 37 33 29;    /* #25211D card top */
+    --surface2: 31 27 24;    /* #1F1B18 card bottom */
+    --surfaceq1: 32 28 25;   /* #201C19 quiet top */
+    --surfaceq2: 25 22 19;   /* #191613 quiet bottom */
+    --m50: 32 29 26;
+    --m100: 40 36 32;
+    --m200: 56 51 45;        /* hairline border */
+    --m300: 74 67 60;
+    --m400: 92 84 75;
+    /* text — warm off-white */
+    --k900: 244 239 232;     /* #F4EFE8 primary */
+    --k800: 233 227 217;
+    --k700: 211 204 191;
+    --k500: 159 150 138;     /* secondary warm gray */
+    --k400: 128 119 106;
+    --k300: 90 83 74;
+    --paper: 244 239 232;
+    /* accent — warm white (no neon) */
+    --a50: 34 31 28;
+    --a100: 46 42 38;
+    --a200: 70 65 59;
+    --a300: 120 114 105;
+    --a400: 201 197 189;
+    --a500: 245 243 239;     /* warm white accent */
+    --a600: 255 255 255;
+    --a700: 255 255 255;
+    --glow: 245 243 239;
+    --node: 245 243 239;
+  }
+
+  /* Carbon + Signal share the original cool-dark neutral base. */
+  [data-theme="carbon"],
+  [data-theme="green"] {
+    --bg: 12 13 14;
+    --bg-top: 13 14 16;
+    --bg-bottom: 10 11 12;
+    --surface1: 23 25 28;
+    --surface2: 19 20 23;
+    --surfaceq1: 18 19 21;
+    --surfaceq2: 15 16 18;
+    --m50: 20 21 23;
+    --m100: 26 28 31;
+    --m200: 40 43 46;
+    --m300: 51 55 58;
+    --m400: 69 74 77;
+    --k900: 241 240 235;
+    --k800: 231 231 225;
+    --k700: 207 209 203;
+    --k500: 135 140 137;
+    --k400: 108 113 110;
+    --k300: 76 81 78;
+    --paper: 241 240 235;
+  }
+
+  /* Carbon accent — clean white. */
+  [data-theme="carbon"] {
     --a50: 30 30 33;
     --a100: 40 41 46;
     --a200: 62 63 70;
     --a300: 120 122 130;
     --a400: 205 207 213;
-    --a500: 245 245 245; /* #F5F5F5 accent */
+    --a500: 245 245 245;
     --a600: 255 255 255;
     --a700: 255 255 255;
     --glow: 255 255 255;
     --node: 255 255 255;
   }
 
+  /* Signal accent — signal green. */
   [data-theme="green"] {
     --a50: 24 34 15;
     --a100: 34 48 26;
     --a200: 57 81 31;
     --a300: 92 138 50;
     --a400: 147 210 74;
-    --a500: 184 242 92; /* #B8F25C signal green */
+    --a500: 184 242 92;
     --a600: 199 247 118;
     --a700: 214 250 149;
     --glow: 184 242 92;
@@ -48,7 +113,7 @@
 
   body {
     @apply text-ink-700 antialiased;
-    background-color: #0c0d0e;
+    background-color: rgb(var(--bg));
     /* The document itself never scrolls - the custom title bar owns the top
        edge, so any scrolling happens inside a content area below it. */
     overflow: hidden;
@@ -56,13 +121,35 @@
     user-select: none;
     -webkit-user-select: none;
     cursor: default;
-    /* Carbon base with two faint accent auras - calm, dark, precise. */
+    /* Base wash with two very faint accent auras - calm, quiet, never neon. */
     background-image:
-      radial-gradient(1000px 680px at 82% -14%, rgb(var(--glow) / 0.06) 0%, rgb(var(--glow) / 0) 55%),
-      radial-gradient(1100px 720px at 8% 6%, rgb(var(--glow) / 0.05) 0%, rgb(var(--glow) / 0) 52%),
-      linear-gradient(180deg, #0d0e10 0%, #0a0b0c 100%);
+      radial-gradient(1000px 680px at 82% -14%, rgb(var(--glow) / 0.05) 0%, rgb(var(--glow) / 0) 55%),
+      radial-gradient(1100px 720px at 8% 6%, rgb(var(--glow) / 0.04) 0%, rgb(var(--glow) / 0) 52%),
+      linear-gradient(180deg, rgb(var(--bg-top)) 0%, rgb(var(--bg-bottom)) 100%);
     background-attachment: fixed;
     font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Hue Labs: editorial voice — Instrument Sans UI, Fraunces display serif for
+     the large headings (h1/h2), matching the website's typographic system. */
+  [data-theme="huelabs"] body {
+    font-family: "Instrument Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  [data-theme="huelabs"] :is(h1, h2) {
+    font-family: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.06;
+  }
+  /* In Hue Labs the brand-emphasis word is set in the display serif, italic,
+     in paper (no gradient) - a quiet editorial accent, not a colored wash. */
+  [data-theme="huelabs"] .text-brand {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+    color: rgb(var(--k900));
+    font-style: italic;
+    font-weight: 500;
   }
 
   /* Nothing draggable (native app), but keep any future text inputs usable. */
@@ -86,8 +173,8 @@
   }
 
   ::selection {
-    background-color: rgb(var(--glow) / 0.22);
-    color: #f1f0eb;
+    background-color: rgb(var(--glow) / 0.20);
+    color: rgb(var(--k900));
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -98,8 +185,8 @@
     }
   }
 
-  /* While the theme is switching, interpolate colours (not layout) for 250ms.
-     Scoped to the switch moment via a class on <html> so it never slows hover. */
+  /* While the theme is switching, interpolate colours (not layout) for 250ms so
+     the change feels calm instead of snapping. Scoped to the switch moment. */
   html.theme-anim,
   html.theme-anim * {
     transition:
@@ -111,10 +198,10 @@
       box-shadow 250ms ease !important;
   }
 
-  /* Custom scrollbar, themed to the app: thin, carbon track, a muted thumb. */
+  /* Custom scrollbar, themed: thin, transparent track, a muted thumb. */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2c2f32 transparent;
+    scrollbar-color: rgb(var(--m300)) transparent;
   }
   ::-webkit-scrollbar {
     width: 10px;
@@ -124,13 +211,13 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #2c2f32;
+    background: rgb(var(--m300));
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3a3d42;
+    background: rgb(var(--m400));
     background-clip: content-box;
   }
   ::-webkit-scrollbar-corner {
@@ -139,19 +226,19 @@
 }
 
 @layer components {
-  /* Surfaces: soft panels a touch lighter than carbon, a thin muted hairline
-     border, and a faint top sheen for quiet, machined depth. */
+  /* Surfaces: soft panels a touch lighter than the base, a thin hairline
+     border, quiet machined depth. Fully theme-driven. */
   .surface {
     @apply rounded-card border border-mist-200 shadow-card;
-    background-image: linear-gradient(180deg, #17191c 0%, #131417 100%);
+    background-image: linear-gradient(180deg, rgb(var(--surface1)) 0%, rgb(var(--surface2)) 100%);
   }
   .surface-tile {
     @apply rounded-tile border border-mist-200 shadow-tile;
-    background-image: linear-gradient(180deg, #17191c 0%, #131417 100%);
+    background-image: linear-gradient(180deg, rgb(var(--surface1)) 0%, rgb(var(--surface2)) 100%);
   }
   .surface-quiet {
     @apply rounded-tile border border-mist-200;
-    background-image: linear-gradient(180deg, #121315 0%, #0f1012 100%);
+    background-image: linear-gradient(180deg, rgb(var(--surfaceq1)) 0%, rgb(var(--surfaceq2)) 100%);
   }
 
   /* Badges --------------------------------------------------------------- */
@@ -159,7 +246,7 @@
     @apply inline-flex items-center gap-1.5 rounded-badge px-3 py-1 text-micro font-semibold;
   }
 
-  /* Signature brand gradient (the accent wash). */
+  /* Signature accent wash (used on primary actions). */
   .brand-gradient {
     background-image: linear-gradient(135deg, rgb(var(--a500)) 0%, rgb(var(--a400)) 100%);
   }
@@ -181,7 +268,7 @@
     background-image: linear-gradient(
       100deg,
       rgba(255, 255, 255, 0) 30%,
-      rgb(var(--glow) / 0.14) 50%,
+      rgb(var(--glow) / 0.12) 50%,
       rgba(255, 255, 255, 0) 70%
     );
     background-size: 200% 100%;
@@ -189,16 +276,21 @@
   .tnum {
     font-variant-numeric: tabular-nums;
   }
+  /* Editorial display serif on demand (Hue Labs uses it for big numbers/titles). */
+  .font-display {
+    font-family: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+    font-optical-sizing: auto;
+  }
   /* Signature pattern language: a faint precision dot mesh. */
   .pattern-dots {
-    background-image: radial-gradient(rgb(var(--glow) / 0.10) 1px, transparent 1px);
+    background-image: radial-gradient(rgb(var(--glow) / 0.08) 1px, transparent 1px);
     background-size: 24px 24px;
   }
   /* A fine technical grid - the precision-tool texture. */
   .pattern-grid {
     background-image:
-      linear-gradient(rgb(var(--glow) / 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(var(--glow) / 0.06) 1px, transparent 1px);
+      linear-gradient(rgb(var(--glow) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--glow) / 0.05) 1px, transparent 1px);
     background-size: 44px 44px;
   }
   /* Accent gradient text, used sparingly for brand emphasis. */

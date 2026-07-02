@@ -18,6 +18,12 @@ import { createMainWindow, createSplashWindow } from "./window";
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 
+// Product identity. Set the user-facing app name (window menus, notifications,
+// userData folder) and the Windows AppUserModelID (taskbar + Action Center) so
+// the OS presents the app as "Hue Labs". Must run before the app is ready.
+app.setName("Hue Labs");
+if (process.platform === "win32") app.setAppUserModelId("com.localaioptimizer.desktop");
+
 // Ensure only one instance runs; a second launch focuses the existing window.
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {

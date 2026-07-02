@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "../ThemeProvider";
 
 /**
  * The shared ambient backdrop. Calm, dark, precise:
@@ -19,7 +20,7 @@ const NOISE =
 
 // Scrim over the photo so foreground content stays readable.
 const SCRIM_BOTTOM =
-  "linear-gradient(180deg, #0C0D0E 0%, #0C0D0E 44%, rgba(12,13,14,0.62) 76%, rgba(12,13,14,0.32) 100%)";
+  "linear-gradient(180deg, rgb(var(--bg)) 0%, rgb(var(--bg)) 44%, rgb(var(--bg) / 0.62) 76%, rgb(var(--bg) / 0.32) 100%)";
 
 export function BrandBackground({
   glow = "top",
@@ -31,6 +32,10 @@ export function BrandBackground({
   image?: false | "bottom";
 }) {
   const reduce = useReducedMotion();
+  const { theme } = useTheme();
+  // Hue Labs is clean and editorial: skip the terrain photo for a calm, warm
+  // charcoal field with generous whitespace. The photo stays for dev themes.
+  const showPhoto = image === "bottom" && theme !== "huelabs";
 
   const glowStyle =
     glow === "center"
@@ -44,12 +49,12 @@ export function BrandBackground({
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(1200px 760px at 50% -8%, #131518 0%, #0c0d0e 55%), linear-gradient(180deg, #0d0e10 0%, #0a0b0c 100%)",
+            "radial-gradient(1200px 760px at 50% -8%, rgb(var(--bg-top)) 0%, rgb(var(--bg)) 55%), linear-gradient(180deg, rgb(var(--bg-top)) 0%, rgb(var(--bg-bottom)) 100%)",
         }}
       />
 
       {/* 2 · terrain photo (bottom focus) or faint grid */}
-      {image === "bottom" ? (
+      {showPhoto ? (
         <div className="absolute inset-0">
           <img
             src="/brand_back.png"

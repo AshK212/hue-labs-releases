@@ -39,7 +39,7 @@ export const WINDOW = {
 };
 /** Matches the application background (carbon base colour in index.css). */
 export const BACKGROUND_COLOR = "#0C0D0E";
-export const WINDOW_TITLE = "Local AI Optimizer";
+export const WINDOW_TITLE = "Hue Labs";
 
 // --- Paths ---------------------------------------------------------------
 /** The app root: the project folder in dev, the asar root in production. */

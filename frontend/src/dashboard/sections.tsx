@@ -416,7 +416,7 @@ export function SettingsSection() {
     <div className="space-y-5 max-w-[40rem]">
       <DashCard title="Appearance" icon={<Palette className="w-5 h-5" strokeWidth={1.8} />}>
         <p className="text-caption text-ink-500 leading-relaxed">
-          Choose the accent for the whole app. Both keep the same calm, dark carbon base.
+          Choose how the whole app looks. Hue Labs is the default; the others are kept for development.
         </p>
         <ThemePicker />
       </DashCard>
@@ -436,7 +436,7 @@ export function SettingsSection() {
       <DashCard title="Data" icon={<Database className="w-5 h-5" strokeWidth={1.8} />}>
         <StatLine label="Benchmark history" value="Stored locally" />
         <StatLine label="Models" value="Managed by Ollama" />
-        <StatLine label="App" value="Local AI Optimizer · MVP" />
+        <StatLine label="App" value="Hue Labs · MVP" />
       </DashCard>
 
       <DashCard title="Setup">
@@ -456,11 +456,7 @@ export function SettingsSection() {
 function ThemePicker() {
   const { theme, setTheme } = useTheme();
   return (
-    <div
-      role="radiogroup"
-      aria-label="Accent theme"
-      className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
-    >
+    <div role="radiogroup" aria-label="Appearance theme" className="mt-4 space-y-2.5">
       {THEMES.map((opt) => {
         const selected = theme === opt.id;
         return (
@@ -470,20 +466,38 @@ function ThemePicker() {
             aria-checked={selected}
             onClick={() => setTheme(opt.id)}
             className={[
-              "group flex items-center gap-3.5 p-3.5 rounded-tile border text-left transition-all duration-200",
+              "group w-full flex items-center gap-3.5 p-3 rounded-tile border text-left transition-all duration-200",
               selected
-                ? "bg-mist-100 !border-sky-300 ring-2 ring-sky-100 shadow-glowSoft"
+                ? "bg-mist-100 !border-sky-300 ring-2 ring-sky-100"
                 : "bg-mist-50 border-mist-200 hover:!border-sky-300/60 hover:-translate-y-[1px]",
             ].join(" ")}
           >
+            {/* swatch: theme base tile with the accent dot */}
             <span
               aria-hidden
-              className="flex-shrink-0 w-9 h-9 rounded-full ring-1 ring-inset ring-white/15 shadow-inner"
-              style={{ backgroundColor: opt.swatch }}
-            />
+              className="flex-shrink-0 grid place-items-center w-10 h-10 rounded-tile ring-1 ring-inset ring-white/10"
+              style={{ backgroundColor: opt.base }}
+            >
+              <span
+                className="w-4 h-4 rounded-full ring-1 ring-inset ring-black/10"
+                style={{ backgroundColor: opt.swatch }}
+              />
+            </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-body font-semibold text-ink-900">{opt.name}</span>
-              <span className="block text-micro text-ink-400 truncate">{opt.tagline}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-body font-semibold text-ink-900">{opt.name}</span>
+                {opt.dev && (
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-ink-400 border border-mist-300 rounded px-1.5 py-px">
+                    Dev
+                  </span>
+                )}
+                {!opt.dev && (
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-ink-500">
+                    Default
+                  </span>
+                )}
+              </span>
+              <span className="block text-micro text-ink-400 truncate mt-0.5">{opt.tagline}</span>
             </span>
             <span
               className={[

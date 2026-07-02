@@ -65,7 +65,7 @@ export function Dashboard() {
   return (
     <div className="h-[var(--vph)] overflow-hidden">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-[#0f1012]/90 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-carbon/90 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
         <div className="px-2 mb-8">
           <BrandLockup markSize={34} onClick={() => enterFlowAt(STEP.Welcome)} />
         </div>
@@ -110,7 +110,7 @@ export function Dashboard() {
       {/* Main - a fixed-height column whose content scrolls internally, so the
           scrollbar lives below the header and never touches the title bar. */}
       <div className="ml-64 min-w-0 h-full flex flex-col">
-        <header className="shrink-0 h-[72px] bg-[#0d0e10]/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8 pr-[150px]">
+        <header className="shrink-0 h-[72px] bg-carbon/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8 pr-[150px]">
           <div>
             <h1 className="text-cardtitle font-semibold text-ink-900 leading-tight">
               {TITLE[active].title}

@@ -65,7 +65,7 @@ export function BrandLineChart({
 
       {/* faint baseline gridlines */}
       {[0.25, 0.5, 0.75].map((f) => (
-        <line key={f} x1="0" x2={W} y1={padY + f * (H - padY * 2)} y2={padY + f * (H - padY * 2)} stroke="#282B2E" strokeWidth="1" strokeDasharray="2 6" />
+        <line key={f} x1="0" x2={W} y1={padY + f * (H - padY * 2)} y2={padY + f * (H - padY * 2)} stroke="rgb(var(--m200))" strokeWidth="1" strokeDasharray="2 6" />
       ))}
 
       <path d={area} fill="url(#lineArea)" />
@@ -88,7 +88,7 @@ export function BrandLineChart({
           cy={y(p.value)}
           r={n > 24 ? 2 : 3}
           fill={p.tone === "gray" ? "#878C89" : "rgb(var(--a500))"}
-          stroke="#0C0D0E"
+          stroke="rgb(var(--bg))"
           strokeWidth="1.5"
         >
           {p.title && <title>{p.title}</title>}

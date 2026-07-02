@@ -43,14 +43,17 @@ export function BrandBadge({
   tone = "neutral",
   dot = false,
   icon,
+  className = "",
 }: {
   children: ReactNode;
   tone?: BadgeTone;
   dot?: boolean;
   icon?: ReactNode;
+  /** Optional per-use overrides (e.g. to make a badge quieter in one place). */
+  className?: string;
 }) {
   return (
-    <span className={`badge ${BADGE[tone]}`}>
+    <span className={`badge ${BADGE[tone]} ${className}`}>
       {dot && (
         <span
           className={`w-1.5 h-1.5 rounded-full ${
@@ -68,13 +71,16 @@ export function BrandBadge({
 type Variant = "primary" | "secondary" | "ghost";
 const base =
   "inline-flex items-center justify-center gap-2.5 h-[52px] px-8 rounded-btn text-body font-medium " +
-  "transition-all duration-200 ease-out select-none whitespace-nowrap " +
+  "transition-[transform,box-shadow,background-color,border-color] duration-[240ms] " +
+  "ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform select-none whitespace-nowrap " +
   "disabled:opacity-45 disabled:pointer-events-none";
+// Premium, calm interaction: a subtle lift + deepening shadow on hover, and a
+// crisp settle on press. No scale bounce — the lift alone reads as quality.
 const VARIANT: Record<Variant, string> = {
   primary:
-    "brand-gradient text-carbon font-semibold shadow-button hover:-translate-y-[2px] hover:scale-[1.02] hover:shadow-glow active:translate-y-0 active:scale-[0.99]",
+    "brand-gradient text-carbon font-semibold shadow-button hover:-translate-y-[2px] hover:shadow-glow active:translate-y-0 active:scale-[0.985] active:duration-100",
   secondary:
-    "bg-mist-100/90 backdrop-blur text-ink-800 border border-mist-200 shadow-soft hover:bg-mist-100 hover:border-sky-300/70 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0",
+    "bg-mist-100/90 backdrop-blur text-ink-800 border border-mist-200 shadow-soft hover:bg-mist-100 hover:border-sky-300/70 hover:-translate-y-[2px] hover:shadow-card active:translate-y-0 active:scale-[0.985] active:duration-100",
   ghost: "text-ink-500 hover:text-ink-900 hover:bg-mist-100",
 };
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -251,7 +257,7 @@ export function BrandProgressRing({
         }}
       />
       <svg width={size} height={size} className={percent === null ? "animate-spin-slow" : ""}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#282B2E" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgb(var(--m200))" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -314,7 +320,7 @@ export function BrandStepList({
               // border is always present (transparent when idle) so switching the
               // active step never changes an item's size or shifts its neighbours.
               "flex items-center gap-3 rounded-tile border px-4 py-2.5 transition-all duration-300",
-              st === "active" ? "border-mist-200 bg-[#17191c] shadow-tile" : "border-transparent",
+              st === "active" ? "border-mist-200 bg-[rgb(var(--surface1))] shadow-tile" : "border-transparent",
             ].join(" ")}
           >
             <span

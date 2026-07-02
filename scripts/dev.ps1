@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
-Write-Host "Local AI Optimizer — starting dev servers..." -ForegroundColor Cyan
+Write-Host "Hue Labs — starting dev servers..." -ForegroundColor Cyan
 
 # --- Backend (FastAPI) ---
 $backend = Join-Path $root "backend"

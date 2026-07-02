@@ -15,7 +15,7 @@
  * read/apply/persist logic. Nothing here changes app behaviour, data or flow.
  */
 
-export type ThemeId = "carbon" | "green";
+export type ThemeId = "huelabs" | "carbon" | "green";
 
 export interface ThemeOption {
   id: ThemeId;
@@ -23,24 +23,39 @@ export interface ThemeOption {
   tagline: string;
   /** Solid accent color for the switcher swatch (static, not theme-driven). */
   swatch: string;
+  /** Background swatch shown behind the accent dot (approx theme base). */
+  base: string;
+  /** Development-only themes are kept for QA, not the shipping experience. */
+  dev?: boolean;
 }
 
 /** The default theme, used on first run and whenever storage is empty. */
-export const DEFAULT_THEME: ThemeId = "carbon";
+export const DEFAULT_THEME: ThemeId = "huelabs";
 
 /** User-facing catalogue (order defines display order in Settings). */
 export const THEMES: ThemeOption[] = [
+  {
+    id: "huelabs",
+    name: "Hue Labs",
+    tagline: "Warm charcoal, editorial, white accent.",
+    swatch: "#F4EFE8",
+    base: "#1A1715",
+  },
   {
     id: "carbon",
     name: "Carbon White",
     tagline: "Minimal white accent on carbon black.",
     swatch: "#F5F5F5",
+    base: "#0C0D0E",
+    dev: true,
   },
   {
     id: "green",
     name: "Signal Green",
     tagline: "The original signal-green accent.",
     swatch: "#B8F25C",
+    base: "#0C0D0E",
+    dev: true,
   },
 ];
 
@@ -50,7 +65,7 @@ const STORAGE_KEY = "lao.theme";
 export function getStoredTheme(): ThemeId {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === "carbon" || v === "green") return v;
+    if (v === "huelabs" || v === "carbon" || v === "green") return v;
   } catch {
     /* localStorage unavailable (private mode / sandbox) — use default. */
   }

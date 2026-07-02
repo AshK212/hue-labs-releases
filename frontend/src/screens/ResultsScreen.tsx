@@ -49,7 +49,7 @@ export function ResultsScreen() {
               <span className="relative grid place-items-center w-16 h-16 animate-pop-in">
                 {/* success ring that draws itself in */}
                 <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle cx="32" cy="32" r="29" fill="none" stroke="#282B2E" strokeWidth="2.5" />
+                  <circle cx="32" cy="32" r="29" fill="none" stroke="rgb(var(--m200))" strokeWidth="2.5" />
                   <motion.circle
                     cx="32" cy="32" r="29" fill="none" stroke="rgb(var(--a500))" strokeWidth="2.5" strokeLinecap="round"
                     initial={{ pathLength: 0 }}

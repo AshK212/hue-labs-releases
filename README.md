@@ -1,4 +1,4 @@
-# Local AI Optimizer
+# Hue Labs
 
 A friendly control layer on top of [Ollama](https://ollama.com) that makes running and
 optimizing local AI models easy for **non-technical users** — zero terminal required.
@@ -11,7 +11,7 @@ optimizing local AI models easy for **non-technical users** — zero terminal re
 
 ## What it is
 
-Local AI Optimizer ships as a **native Windows desktop application** (Electron). The user
+Hue Labs ships as a **native Windows desktop application** (Electron). The user
 double-clicks one icon; the app starts its own backend, waits until it's ready, and opens a
 single clean window. There is no browser, no URL bar, and nothing to start by hand.
 
@@ -67,7 +67,7 @@ are all centralized in [electron/config.ts](electron/config.ts).
 ## Window & platform
 
 - **Window:** 1600 × 1000, minimum 1200 × 800, centered, native title bar,
-  title "Local AI Optimizer", background matching the app (`#f5f7fc`).
+  title "Hue Labs", background matching the app (`#f5f7fc`).
 - **Target platform for Milestone 1:** **Windows 11.** One platform, one or two models,
   honest and measurable gains. See [docs/milestone-1-scope.md](docs/milestone-1-scope.md)
   for the full scope and [docs/optimization-notes.md](docs/optimization-notes.md) for the
