@@ -4,7 +4,6 @@ import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
 import { Button } from "../components/Button";
 import { MetricCard } from "../components/Metric";
-import { StatusBadge } from "../components/Badge";
 import { TechnicalDetails } from "../components/TechnicalDetails";
 import { useCountUp } from "../components/useCountUp";
 import { friendlySetting } from "../journey/labels";
@@ -84,27 +83,26 @@ export function ResultsScreen() {
           </h1>
           <p className="text-body text-ink-500 mt-2">
             {improved
-              ? "Measured on your computer, with the same prompt and model."
+              ? "Measured on this machine — same prompt, same model."
               : "That is okay. The gain depends on your machine."}
           </p>
         </Reveal>
       </div>
 
-      <Reveal index={2} className="mt-10">
-        <div className="grid grid-cols-2 gap-4">
+      {/* Before → After comparison, read as one connected measurement */}
+      <Reveal index={2} className="mt-9">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5 sm:gap-4">
           <MetricCard label="Before" value={before.toFixed(1)} unit="tokens/sec" />
+          <div className={`grid place-items-center w-9 h-9 rounded-full border ${improved ? "bg-sage-50 border-sky-100 text-sage-500" : "bg-mist-100 border-mist-200 text-ink-400"}`}>
+            <ArrowRightIcon className="w-4 h-4" />
+          </div>
           <MetricCard label="After" value={after.toFixed(1)} unit="tokens/sec" tone={improved ? "green" : "blue"} />
         </div>
         {improved && (
-          <p className="text-caption font-mono text-sage-600 font-medium text-center mt-3">
-            +{(after - before).toFixed(1)} tokens/sec faster than before
+          <p className="text-caption font-mono text-sage-600 font-medium text-center mt-3.5">
+            +{(after - before).toFixed(1)} tokens/sec faster
           </p>
         )}
-        <div className="flex justify-center mt-4">
-          <StatusBadge tone="soft" dot>
-            <span className="font-mono uppercase tracking-wide">Measured on this machine</span>
-          </StatusBadge>
-        </div>
       </Reveal>
 
       {changes.length > 0 && (
@@ -131,13 +129,7 @@ export function ResultsScreen() {
         </Reveal>
       )}
 
-      <Reveal index={4} className="mt-5">
-        <p className="text-micro text-ink-400 text-center">
-          Same prompt, same model. We only changed the settings.
-        </p>
-      </Reveal>
-
-      <Reveal index={5} className="mt-8 flex items-center justify-center gap-3">
+      <Reveal index={4} className="mt-8 flex items-center justify-center gap-3">
         <Button variant="ghost" onClick={reset}>
           Start over
         </Button>

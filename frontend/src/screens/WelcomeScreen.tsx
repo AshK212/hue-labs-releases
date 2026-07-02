@@ -55,10 +55,10 @@ export function WelcomeScreen() {
         />
       </div>
 
-      {/* Top bar (also the window drag region) */}
-      <header className="relative z-10 w-full app-drag">
+      {/* Top bar (dragging is handled by the global title-bar strip) */}
+      <header className="relative z-10 w-full">
         <div className="max-w-[1300px] mx-auto w-full px-8 lg:px-20 h-[84px] flex items-center justify-between">
-          <div className="app-no-drag">
+          <div>
             <BrandLockup markSize={40} onClick={() => enterFlowAt(STEP.Welcome)} />
           </div>
           <StatusBadge tone="soft" dot>

@@ -2,17 +2,18 @@ import { useEffect, useState } from "react";
 
 /**
  * Custom window controls for the frameless desktop window: minimize, maximize /
- * restore, and close, styled to match the dark theme with clear hover feedback.
+ * restore, and close.
  *
- * IMPORTANT (Electron): `-webkit-app-region: no-drag` only takes effect when it
- * carves out of an *ancestor* `drag` region. So the controls are wrapped in a
- * small `app-drag` bar (the ancestor) and the buttons carry `app-no-drag` — this
- * makes them clickable/hoverable even though the page header behind them is a
- * drag region. A standalone no-drag element (no drag ancestor) is ignored.
+ * Drag model (this is the reliable one): a dedicated draggable title-bar strip
+ * spans the top EXCEPT the right area occupied by the controls, and the page
+ * headers are NOT draggable. That way there is no `-webkit-app-region: drag`
+ * region beneath the buttons, so they are plain, clickable buttons (a drag
+ * region beneath was what swallowed the clicks before).
  *
- * NOTE: changes to the Electron preload/main require a full app restart
- * (`npm run desktop`) — Vite hot-reload alone won't pick them up.
+ * NOTE: Electron preload/main changes need a full app restart (`npm run desktop`).
  */
+const CONTROLS_W = 140; // px reserved on the right for the controls
+
 export function WindowControls() {
   const [maximized, setMaximized] = useState(false);
   const api = typeof window !== "undefined" ? window.desktop?.window : undefined;
@@ -28,18 +29,26 @@ export function WindowControls() {
     };
   }, [api]);
 
+  const run = (name: "minimize" | "maximizeToggle" | "close") => api?.[name]?.();
+
   const btn =
-    "app-no-drag grid place-items-center w-[46px] h-full text-ink-500 transition-colors duration-150 outline-none cursor-default";
+    "grid place-items-center w-[46px] h-full text-ink-500 transition-colors duration-150 outline-none cursor-default";
 
   return (
-    // ancestor drag bar → lets the buttons' no-drag actually take effect
-    <div className="fixed top-0 right-0 z-[200] h-9 app-drag">
-      <div className="flex items-stretch h-full app-no-drag select-none">
+    <>
+      {/* draggable title-bar strip — everything except the controls on the right */}
+      <div
+        className="fixed top-0 left-0 h-9 z-[90] app-drag"
+        style={{ right: CONTROLS_W }}
+      />
+
+      {/* window controls — no drag region beneath, so they click normally */}
+      <div className="fixed top-0 right-0 z-[110] flex items-stretch h-9 select-none">
         <button
           type="button"
           className={`${btn} hover:bg-white/[0.09] hover:text-ink-900 active:bg-white/[0.14]`}
           aria-label="Minimize"
-          onClick={() => api?.minimize()}
+          onClick={() => run("minimize")}
         >
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
             <path d="M1.5 5.5h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -50,7 +59,7 @@ export function WindowControls() {
           type="button"
           className={`${btn} hover:bg-white/[0.09] hover:text-ink-900 active:bg-white/[0.14]`}
           aria-label={maximized ? "Restore" : "Maximize"}
-          onClick={() => api?.maximizeToggle()}
+          onClick={() => run("maximizeToggle")}
         >
           {maximized ? (
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -68,13 +77,13 @@ export function WindowControls() {
           type="button"
           className={`${btn} hover:bg-[#e5484d] hover:text-white active:bg-[#c93a3f]`}
           aria-label="Close"
-          onClick={() => api?.close()}
+          onClick={() => run("close")}
         >
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
             <path d="M1.8 1.8l7.4 7.4M9.2 1.8l-7.4 7.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
         </button>
       </div>
-    </div>
+    </>
   );
 }
