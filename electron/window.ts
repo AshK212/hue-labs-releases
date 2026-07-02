@@ -5,11 +5,46 @@
  * startup, and the main application window. All visual/window options are
  * sourced from config.ts so behaviour stays declarative here.
  */
-import { BrowserWindow } from "electron";
+import { BrowserWindow, shell } from "electron";
 import path from "node:path";
 
 import { BACKGROUND_COLOR, WINDOW, WINDOW_TITLE, splashHtmlPath } from "./config";
 import { log } from "./logger";
+
+/**
+ * Route external links to the user's default browser instead of spawning a new
+ * Electron window. Links in the UI that use `target="_blank"` (e.g. the Ollama
+ * download page) trigger `window.open`, which Electron would otherwise open as
+ * an in-app window. We deny that and hand the URL to the OS browser as a new
+ * tab. Local app/backend URLs (127.0.0.1 / localhost) are never opened out.
+ */
+function openExternalLinksInBrowser(win: BrowserWindow): void {
+  const isExternalHttp = (url: string): boolean => {
+    try {
+      const u = new URL(url);
+      const isHttp = u.protocol === "http:" || u.protocol === "https:";
+      const isLocal = u.hostname === "127.0.0.1" || u.hostname === "localhost";
+      return isHttp && !isLocal;
+    } catch {
+      return false;
+    }
+  };
+
+  // target="_blank" / window.open → open in the browser, never as an app window.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalHttp(url)) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+
+  // Plain external links (or any attempt to navigate the main window away from
+  // the app) → keep the app put and send the URL to the browser instead.
+  win.webContents.on("will-navigate", (event, url) => {
+    if (isExternalHttp(url)) {
+      event.preventDefault();
+      void shell.openExternal(url);
+    }
+  });
+}
 
 /**
  * Create the frameless, always-centered splash window shown while the backend
@@ -66,6 +101,9 @@ export function createMainWindow(): BrowserWindow {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+
+  // External links open in the default browser (a new tab), not a new app window.
+  openExternalLinksInBrowser(win);
 
   // Keep the OS window title fixed to the product name even if the page tries
   // to change document.title.

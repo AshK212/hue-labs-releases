@@ -172,3 +172,4 @@ This is a standard electron-builder-on-Windows requirement and is unrelated to t
 | `Port 5173 is in use` / app loads the wrong UI | A previous Vite server is still running. Close it (or `Stop-Process` the stale `node`/`vite`), then relaunch. |
 | Benchmarks fail with "Couldn't reach Ollama" | Ollama isn't running. Start Ollama (or install it); the rest of the app still works without it. |
 | Icon/metadata not updating in a rebuild | Delete `release/` and rebuild so electron-builder re-stamps the executable. |
+
