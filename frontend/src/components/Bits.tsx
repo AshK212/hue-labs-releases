@@ -31,7 +31,7 @@ export function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="surface-tile p-6 flex items-start gap-4 transition-all duration-200 hover:border-sky-300/60">
+    <div className="h-full surface-tile p-6 flex items-start gap-4 transition-all duration-200 hover:border-sky-300/60">
       <div className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100">
         {icon}
       </div>

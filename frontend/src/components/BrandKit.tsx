@@ -311,8 +311,10 @@ export function BrandStepList({
           <li
             key={s.label}
             className={[
-              "flex items-center gap-3 rounded-tile px-4 py-2.5 transition-all duration-300",
-              st === "active" ? "surface-tile" : "bg-transparent",
+              // border is always present (transparent when idle) so switching the
+              // active step never changes an item's size or shifts its neighbours.
+              "flex items-center gap-3 rounded-tile border px-4 py-2.5 transition-all duration-300",
+              st === "active" ? "border-mist-200 bg-[#17191c] shadow-tile" : "border-transparent",
             ].join(" ")}
           >
             <span

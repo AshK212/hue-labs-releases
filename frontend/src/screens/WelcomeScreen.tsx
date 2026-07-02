@@ -1,48 +1,81 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { motion } from "framer-motion";
+import { Cpu, Sparkles, Zap, Gauge } from "lucide-react";
 import { useJourney } from "../journey/JourneyContext";
-import { BrandMark } from "../components/BrandMark";
-import { BrandHeroVisual } from "../components/BrandHeroVisual";
+import { STEP } from "../journey/steps";
+import { BrandLockup } from "../components/BrandMark";
+import { BrandHeroVisual } from "../components/brand/BrandHeroVisual";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
-import { ArrowRightIcon, ShieldIcon, GaugeIcon, TerminalOffIcon } from "../components/Icons";
+import { ArrowRightIcon } from "../components/Icons";
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
 };
 const item = {
   hidden: { opacity: 0, y: 14 },
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
+const FEATURES = [
+  { icon: <Cpu className="w-[18px] h-[18px]" strokeWidth={1.8} />, title: "Smart Hardware Detection", desc: "A deep scan of your system's real capabilities." },
+  { icon: <Sparkles className="w-[18px] h-[18px]" strokeWidth={1.8} />, title: "Intelligent Recommendations", desc: "The right model for the hardware you own." },
+  { icon: <Zap className="w-[18px] h-[18px]" strokeWidth={1.8} />, title: "One-Click Optimization", desc: "Tune runtime settings without the terminal." },
+  { icon: <Gauge className="w-[18px] h-[18px]" strokeWidth={1.8} />, title: "Accurate Benchmarking", desc: "Real, measured performance on this machine." },
+];
+
 export function WelcomeScreen() {
-  const { next } = useJourney();
+  const { next, enterFlowAt } = useJourney();
+  const [bgFailed, setBgFailed] = useState(false);
 
   return (
-    <section className="relative min-h-[100dvh] w-full flex flex-col">
-      {/* Top bar */}
-      <header className="w-full">
-        <div className="max-w-[1320px] mx-auto w-full px-8 lg:px-14 h-[84px] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <BrandMark size={32} />
-            <span className="text-body font-semibold text-ink-800">Local AI Optimizer</span>
+    <section className="relative isolate min-h-[var(--vph)] w-full flex flex-col overflow-hidden">
+      {/* Full-bleed terrain background + scrims */}
+      <div className="absolute inset-0 z-0">
+        {!bgFailed && (
+          <img
+            src="/brand_back.png"
+            alt=""
+            aria-hidden
+            onError={() => setBgFailed(true)}
+            className="w-full h-full object-cover"
+            style={{ transform: "scale(1.22) translateX(11%)", transformOrigin: "center" }}
+          />
+        )}
+        {/* left scrim for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-carbon via-carbon/85 to-transparent" />
+        {/* top + bottom blend into the app */}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-carbon to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-carbon to-transparent" />
+        {/* faint valley glow */}
+        <div
+          className="absolute left-[58%] top-[46%] w-[520px] h-[360px] -translate-x-1/2 blur-[120px]"
+          style={{ background: "radial-gradient(circle, rgba(184,242,92,0.10), rgba(184,242,92,0) 70%)" }}
+        />
+      </div>
+
+      {/* Top bar (also the window drag region) */}
+      <header className="relative z-10 w-full app-drag">
+        <div className="max-w-[1300px] mx-auto w-full px-8 lg:px-20 h-[84px] flex items-center justify-between">
+          <div className="app-no-drag">
+            <BrandLockup markSize={40} onClick={() => enterFlowAt(STEP.Welcome)} />
           </div>
           <StatusBadge tone="soft" dot>
-            <span className="font-mono uppercase tracking-wide text-ink-500">Private · Local only</span>
+            <span className="font-mono uppercase tracking-wide text-ink-500">100% Local · Private · Secure</span>
           </StatusBadge>
         </div>
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex items-center">
-        <div className="w-[92%] max-w-[1240px] mx-auto py-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <main className="relative z-10 flex-1 flex items-center">
+        <div className="max-w-[1300px] mx-auto w-full px-8 lg:px-20 py-8">
+          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
             {/* Left: content */}
-            <motion.div variants={container} initial="hidden" animate="show">
+            <motion.div variants={container} initial="hidden" animate="show" className="lg:-mt-10">
               <motion.span
                 variants={item}
-                className="inline-flex items-center gap-2 rounded-badge bg-mist-100 border border-mist-200 pl-2 pr-3 py-1.5 mb-8"
+                className="inline-flex items-center gap-2 rounded-badge bg-mist-100/80 backdrop-blur border border-mist-200 pl-2 pr-3 py-1.5 mb-7"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-signal shadow-[0_0_8px_rgba(184,242,92,0.9)]" />
                 <span className="text-micro font-mono uppercase tracking-wider text-ink-500">
@@ -52,43 +85,44 @@ export function WelcomeScreen() {
 
               <motion.h1
                 variants={item}
-                className="text-[44px] sm:text-[52px] lg:text-hero font-semibold tracking-tight2 text-ink-900 leading-[1.02]"
+                className="text-[46px] sm:text-[56px] lg:text-[64px] font-semibold tracking-tight2 text-ink-900 leading-[1.02]"
               >
-                Local AI.
+                Run Local AI.
                 <br />
                 <span className="text-brand">Optimized.</span>
               </motion.h1>
 
               <motion.p
                 variants={item}
-                className="mt-6 text-[18px] leading-relaxed text-ink-500 max-w-[30rem]"
+                className="mt-6 text-[18px] leading-relaxed text-ink-500 max-w-[32rem]"
               >
-                Detect your hardware, choose the right model, and tune local performance
-                without using the terminal.
+                We analyze your hardware, recommend the best model, and tune local performance
+                so you get the most out of your machine.
               </motion.p>
 
-              <motion.div variants={item} className="mt-9 flex items-center gap-4">
-                <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
-                  Start optimization
-                </Button>
-              </motion.div>
+              {/* Feature list */}
+              <motion.ul variants={item} className="mt-9 space-y-4 max-w-[34rem]">
+                {FEATURES.map((f) => (
+                  <Feature key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
+                ))}
+              </motion.ul>
 
-              {/* Value points */}
-              <motion.div variants={item} className="mt-12 flex items-center gap-8">
-                <Value icon={<ShieldIcon className="w-[18px] h-[18px]" />} label="Private" />
-                <span className="w-px h-8 bg-mist-200" />
-                <Value icon={<GaugeIcon className="w-[18px] h-[18px]" />} label="Measured" />
-                <span className="w-px h-8 bg-mist-200" />
-                <Value icon={<TerminalOffIcon className="w-[18px] h-[18px]" />} label="Local" />
+              <motion.div variants={item} className="mt-16 flex items-center gap-5">
+                <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
+                  Get Started
+                </Button>
+                <span className="text-micro font-mono uppercase tracking-wide text-ink-400">
+                  Takes less than a minute
+                </span>
               </motion.div>
             </motion.div>
 
-            {/* Right: precision graphic */}
+            {/* Right: hero visual */}
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="relative hidden lg:block"
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="relative hidden lg:block lg:mt-16"
             >
               <BrandHeroVisual />
             </motion.div>
@@ -99,13 +133,16 @@ export function WelcomeScreen() {
   );
 }
 
-function Value({ icon, label }: { icon: ReactNode; label: string }) {
+function Feature({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="grid place-items-center w-9 h-9 rounded-tile bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100">
+    <li className="flex items-start gap-3.5">
+      <span className="mt-0.5 grid place-items-center w-9 h-9 rounded-tile bg-signal/10 text-signal ring-1 ring-inset ring-signal/25 flex-shrink-0">
         {icon}
       </span>
-      <span className="text-body font-medium text-ink-800">{label}</span>
-    </div>
+      <div>
+        <div className="text-body font-semibold text-ink-900 leading-tight">{title}</div>
+        <div className="text-caption text-ink-500 mt-0.5">{desc}</div>
+      </div>
+    </li>
   );
 }

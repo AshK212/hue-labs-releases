@@ -40,6 +40,21 @@ async function bootstrap(): Promise<void> {
   // Renderer can ask for the app version over IPC (see preload.ts).
   ipcMain.handle("app:getVersion", () => app.getVersion());
 
+  // Custom title bar controls: minimize / maximize-toggle / close, addressed to
+  // whichever window sent the request.
+  ipcMain.on("window:minimize", (e) => BrowserWindow.fromWebContents(e.sender)?.minimize());
+  ipcMain.on("window:maximizeToggle", (e) => {
+    const w = BrowserWindow.fromWebContents(e.sender);
+    if (!w) return;
+    if (w.isMaximized()) w.unmaximize();
+    else w.maximize();
+  });
+  ipcMain.on("window:close", (e) => BrowserWindow.fromWebContents(e.sender)?.close());
+  ipcMain.handle(
+    "window:isMaximized",
+    (e) => BrowserWindow.fromWebContents(e.sender)?.isMaximized() ?? false
+  );
+
   // 1. Show the splash immediately so the user gets instant feedback.
   splashWindow = createSplashWindow();
 

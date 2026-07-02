@@ -1,11 +1,13 @@
 // The shared top navigation: back + brand on the left, a desktop step indicator
 // on the right, and a slim animated progress bar pinned to the very top.
 
-import { BrandMark } from "./Brand";
+import { BrandLockup } from "./BrandMark";
 import { ArrowLeftIcon } from "./Icons";
-import { FLOW_STEPS, BACK_STEPS } from "../journey/steps";
+import { FLOW_STEPS, BACK_STEPS, STEP } from "../journey/steps";
+import { useJourney } from "../journey/JourneyContext";
 
 export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
+  const { enterFlowAt } = useJourney();
   const flowIndex = FLOW_STEPS.findIndex((f) => f.step === step);
   const showBack = BACK_STEPS.includes(step as (typeof BACK_STEPS)[number]);
   const total = FLOW_STEPS.length;
@@ -14,9 +16,11 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
 
   return (
     <>
-      {/* Slim animated progress bar across the very top */}
+      {/* Slim animated progress bar, sat along the bottom edge of the header so
+          it reads as a progress underline — clear of the window controls at the
+          top and the step label. */}
       {flowIndex !== -1 && (
-        <div className="fixed top-0 inset-x-0 z-40 h-[2px] bg-mist-200">
+        <div className="fixed top-[82px] inset-x-0 z-20 h-[2px] bg-mist-200">
           <div
             className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-r-full shadow-[0_0_12px_rgba(184,242,92,0.6)] transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }}
@@ -24,9 +28,9 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
         </div>
       )}
 
-      <header className="fixed top-0 inset-x-0 z-30 h-[84px]">
+      <header className="fixed top-0 inset-x-0 z-30 h-[84px] app-drag">
         <div className="h-full max-w-[1240px] mx-auto px-8 lg:px-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 app-no-drag">
             {showBack ? (
               <button
                 onClick={onBack}
@@ -37,10 +41,7 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
                 Back
               </button>
             ) : (
-              <div className="flex items-center gap-2.5">
-                <BrandMark size={30} />
-                <span className="text-body font-semibold text-ink-700">Local AI Optimizer</span>
-              </div>
+              <BrandLockup markSize={34} onClick={() => enterFlowAt(STEP.Welcome)} />
             )}
           </div>
 

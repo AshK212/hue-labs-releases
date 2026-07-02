@@ -18,6 +18,24 @@ const api = {
   platform: process.platform,
   /** Resolve the packaged application version from the main process. */
   getVersion: (): Promise<string> => ipcRenderer.invoke("app:getVersion"),
+  /** Custom title-bar window controls. */
+  window: {
+    minimize: (): void => ipcRenderer.send("window:minimize"),
+    maximizeToggle: (): void => ipcRenderer.send("window:maximizeToggle"),
+    close: (): void => ipcRenderer.send("window:close"),
+    isMaximized: (): Promise<boolean> => ipcRenderer.invoke("window:isMaximized"),
+    /** Subscribe to maximize/restore changes; returns an unsubscribe fn. */
+    onMaximizeChange: (cb: (maximized: boolean) => void): (() => void) => {
+      const onMax = () => cb(true);
+      const onUnmax = () => cb(false);
+      ipcRenderer.on("window:maximized", onMax);
+      ipcRenderer.on("window:unmaximized", onUnmax);
+      return () => {
+        ipcRenderer.off("window:maximized", onMax);
+        ipcRenderer.off("window:unmaximized", onUnmax);
+      };
+    },
+  },
 };
 
 export type DesktopApi = typeof api;

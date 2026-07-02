@@ -2,6 +2,7 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
 import { BrandBackground } from "./components/BrandBackground";
+import { WindowControls } from "./components/WindowControls";
 import { Screen } from "./components/Screen";
 import { TopBar } from "./components/TopBar";
 import { pageMotion } from "./components/PageTransition";
@@ -41,11 +42,21 @@ function renderScreen(step: number) {
 
 function Journey() {
   const { view, step, back } = useJourney();
+  const isDashboard = view === "dashboard";
+  const isWelcome = !isDashboard && step === STEP.Welcome;
 
   return (
     <>
-      {/* Signature ambient background, shared by every screen. */}
-      <BrandBackground glow={view === "dashboard" ? "none" : "top"} />
+      {/* Signature ambient background, shared by every screen. Welcome renders
+          its own right-focused photo; the flow steps get the bottom-focused
+          terrain photo; the dashboard stays on clean carbon panels. */}
+      <BrandBackground
+        glow={isDashboard ? "none" : "top"}
+        image={isDashboard || isWelcome ? false : "bottom"}
+      />
+
+      {/* Custom window controls for the frameless desktop window. */}
+      <WindowControls />
 
       {view === "dashboard" ? (
         <Dashboard />

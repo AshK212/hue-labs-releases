@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Full-height reference, set precisely from JS (innerHeight / zoom). The
+       100dvh fallback covers the first paint before the script runs. */
+    --vph: 100dvh;
+  }
+
   html,
   body,
   #root {
@@ -12,6 +18,14 @@
   body {
     @apply text-ink-700 antialiased;
     background-color: #0c0d0e;
+    /* The document itself never scrolls — the custom title bar owns the top
+       edge, so any scrolling happens inside a content area below it. This keeps
+       the scrollbar away from the window controls. */
+    overflow: hidden;
+    /* Native desktop feel: nothing is selectable or draggable. */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
     /* Carbon base with two faint signal-green auras — calm, dark, precise. */
     background-image:
       radial-gradient(1000px 680px at 82% -14%, rgba(184, 242, 92, 0.06) 0%, rgba(184, 242, 92, 0) 55%),
@@ -19,6 +33,18 @@
       linear-gradient(180deg, #0d0e10 0%, #0a0b0c 100%);
     background-attachment: fixed;
     font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Nothing draggable (native app), but keep any future text inputs usable. */
+  img,
+  svg,
+  a {
+    -webkit-user-drag: none;
+  }
+  input,
+  textarea {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   h1, h2, h3 {
@@ -40,6 +66,34 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
     }
+  }
+
+  /* Custom scrollbar, themed to the app: only visible when scrolling is really
+     needed, thin, carbon track, a muted instrument-gray thumb that hints signal
+     green on hover. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2c2f32 transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2c2f32;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #465032;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
@@ -71,6 +125,14 @@
 }
 
 @layer utilities {
+  /* Custom title-bar drag regions (Electron frameless window). */
+  .app-drag {
+    -webkit-app-region: drag;
+  }
+  .app-no-drag {
+    -webkit-app-region: no-drag;
+  }
+
   .orb {
     @apply pointer-events-none fixed rounded-full blur-3xl;
   }

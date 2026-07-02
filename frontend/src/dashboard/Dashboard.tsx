@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BrandMark } from "../components/Brand";
+import { BrandLockup } from "../components/BrandMark";
 import { StatusBadge } from "../components/Badge";
 import { ShieldCheck } from "lucide-react";
+import { useJourney } from "../journey/JourneyContext";
+import { STEP } from "../journey/steps";
 import { useDashboardData } from "./useDashboardData";
 import {
   OverviewSection,
@@ -39,6 +41,7 @@ const TITLE: Record<SectionId, { title: string; subtitle: string }> = {
 export function Dashboard() {
   const [active, setActive] = useState<SectionId>("overview");
   const { history, models } = useDashboardData();
+  const { enterFlowAt } = useJourney();
 
   const renderSection = () => {
     switch (active) {
@@ -60,12 +63,11 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-[100dvh]">
+    <div className="h-[var(--vph)] overflow-hidden">
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 w-64 bg-[#0f1012]/90 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
-        <div className="flex items-center gap-2.5 px-2 mb-8">
-          <BrandMark size={30} />
-          <span className="text-body font-semibold text-ink-800">Local AI Optimizer</span>
+        <div className="px-2 mb-8">
+          <BrandLockup markSize={34} onClick={() => enterFlowAt(STEP.Welcome)} />
         </div>
 
         <nav className="flex-1 space-y-1">
@@ -83,7 +85,9 @@ export function Dashboard() {
                 {on && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-signal shadow-[0_0_10px_rgba(184,242,92,0.8)]"
+                    // Centre via top/bottom + auto margins (no transform) so the
+                    // layout animation's own transform doesn't fight the centering.
+                    className="absolute left-0 top-0 bottom-0 my-auto h-5 w-[3px] rounded-r-full bg-signal shadow-[0_0_10px_rgba(184,242,92,0.8)]"
                   />
                 )}
                 <span className={on ? "text-sky-500" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
@@ -103,9 +107,10 @@ export function Dashboard() {
         </div>
       </aside>
 
-      {/* Main */}
-      <div className="ml-64 min-w-0">
-        <header className="sticky top-0 z-10 h-[72px] bg-[#0d0e10]/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8">
+      {/* Main — a fixed-height column whose content scrolls internally, so the
+          scrollbar lives below the header and never touches the title bar. */}
+      <div className="ml-64 min-w-0 h-full flex flex-col">
+        <header className="shrink-0 h-[72px] bg-[#0d0e10]/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8 pr-[150px] app-drag">
           <div>
             <h1 className="text-cardtitle font-semibold text-ink-900 leading-tight">
               {TITLE[active].title}
@@ -117,7 +122,10 @@ export function Dashboard() {
           </StatusBadge>
         </header>
 
-        <main className="px-8 py-8">
+        <main
+          className="flex-1 min-h-0 overflow-y-auto px-8 py-8"
+          style={{ scrollbarGutter: "stable" }}
+        >
           <div className="max-w-[1080px] mx-auto">
             <AnimatePresence mode="wait">
               <motion.div

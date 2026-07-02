@@ -29,10 +29,10 @@ export function HardwareScreen() {
       </Reveal>
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        <Reveal index={1}>
+        <Reveal index={1} className="h-full">
           <StatTile icon={<MonitorIcon className="w-[18px] h-[18px]" />} label="System" value={hardware.os_name} />
         </Reveal>
-        <Reveal index={2}>
+        <Reveal index={2} className="h-full">
           <StatTile
             icon={<ChipIcon className="w-[18px] h-[18px]" />}
             label="Processor"
@@ -40,7 +40,7 @@ export function HardwareScreen() {
             hint={`${hardware.cpu_cores_physical} cores`}
           />
         </Reveal>
-        <Reveal index={3}>
+        <Reveal index={3} className="h-full">
           <StatTile
             icon={<MemoryIcon className="w-[18px] h-[18px]" />}
             label="Memory"
@@ -48,7 +48,7 @@ export function HardwareScreen() {
             hint={`${hardware.memory_available_gb} GB free`}
           />
         </Reveal>
-        <Reveal index={4}>
+        <Reveal index={4} className="h-full">
           <StatTile
             icon={<GpuIcon className="w-[18px] h-[18px]" />}
             label="Graphics"

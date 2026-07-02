@@ -53,8 +53,11 @@ export function createMainWindow(): BrowserWindow {
     show: false,
     title: WINDOW_TITLE,
     backgroundColor: BACKGROUND_COLOR,
-    // Native OS title bar, as requested.
     autoHideMenuBar: true,
+    // Custom title bar: hide the native caption + buttons but keep the native
+    // frame so resizing, aero-snap and window shadows all still work. The
+    // renderer draws its own draggable title bar and min/max/close controls.
+    titleBarStyle: "hidden",
     webPreferences: {
       // Secure defaults: isolate the preload/context, no Node in the renderer.
       contextIsolation: true,
@@ -70,6 +73,11 @@ export function createMainWindow(): BrowserWindow {
     e.preventDefault();
     win.setTitle(WINDOW_TITLE);
   });
+
+  // Tell the renderer when the maximize state changes so its restore/maximize
+  // icon can stay in sync.
+  win.on("maximize", () => win.webContents.send("window:maximized"));
+  win.on("unmaximize", () => win.webContents.send("window:unmaximized"));
 
   log.info("window", "main window created");
   return win;
