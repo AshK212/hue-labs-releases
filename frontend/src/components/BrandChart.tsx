@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 /**
  * Minimalist charts drawn from REAL benchmark history only. Signal green marks
  * optimized/current data; instrument gray marks baseline. No invented series,
- * no axes clutter — just the measured shape of the runs.
+ * no axes clutter - just the measured shape of the runs.
  */
 
 export interface ChartPoint {
@@ -58,8 +58,8 @@ export function BrandLineChart({
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} preserveAspectRatio="none">
       <defs>
         <linearGradient id="lineArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(184,242,92,0.22)" />
-          <stop offset="100%" stopColor="rgba(184,242,92,0)" />
+          <stop offset="0%" stopColor="rgb(var(--glow)/0.22)" />
+          <stop offset="100%" stopColor="rgb(var(--glow)/0)" />
         </linearGradient>
       </defs>
 
@@ -72,14 +72,14 @@ export function BrandLineChart({
       <motion.path
         d={line}
         fill="none"
-        stroke="#B8F25C"
+        stroke="rgb(var(--a500))"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
         initial={reduce ? undefined : { pathLength: 0 }}
         animate={reduce ? undefined : { pathLength: 1 }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        style={{ filter: "drop-shadow(0 0 6px rgba(184,242,92,0.35))" }}
+        style={{ filter: "drop-shadow(0 0 6px rgb(var(--glow)/0.35))" }}
       />
       {points.map((p, i) => (
         <circle
@@ -87,7 +87,7 @@ export function BrandLineChart({
           cx={x(i)}
           cy={y(p.value)}
           r={n > 24 ? 2 : 3}
-          fill={p.tone === "gray" ? "#878C89" : "#B8F25C"}
+          fill={p.tone === "gray" ? "#878C89" : "rgb(var(--a500))"}
           stroke="#0C0D0E"
           strokeWidth="1.5"
         >
@@ -116,7 +116,7 @@ export function BrandBarChart({
       {values.map((v, i) => (
         <motion.div
           key={i}
-          className="flex-1 rounded-t-md bg-gradient-to-t from-sky-300/30 via-sky-400 to-sky-500 min-w-[8px] shadow-[0_0_12px_-2px_rgba(184,242,92,0.5)]"
+          className="flex-1 rounded-t-md bg-gradient-to-t from-sky-300/30 via-sky-400 to-sky-500 min-w-[8px] shadow-[0_0_12px_-2px_rgb(var(--glow)/0.5)]"
           initial={reduce ? undefined : { height: 0 }}
           animate={{ height: `${Math.max(6, (v / max) * 100)}%` }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}

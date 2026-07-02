@@ -3,10 +3,41 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Full-height reference, set precisely from JS (innerHeight / zoom). The
-       100dvh fallback covers the first paint before the script runs. */
+  /* ── Theme accent tokens ────────────────────────────────────────────────
+   * The whole app's accent (formerly signal green) is driven by these CSS
+   * variables, expressed as raw RGB triplets so Tailwind can apply opacity via
+   * rgb(var(--aXXX) / <alpha-value>). Switching `data-theme` on <html> re-tints
+   * the entire UI — buttons, charts, glows, rings, icons, everything.
+   *
+   * Carbon White is the default; Signal Green preserves the original look.
+   * Only the accent changes; the dark carbon base/surfaces stay identical. */
+  :root,
+  [data-theme="carbon"] {
     --vph: 100dvh;
+
+    --a50: 30 30 33;
+    --a100: 40 41 46;
+    --a200: 62 63 70;
+    --a300: 120 122 130;
+    --a400: 205 207 213;
+    --a500: 245 245 245; /* #F5F5F5 accent */
+    --a600: 255 255 255;
+    --a700: 255 255 255;
+    --glow: 255 255 255;
+    --node: 255 255 255;
+  }
+
+  [data-theme="green"] {
+    --a50: 24 34 15;
+    --a100: 34 48 26;
+    --a200: 57 81 31;
+    --a300: 92 138 50;
+    --a400: 147 210 74;
+    --a500: 184 242 92; /* #B8F25C signal green */
+    --a600: 199 247 118;
+    --a700: 214 250 149;
+    --glow: 184 242 92;
+    --node: 234 252 176;
   }
 
   html,
@@ -18,18 +49,17 @@
   body {
     @apply text-ink-700 antialiased;
     background-color: #0c0d0e;
-    /* The document itself never scrolls — the custom title bar owns the top
-       edge, so any scrolling happens inside a content area below it. This keeps
-       the scrollbar away from the window controls. */
+    /* The document itself never scrolls - the custom title bar owns the top
+       edge, so any scrolling happens inside a content area below it. */
     overflow: hidden;
     /* Native desktop feel: nothing is selectable or draggable. */
     user-select: none;
     -webkit-user-select: none;
     cursor: default;
-    /* Carbon base with two faint signal-green auras — calm, dark, precise. */
+    /* Carbon base with two faint accent auras - calm, dark, precise. */
     background-image:
-      radial-gradient(1000px 680px at 82% -14%, rgba(184, 242, 92, 0.06) 0%, rgba(184, 242, 92, 0) 55%),
-      radial-gradient(1100px 720px at 8% 6%, rgba(184, 242, 92, 0.05) 0%, rgba(184, 242, 92, 0) 52%),
+      radial-gradient(1000px 680px at 82% -14%, rgb(var(--glow) / 0.06) 0%, rgb(var(--glow) / 0) 55%),
+      radial-gradient(1100px 720px at 8% 6%, rgb(var(--glow) / 0.05) 0%, rgb(var(--glow) / 0) 52%),
       linear-gradient(180deg, #0d0e10 0%, #0a0b0c 100%);
     background-attachment: fixed;
     font-feature-settings: "cv11", "ss01";
@@ -56,7 +86,7 @@
   }
 
   ::selection {
-    background-color: rgba(184, 242, 92, 0.24);
+    background-color: rgb(var(--glow) / 0.22);
     color: #f1f0eb;
   }
 
@@ -68,9 +98,20 @@
     }
   }
 
-  /* Custom scrollbar, themed to the app: only visible when scrolling is really
-     needed, thin, carbon track, a muted instrument-gray thumb that hints signal
-     green on hover. */
+  /* While the theme is switching, interpolate colours (not layout) for 250ms.
+     Scoped to the switch moment via a class on <html> so it never slows hover. */
+  html.theme-anim,
+  html.theme-anim * {
+    transition:
+      background-color 250ms ease,
+      border-color 250ms ease,
+      color 250ms ease,
+      fill 250ms ease,
+      stroke 250ms ease,
+      box-shadow 250ms ease !important;
+  }
+
+  /* Custom scrollbar, themed to the app: thin, carbon track, a muted thumb. */
   * {
     scrollbar-width: thin;
     scrollbar-color: #2c2f32 transparent;
@@ -89,7 +130,7 @@
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #465032;
+    background: #3a3d42;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-corner {
@@ -118,9 +159,9 @@
     @apply inline-flex items-center gap-1.5 rounded-badge px-3 py-1 text-micro font-semibold;
   }
 
-  /* Signature brand gradient (the signal): a precise green wash. */
+  /* Signature brand gradient (the accent wash). */
   .brand-gradient {
-    background-image: linear-gradient(135deg, #b8f25c 0%, #93d24a 100%);
+    background-image: linear-gradient(135deg, rgb(var(--a500)) 0%, rgb(var(--a400)) 100%);
   }
 }
 
@@ -140,7 +181,7 @@
     background-image: linear-gradient(
       100deg,
       rgba(255, 255, 255, 0) 30%,
-      rgba(184, 242, 92, 0.14) 50%,
+      rgb(var(--glow) / 0.14) 50%,
       rgba(255, 255, 255, 0) 70%
     );
     background-size: 200% 100%;
@@ -150,19 +191,19 @@
   }
   /* Signature pattern language: a faint precision dot mesh. */
   .pattern-dots {
-    background-image: radial-gradient(rgba(184, 242, 92, 0.10) 1px, transparent 1px);
+    background-image: radial-gradient(rgb(var(--glow) / 0.10) 1px, transparent 1px);
     background-size: 24px 24px;
   }
-  /* A fine technical grid — the precision-tool texture. */
+  /* A fine technical grid - the precision-tool texture. */
   .pattern-grid {
     background-image:
-      linear-gradient(rgba(184, 242, 92, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(184, 242, 92, 0.06) 1px, transparent 1px);
+      linear-gradient(rgb(var(--glow) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--glow) / 0.06) 1px, transparent 1px);
     background-size: 44px 44px;
   }
-  /* Signal-green gradient text, used sparingly for brand emphasis. */
+  /* Accent gradient text, used sparingly for brand emphasis. */
   .text-brand {
-    background-image: linear-gradient(120deg, #b8f25c 0%, #d6fa95 60%, #93d24a 100%);
+    background-image: linear-gradient(120deg, rgb(var(--a500)) 0%, rgb(var(--a700)) 60%, rgb(var(--a400)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

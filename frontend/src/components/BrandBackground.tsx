@@ -9,7 +9,7 @@ import { motion, useReducedMotion } from "framer-motion";
  *   3. a soft film-grain noise,
  *   4. one very soft signal-green glow.
  *
- * Almost no motion — only the glow breathes slowly, and it stops under
+ * Almost no motion - only the glow breathes slowly, and it stops under
  * prefers-reduced-motion.
  */
 
@@ -84,7 +84,7 @@ export function BrandBackground({
             width: 720,
             height: 520,
             background:
-              "radial-gradient(circle, rgba(184,242,92,0.09) 0%, rgba(184,242,92,0) 70%)",
+              "radial-gradient(circle, rgb(var(--glow)/0.09) 0%, rgb(var(--glow)/0) 70%)",
             ...glowStyle,
           }}
           animate={reduce ? undefined : { opacity: [0.7, 1, 0.7], scale: [1, 1.04, 1] }}

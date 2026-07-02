@@ -1,11 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { applyTheme, getStoredTheme } from "./theme";
 import "./index.css";
+
+// Restore the saved accent theme before the first paint so the UI renders in
+// the correct theme with no flash or reload. Defaults to Carbon White.
+applyTheme(getStoredTheme(), false);
 
 /**
  * Scale the whole UI proportionally with the window so content, type and visuals
- * grow on large / full-screen windows and shrink to fit small ones — the app is
+ * grow on large / full-screen windows and shrink to fit small ones - the app is
  * designed around a ~1536×850 desktop frame.
  *
  * Because `zoom` scales layout but leaves `vh`/`dvh` measuring the *physical*

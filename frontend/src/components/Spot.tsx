@@ -30,7 +30,7 @@ const GLYPH: Record<SpotMotif, React.ComponentType<LucideProps>> = {
 };
 
 /**
- * A signature "spot illustration": one consistent composition — a soft stage
+ * A signature "spot illustration": one consistent composition - a soft stage
  * tile with a gradient wash, an orbit ring, a central brand-gradient disc with a
  * glyph, drifting sparks and an aura glow. Every motif shares this exact anatomy
  * so the whole set reads as one illustration family that belongs to this product.
@@ -48,11 +48,11 @@ export function Spot({
   const green = tone === "green";
   // Both tones now read in the signal-green family; "green" is a touch brighter.
   const aura = green
-    ? "radial-gradient(circle, rgba(184,242,92,0.34) 0%, rgba(184,242,92,0) 70%)"
+    ? "radial-gradient(circle, rgb(var(--glow)/0.34) 0%, rgb(var(--glow)/0) 70%)"
     : "radial-gradient(circle, rgba(147,210,74,0.28) 0%, rgba(147,210,74,0) 70%)";
   const wash = green
-    ? "linear-gradient(135deg, #b8f25c 0%, #93d24a 100%)"
-    : "linear-gradient(135deg, #93d24a 0%, #6f9a2f 100%)";
+    ? "linear-gradient(135deg, rgb(var(--a500)) 0%, rgb(var(--a400)) 100%)"
+    : "linear-gradient(135deg, rgb(var(--a400)) 0%, rgb(var(--a300)) 100%)";
 
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }}>

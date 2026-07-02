@@ -87,7 +87,7 @@ export function Dashboard() {
                     layoutId="nav-active"
                     // Centre via top/bottom + auto margins (no transform) so the
                     // layout animation's own transform doesn't fight the centering.
-                    className="absolute left-0 top-0 bottom-0 my-auto h-5 w-[3px] rounded-r-full bg-signal shadow-[0_0_10px_rgba(184,242,92,0.8)]"
+                    className="absolute left-0 top-0 bottom-0 my-auto h-5 w-[3px] rounded-r-full bg-signal shadow-[0_0_10px_rgb(var(--glow)/0.8)]"
                   />
                 )}
                 <span className={on ? "text-sky-500" : "text-ink-400"}>{SECTION_ICON[item.id]}</span>
@@ -107,7 +107,7 @@ export function Dashboard() {
         </div>
       </aside>
 
-      {/* Main — a fixed-height column whose content scrolls internally, so the
+      {/* Main - a fixed-height column whose content scrolls internally, so the
           scrollbar lives below the header and never touches the title bar. */}
       <div className="ml-64 min-w-0 h-full flex flex-col">
         <header className="shrink-0 h-[72px] bg-[#0d0e10]/85 backdrop-blur border-b border-mist-200 flex items-center justify-between px-8 pr-[150px]">

@@ -9,7 +9,9 @@ export default {
         // instrument gray secondary. Named tokens for direct, intentional use.
         carbon: "#0C0D0E",
         paper: "#F1F0EB",
-        signal: "#B8F25C",
+        // Accent (was signal green): now theme-driven. Carbon White is the
+        // default; Signal Green is preserved. Driven by CSS vars in index.css.
+        signal: "rgb(var(--a500) / <alpha-value>)",
         instrument: "#878C89",
 
         // ── Semantic scales (names kept from the original light theme so the
@@ -33,41 +35,42 @@ export default {
           400: "#6C716E", // dimmer gray — captions / hints
           300: "#4C514E", // dimmest — inactive / disabled
         },
-        // Primary accent → signal green (with dark green-tinted surfaces low,
-        // bright signal high). Was the blue "sky" scale.
+        // Primary accent → theme accent (Carbon White default, Signal Green
+        // preserved). Every step maps to a CSS var so the whole app re-tints
+        // when `data-theme` flips. Was the blue "sky" scale.
         sky: {
-          50: "#18220F", // deep green-black chip surface
-          100: "#22301A", // soft border
-          200: "#39511F", // hover border
-          300: "#5C8A32", // ring / active border
-          400: "#93D24A",
-          500: "#B8F25C", // signal green
-          600: "#C7F776", // bright green text on dark
-          700: "#D6FA95",
+          50: "rgb(var(--a50) / <alpha-value>)", // chip surface
+          100: "rgb(var(--a100) / <alpha-value>)", // soft border
+          200: "rgb(var(--a200) / <alpha-value>)", // hover border
+          300: "rgb(var(--a300) / <alpha-value>)", // ring / active border
+          400: "rgb(var(--a400) / <alpha-value>)",
+          500: "rgb(var(--a500) / <alpha-value>)", // accent
+          600: "rgb(var(--a600) / <alpha-value>)", // bright accent text
+          700: "rgb(var(--a700) / <alpha-value>)",
         },
-        // Secondary brand accent → unified onto signal green (was violet "iris").
+        // Secondary brand accent → unified onto the theme accent (was "iris").
         iris: {
-          50: "#18220F",
-          100: "#22301A",
-          200: "#39511F",
-          300: "#5C8A32",
-          400: "#93D24A",
-          500: "#B8F25C",
-          600: "#C7F776",
-          700: "#D6FA95",
+          50: "rgb(var(--a50) / <alpha-value>)",
+          100: "rgb(var(--a100) / <alpha-value>)",
+          200: "rgb(var(--a200) / <alpha-value>)",
+          300: "rgb(var(--a300) / <alpha-value>)",
+          400: "rgb(var(--a400) / <alpha-value>)",
+          500: "rgb(var(--a500) / <alpha-value>)",
+          600: "rgb(var(--a600) / <alpha-value>)",
+          700: "rgb(var(--a700) / <alpha-value>)",
         },
-        // Success → signal green family.
+        // Success → theme accent family.
         sage: {
-          50: "#16220E",
-          100: "#1E3015",
-          400: "#93D24A",
-          500: "#B8F25C",
-          600: "#C7F776",
+          50: "rgb(var(--a50) / <alpha-value>)",
+          100: "rgb(var(--a100) / <alpha-value>)",
+          400: "rgb(var(--a400) / <alpha-value>)",
+          500: "rgb(var(--a500) / <alpha-value>)",
+          600: "rgb(var(--a600) / <alpha-value>)",
         },
-        // Faint highlight, greened.
+        // Faint highlight, theme accent.
         aqua: {
-          300: "#5C8A32",
-          400: "#93D24A",
+          300: "rgb(var(--a300) / <alpha-value>)",
+          400: "rgb(var(--a400) / <alpha-value>)",
         },
       },
       fontFamily: {
@@ -115,10 +118,10 @@ export default {
         soft: "0 2px 10px -4px rgba(0,0,0,0.55)",
         card: "inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.5), 0 22px 50px -26px rgba(0,0,0,0.8)",
         tile: "inset 0 1px 0 0 rgba(255,255,255,0.03), 0 1px 2px rgba(0,0,0,0.45), 0 14px 34px -24px rgba(0,0,0,0.75)",
-        // Signature signal-green glow for primary actions.
-        button: "0 1px 2px rgba(0,0,0,0.45), 0 14px 32px -14px rgba(184,242,92,0.4)",
-        glow: "0 0 0 1px rgba(184,242,92,0.16), 0 0 60px -10px rgba(184,242,92,0.42)",
-        glowSoft: "0 0 46px -14px rgba(184,242,92,0.34)",
+        // Signature accent glow for primary actions (theme-driven).
+        button: "0 1px 2px rgba(0,0,0,0.45), 0 14px 32px -14px rgb(var(--glow) / 0.4)",
+        glow: "0 0 0 1px rgb(var(--glow) / 0.16), 0 0 60px -10px rgb(var(--glow) / 0.42)",
+        glowSoft: "0 0 46px -14px rgb(var(--glow) / 0.34)",
       },
       keyframes: {
         fadeUp: {

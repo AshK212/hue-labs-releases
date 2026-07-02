@@ -4,7 +4,7 @@ import { Spinner } from "./Icons";
 import { useCountUp } from "./useCountUp";
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Shared class tokens — one source of truth so the same look isn't re-typed.
+ * Shared class tokens - one source of truth so the same look isn't re-typed.
  * ────────────────────────────────────────────────────────────────────────── */
 export const tone = {
   label: "text-micro font-mono uppercase tracking-wide text-ink-400",
@@ -15,7 +15,7 @@ export const tone = {
 /* ── BrandStatusDot ───────────────────────────────────────────────────────*/
 type DotTone = "signal" | "gray" | "amber";
 const DOT: Record<DotTone, string> = {
-  signal: "bg-signal shadow-[0_0_8px_rgba(184,242,92,0.9)]",
+  signal: "bg-signal shadow-[0_0_8px_rgb(var(--glow)/0.9)]",
   gray: "bg-ink-400",
   amber: "bg-amber-400",
 };
@@ -247,7 +247,7 @@ export function BrandProgressRing({
         style={{
           width: size * 0.86,
           height: size * 0.86,
-          background: "radial-gradient(circle, rgba(184,242,92,0.28) 0%, rgba(184,242,92,0) 70%)",
+          background: "radial-gradient(circle, rgb(var(--glow)/0.28) 0%, rgb(var(--glow)/0) 70%)",
         }}
       />
       <svg width={size} height={size} className={percent === null ? "animate-spin-slow" : ""}>
@@ -267,8 +267,8 @@ export function BrandProgressRing({
         />
         <defs>
           <linearGradient id="brandRing" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#93D24A" />
-            <stop offset="100%" stopColor="#B8F25C" />
+            <stop offset="0%" stopColor="rgb(var(--a400))" />
+            <stop offset="100%" stopColor="rgb(var(--a500))" />
           </linearGradient>
         </defs>
       </svg>
@@ -280,7 +280,7 @@ export function BrandProgressRing({
 /* ── BrandStepList ────────────────────────────────────────────────────────*/
 export interface Step {
   label: string;
-  /** done | active | pending — if omitted, derived from `activeIndex`. */
+  /** done | active | pending - if omitted, derived from `activeIndex`. */
   state?: "done" | "active" | "pending";
 }
 /** An animated checklist with a drawn checkmark. Drives scan/optimize/run views. */

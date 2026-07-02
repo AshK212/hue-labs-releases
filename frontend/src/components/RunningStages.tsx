@@ -11,7 +11,7 @@ const STAGES = [
 /**
  * A calm staged view for benchmarks: an indeterminate signal-green ring with the
  * live icon, and an honest step list beneath. The stages reflect what is actually
- * happening — we never show a fake percentage. Stages advance on a gentle timer
+ * happening - we never show a fake percentage. Stages advance on a gentle timer
  * and hold on the last one until the real result arrives and the parent unmounts.
  */
 export function RunningStages({

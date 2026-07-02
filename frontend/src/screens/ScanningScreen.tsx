@@ -75,7 +75,7 @@ export function ScanningScreen() {
   return (
     <Column width="wide">
       <div className="grid lg:grid-cols-[auto_1fr] gap-10 lg:gap-14 items-center">
-        {/* Left — scan ring */}
+        {/* Left - scan ring */}
         <div className="flex flex-col items-center text-center mx-auto">
           <BrandProgressRing percent={pct} size={208} stroke={10}>
             <div>
@@ -92,7 +92,7 @@ export function ScanningScreen() {
           <p className="mt-1.5 text-caption text-ink-500">This only takes a moment.</p>
         </div>
 
-        {/* Right — detected checklist */}
+        {/* Right - detected checklist */}
         <div className="surface p-2.5 divide-y divide-mist-200">
           {items.map((it, i) => {
             const done = i < revealed && !!it.value;
@@ -119,7 +119,7 @@ export function ScanningScreen() {
                   <div className="min-w-0">
                     <div className="text-micro font-mono uppercase tracking-wide text-ink-400">{it.label}</div>
                     <div className="text-body font-medium text-ink-800 truncate" title={it.value}>
-                      {done ? it.value : current ? "Checking…" : "—"}
+                      {done ? it.value : current ? "Checking…" : "-"}
                     </div>
                   </div>
                 </div>

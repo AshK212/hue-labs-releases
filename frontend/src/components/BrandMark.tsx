@@ -5,7 +5,7 @@
  * SVG glyph below mirrors it for the splash screen and as a crisp fallback.
  */
 
-/** The SVG glyph — mirrors the client logo (square frame, open lower-right + block). */
+/** The SVG glyph - mirrors the client logo (square frame, open lower-right + block). */
 export function BrandGlyph({ className = "w-full h-full" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -14,32 +14,26 @@ export function BrandGlyph({ className = "w-full h-full" }: { className?: string
       {/* open the lower-right corner (paint carbon over the frame) */}
       <rect x="16.5" y="16.5" width="11" height="11" fill="#0C0D0E" />
       {/* signal-green block in the opened corner */}
-      <rect x="17.6" y="17.6" width="6.6" height="6.6" rx="1.3" fill="#B8F25C" />
+      <rect x="17.6" y="17.6" width="6.6" height="6.6" rx="1.3" fill="rgb(var(--a500))" />
     </svg>
   );
 }
 
-/** The mark at a given pixel size (uses the exact client logo asset). */
+/** The mark at a given pixel size. Rendered as the themeable SVG glyph so the
+ *  accent block follows the active theme (white in Carbon, green in Signal). */
 export function BrandMark({ size = 30 }: { size?: number }) {
   return (
     <span
       className="relative inline-grid place-items-center"
       style={{ width: size, height: size }}
     >
-      {/* faint signal glow behind the mark */}
+      {/* faint accent glow behind the mark */}
       <span
         aria-hidden
         className="absolute inset-0 blur-md"
-        style={{ background: "radial-gradient(circle, rgba(184,242,92,0.22), rgba(184,242,92,0) 70%)" }}
+        style={{ background: "radial-gradient(circle, rgb(var(--glow)/0.22), rgb(var(--glow)/0) 70%)" }}
       />
-      <img
-        src="/logo.png"
-        alt="Local AI Optimizer"
-        width={size}
-        height={size}
-        className="relative block"
-        style={{ width: size, height: size }}
-      />
+      <BrandGlyph className="relative block w-full h-full" />
     </span>
   );
 }

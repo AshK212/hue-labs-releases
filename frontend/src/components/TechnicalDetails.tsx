@@ -1,7 +1,7 @@
 /**
  * A small, collapsed-by-default disclosure that surfaces the raw runtime
  * settings (e.g. num_gpu, num_batch) for curious users, while keeping the main
- * UI free of jargon. Reads real values straight from the optimization profile —
+ * UI free of jargon. Reads real values straight from the optimization profile -
  * nothing invented.
  */
 export function TechnicalDetails({ options }: { options: Record<string, unknown> }) {

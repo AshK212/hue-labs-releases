@@ -17,12 +17,12 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
   return (
     <>
       {/* Slim animated progress bar, sat along the bottom edge of the header so
-          it reads as a progress underline — clear of the window controls at the
+          it reads as a progress underline - clear of the window controls at the
           top and the step label. */}
       {flowIndex !== -1 && (
         <div className="fixed top-[82px] inset-x-0 z-20 h-[2px] bg-mist-200">
           <div
-            className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-r-full shadow-[0_0_12px_rgba(184,242,92,0.6)] transition-all duration-500 ease-out"
+            className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-r-full shadow-[0_0_12px_rgb(var(--glow)/0.6)] transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>

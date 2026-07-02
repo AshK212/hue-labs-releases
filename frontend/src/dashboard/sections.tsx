@@ -1,5 +1,7 @@
 import { useJourney } from "../journey/JourneyContext";
 import { STEP } from "../journey/steps";
+import { useTheme } from "../ThemeProvider";
+import { THEMES } from "../theme";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
@@ -11,10 +13,12 @@ import {
   Activity,
   ArrowRight,
   Boxes,
+  Check,
   Clock,
   Cpu,
   Database,
   Gauge,
+  Palette,
   Play,
   RefreshCw,
   Settings as SettingsIcon,
@@ -351,13 +355,13 @@ export function BenchmarkSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <DashCard title="Baseline" icon={<Gauge className="w-5 h-5" strokeWidth={1.8} />} index={0}>
           <div className="text-[40px] font-semibold font-mono text-ink-900 tnum">
-            {baseline ? baseline.tokens_per_sec.toFixed(1) : "—"}
+            {baseline ? baseline.tokens_per_sec.toFixed(1) : "-"}
           </div>
           <p className="text-micro font-mono text-ink-400">tokens/sec · default settings</p>
         </DashCard>
         <DashCard title="Optimized" icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />} index={1}>
           <div className="text-[40px] font-semibold font-mono text-sage-600 tnum">
-            {optimized ? optimized.tokens_per_sec.toFixed(1) : "—"}
+            {optimized ? optimized.tokens_per_sec.toFixed(1) : "-"}
           </div>
           <p className="text-micro font-mono text-ink-400">tokens/sec · tuned settings</p>
         </DashCard>
@@ -410,6 +414,13 @@ export function SettingsSection() {
   const { reset } = useJourney();
   return (
     <div className="space-y-5 max-w-[40rem]">
+      <DashCard title="Appearance" icon={<Palette className="w-5 h-5" strokeWidth={1.8} />}>
+        <p className="text-caption text-ink-500 leading-relaxed">
+          Choose the accent for the whole app. Both keep the same calm, dark carbon base.
+        </p>
+        <ThemePicker />
+      </DashCard>
+
       <DashCard title="Privacy" icon={<ShieldCheck className="w-5 h-5" strokeWidth={1.8} />}>
         <p className="text-caption text-ink-500 leading-relaxed">
           Everything runs locally on your computer. Models and benchmarks never leave your
@@ -438,6 +449,55 @@ export function SettingsSection() {
           </Button>
         </div>
       </DashCard>
+    </div>
+  );
+}
+
+function ThemePicker() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Accent theme"
+      className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
+    >
+      {THEMES.map((opt) => {
+        const selected = theme === opt.id;
+        return (
+          <button
+            key={opt.id}
+            role="radio"
+            aria-checked={selected}
+            onClick={() => setTheme(opt.id)}
+            className={[
+              "group flex items-center gap-3.5 p-3.5 rounded-tile border text-left transition-all duration-200",
+              selected
+                ? "bg-mist-100 !border-sky-300 ring-2 ring-sky-100 shadow-glowSoft"
+                : "bg-mist-50 border-mist-200 hover:!border-sky-300/60 hover:-translate-y-[1px]",
+            ].join(" ")}
+          >
+            <span
+              aria-hidden
+              className="flex-shrink-0 w-9 h-9 rounded-full ring-1 ring-inset ring-white/15 shadow-inner"
+              style={{ backgroundColor: opt.swatch }}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-semibold text-ink-900">{opt.name}</span>
+              <span className="block text-micro text-ink-400 truncate">{opt.tagline}</span>
+            </span>
+            <span
+              className={[
+                "flex-shrink-0 grid place-items-center w-6 h-6 rounded-full border transition-colors",
+                selected
+                  ? "bg-sky-500 border-transparent text-carbon"
+                  : "border-mist-300 text-transparent group-hover:border-sky-300/60",
+              ].join(" ")}
+            >
+              <Check className="w-4 h-4" strokeWidth={2.5} />
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

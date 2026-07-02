@@ -39,7 +39,7 @@ export function ResultsScreen() {
           className="absolute -top-10 left-1/2 -translate-x-1/2 w-[420px] h-[280px] blur-3xl animate-breathe pointer-events-none"
           style={{
             background: improved
-              ? "radial-gradient(50% 50% at 50% 50%, rgba(184,242,92,0.22), rgba(184,242,92,0) 70%)"
+              ? "radial-gradient(50% 50% at 50% 50%, rgb(var(--glow)/0.22), rgb(var(--glow)/0) 70%)"
               : "radial-gradient(50% 50% at 50% 50%, rgba(135,140,137,0.14), rgba(135,140,137,0) 70%)",
           }}
         />
@@ -51,11 +51,11 @@ export function ResultsScreen() {
                 <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full -rotate-90">
                   <circle cx="32" cy="32" r="29" fill="none" stroke="#282B2E" strokeWidth="2.5" />
                   <motion.circle
-                    cx="32" cy="32" r="29" fill="none" stroke="#B8F25C" strokeWidth="2.5" strokeLinecap="round"
+                    cx="32" cy="32" r="29" fill="none" stroke="rgb(var(--a500))" strokeWidth="2.5" strokeLinecap="round"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
                     transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-                    style={{ filter: "drop-shadow(0 0 6px rgba(184,242,92,0.5))" }}
+                    style={{ filter: "drop-shadow(0 0 6px rgb(var(--glow)/0.5))" }}
                   />
                 </svg>
                 <span className="grid place-items-center w-11 h-11 rounded-full bg-sage-50 text-sage-500">
@@ -83,7 +83,7 @@ export function ResultsScreen() {
           </h1>
           <p className="text-body text-ink-500 mt-2">
             {improved
-              ? "Measured on this machine — same prompt, same model."
+              ? "Measured on this machine. Same prompt, same model."
               : "That is okay. The gain depends on your machine."}
           </p>
         </Reveal>

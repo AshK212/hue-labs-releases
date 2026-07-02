@@ -6,14 +6,14 @@ import { motion, useReducedMotion } from "framer-motion";
  *   · the top face catches faint ambient sky light, the sides sit in shadow, and
  *     the base is uplit by the scan point's glow bleeding through the glass;
  *   · the hidden back edges are drawn faintly so the cube reads as transparent;
- *   · edges vary in brightness by depth — near/front brightest, far edges dim;
+ *   · edges vary in brightness by depth - near/front brightest, far edges dim;
  *   · a full radar floor of many rings (with distinct, receding heights) sits
  *     under a bright scan point, threaded by faint vertical light beams;
  *   · it floats straight up/down (never rotates) so the centre edge stays aligned
  *     with the scan point and rings.
- * Pure SVG + Framer Motion — crisp, calm, still under prefers-reduced-motion.
+ * Pure SVG + Framer Motion - crisp, calm, still under prefers-reduced-motion.
  *
- * Brand: Carbon #0C0D0E · Paper #F1F0EB · Signal Green #B8F25C · Instrument #878C89
+ * Brand: Carbon #0C0D0E · Paper #F1F0EB · Signal Green rgb(var(--a500)) · Instrument #878C89
  */
 
 type Pt = { x: number; y: number };
@@ -30,12 +30,12 @@ const C = P(240, 168); // front-top (top of the middle vertical edge)
 const BL = P(128, 262); // bottom-left
 const BR = P(352, 262); // bottom-right
 const BC = P(240, 318); // front-bottom
-const BB = P(240, 206); // back-bottom (hidden — drawn faint for the glass look)
+const BB = P(240, 206); // back-bottom (hidden - drawn faint for the glass look)
 
 const SCAN = P(240, 384);
 const FLOOR_Y = 388;
-const RATIO = 0.34; // ry / rx — tilt of the floor rings (higher = more forward)
-const CONE = 48; // descent as a ring grows — a visible but gentle height step
+const RATIO = 0.34; // ry / rx - tilt of the floor rings (higher = more forward)
+const CONE = 48; // descent as a ring grows - a visible but gentle height step
 
 const poly = (...pts: Pt[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
 const ln = (a: Pt, b: Pt) => ({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
@@ -60,7 +60,7 @@ const NODES = [T, L, R, C, BL, BR, BC];
 // (no static/paused rings), all at one constant speed.
 const RIPPLE_COUNT = 7;
 const RIPPLE_DUR = 9;
-// Static fallback for reduced-motion only — rings descend as they widen (cone).
+// Static fallback for reduced-motion only - rings descend as they widen (cone).
 const STATIC_RINGS = Array.from({ length: 7 }, (_, i) => {
   const t = i / 6;
   const rx = 20 + i * 34;
@@ -77,7 +77,7 @@ const PARTICLES = [
   { x: 322, y: 320, r: 1.3, d: 1.1 },
 ];
 
-const GREEN = "#B8F25C";
+const GREEN = "rgb(var(--a500))";
 
 // One ring, born at the centre and expanding outward at a CONSTANT speed
 // (rx/ry/cy interpolate linearly across the whole duration); opacity fades in
@@ -89,7 +89,7 @@ function Ripple({ delay }: { delay: number }) {
       fill="none"
       stroke={GREEN}
       strokeWidth={0.9}
-      style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.4))" }}
+      style={{ filter: "drop-shadow(0 0 3px rgb(var(--glow)/0.4))" }}
       initial={{ rx: 8, ry: 8 * RATIO, cy: FLOOR_Y - 4, opacity: 0 }}
       animate={{
         // born small at the high centre and visible from the start, expanding
@@ -128,23 +128,23 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
             <stop offset="100%" stopColor="rgba(150,198,88,0.11)" />
           </linearGradient>
           <radialGradient id="baseLight" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(184,242,92,0.24)" />
-            <stop offset="46%" stopColor="rgba(184,242,92,0.07)" />
-            <stop offset="100%" stopColor="rgba(184,242,92,0)" />
+            <stop offset="0%" stopColor="rgb(var(--glow)/0.24)" />
+            <stop offset="46%" stopColor="rgb(var(--glow)/0.07)" />
+            <stop offset="100%" stopColor="rgb(var(--glow)/0)" />
           </radialGradient>
           <radialGradient id="scanGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(224,252,168,0.95)" />
-            <stop offset="30%" stopColor="rgba(184,242,92,0.55)" />
-            <stop offset="100%" stopColor="rgba(184,242,92,0)" />
+            <stop offset="0%" stopColor="rgb(var(--node)/0.95)" />
+            <stop offset="30%" stopColor="rgb(var(--glow)/0.55)" />
+            <stop offset="100%" stopColor="rgb(var(--glow)/0)" />
           </radialGradient>
           <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(184,242,92,0)" />
-            <stop offset="100%" stopColor="rgba(184,242,92,0.5)" />
+            <stop offset="0%" stopColor="rgb(var(--glow)/0)" />
+            <stop offset="100%" stopColor="rgb(var(--glow)/0.5)" />
           </linearGradient>
           <linearGradient id="guide" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(184,242,92,0)" />
-            <stop offset="52%" stopColor="rgba(184,242,92,0.1)" />
-            <stop offset="100%" stopColor="rgba(184,242,92,0)" />
+            <stop offset="0%" stopColor="rgb(var(--glow)/0)" />
+            <stop offset="52%" stopColor="rgb(var(--glow)/0.1)" />
+            <stop offset="100%" stopColor="rgb(var(--glow)/0)" />
           </linearGradient>
           {/* soft bloom so the wireframe reads as a glowing hologram, not hard lines */}
           <filter id="edgeGlow" x="-40%" y="-40%" width="180%" height="180%">
@@ -172,7 +172,7 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
         {/* drifting particles */}
         {PARTICLES.map((p, i) => (
           <motion.circle key={i} cx={p.x} r={p.r} fill={GREEN}
-            style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.7))" }}
+            style={{ filter: "drop-shadow(0 0 3px rgb(var(--glow)/0.7))" }}
             initial={{ cy: p.y, opacity: 0.32 }}
             animate={reduce ? { cy: p.y, opacity: 0.32 } : { cy: [p.y, p.y - 12, p.y], opacity: [0.16, 0.46, 0.16] }}
             transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: p.d }} />
@@ -184,7 +184,7 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           ? STATIC_RINGS.map((r, i) => (
               <ellipse key={i} cx={SCAN.x} cy={r.cy} rx={r.rx} ry={r.ry}
                 fill="none" stroke={GREEN} strokeWidth={0.9} opacity={r.opacity * 0.6}
-                style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.4))" }} />
+                style={{ filter: "drop-shadow(0 0 3px rgb(var(--glow)/0.4))" }} />
             ))
           : Array.from({ length: RIPPLE_COUNT }, (_, i) => (
               <Ripple key={i} delay={(i * RIPPLE_DUR) / RIPPLE_COUNT} />
@@ -193,7 +193,7 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
         {/* light beam from the cube base down to the scan point (always centered) */}
         <rect x={BC.x - 1.5} y={300} width="3" height={SCAN.y - 300} fill="url(#beam)" style={{ filter: "blur(0.6px)" }} />
         {!reduce && (
-          <motion.circle cx={BC.x} r={3.6} fill="rgba(224,252,168,0.9)" style={{ filter: "blur(2px)" }}
+          <motion.circle cx={BC.x} r={3.6} fill="rgb(var(--node)/0.9)" style={{ filter: "blur(2px)" }}
             initial={{ cy: SCAN.y, opacity: 0 }}
             // starts at the scan point (where the rings begin) and rises at a
             // constant speed up to the cube base, fading as it goes.
@@ -208,7 +208,7 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           style={{ transformOrigin: `${SCAN.x}px ${SCAN.y}px` }}
         >
           <ellipse cx={SCAN.x} cy={SCAN.y} rx="52" ry={52 * RATIO} fill="url(#scanGlow)" />
-          <circle cx={SCAN.x} cy={SCAN.y} r="3.4" fill="#EAFCB0" style={{ filter: "drop-shadow(0 0 6px rgba(184,242,92,0.95))" }} />
+          <circle cx={SCAN.x} cy={SCAN.y} r="3.4" fill="rgb(var(--node))" style={{ filter: "drop-shadow(0 0 6px rgb(var(--glow)/0.95))" }} />
         </motion.g>
 
         {/* ── the floating cube (vertical float only) ─────────────────────── */}
@@ -216,7 +216,7 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
           animate={reduce ? undefined : { y: [-6, 6, -6] }}
           transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
         >
-          {/* hidden back edges — faint, so the cube reads as transparent glass */}
+          {/* hidden back edges - faint, so the cube reads as transparent glass */}
           <g stroke={GREEN} strokeWidth="0.9" strokeLinecap="round" opacity="0.2">
             <line {...ln(BB, T)} />
             <line {...ln(BB, BL)} />
@@ -258,12 +258,12 @@ export function BrandHeroVisual({ className = "" }: { className?: string }) {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
           </g>
 
-          {/* corner nodes — soft, brighter near the viewer, dimmer at the back */}
+          {/* corner nodes - soft, brighter near the viewer, dimmer at the back */}
           {NODES.map((n, i) => {
             const near = n.y > 200 ? 0.75 : 0.45;
             return (
-              <motion.circle key={i} cx={n.x} cy={n.y} fill="#EAFCB0"
-                style={{ filter: "drop-shadow(0 0 3px rgba(184,242,92,0.7))" }}
+              <motion.circle key={i} cx={n.x} cy={n.y} fill="rgb(var(--node))"
+                style={{ filter: "drop-shadow(0 0 3px rgb(var(--glow)/0.7))" }}
                 initial={{ r: 2, opacity: near * 0.6 }}
                 animate={reduce ? { r: 2, opacity: near } : { opacity: [near * 0.55, near, near * 0.55], r: [1.7, 2.2, 1.7] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.28 }} />

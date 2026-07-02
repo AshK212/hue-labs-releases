@@ -36,13 +36,13 @@ export function WindowControls() {
 
   return (
     <>
-      {/* draggable title-bar strip — everything except the controls on the right */}
+      {/* draggable title-bar strip - everything except the controls on the right */}
       <div
         className="fixed top-0 left-0 h-9 z-[90] app-drag"
         style={{ right: CONTROLS_W }}
       />
 
-      {/* window controls — no drag region beneath, so they click normally */}
+      {/* window controls - no drag region beneath, so they click normally */}
       <div className="fixed top-0 right-0 z-[110] flex items-stretch h-9 select-none">
         <button
           type="button"

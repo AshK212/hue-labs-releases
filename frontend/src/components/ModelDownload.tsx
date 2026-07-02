@@ -37,12 +37,12 @@ function gb(n: number): string {
   return `${Math.max(1, Math.round(n / 1024 ** 2))} MB`;
 }
 function speedText(bps: number): string {
-  if (bps <= 0) return "—";
+  if (bps <= 0) return "-";
   const mb = bps / 1024 ** 2;
   return mb >= 1 ? `${mb.toFixed(1)} MB/s` : `${Math.max(1, Math.round(bps / 1024))} KB/s`;
 }
 function etaText(sec: number | null): string {
-  if (sec === null || !isFinite(sec) || sec <= 0) return "—";
+  if (sec === null || !isFinite(sec) || sec <= 0) return "-";
   if (sec >= 90) return `about ${Math.round(sec / 60)} min`;
   return `${Math.max(1, Math.round(sec))} sec`;
 }
@@ -85,7 +85,7 @@ export function ModelDownload({ model, label, sizeGb, onComplete, onContinue }: 
         <Reveal index={3} className="mt-8 w-full max-w-[26rem]">
           <div className="grid grid-cols-2 gap-3">
             <Metric label="Downloaded" value={gb(dl.completedBytes)} />
-            <Metric label="Remaining" value={dl.totalBytes > 0 ? gb(remaining) : "—"} />
+            <Metric label="Remaining" value={dl.totalBytes > 0 ? gb(remaining) : "-"} />
             <Metric label="Speed" value={speedText(dl.speedBytesPerSec)} />
             <Metric label="Time left" value={etaText(dl.etaSeconds)} />
           </div>

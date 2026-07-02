@@ -51,7 +51,7 @@ export function WelcomeScreen() {
         {/* faint valley glow */}
         <div
           className="absolute left-[58%] top-[46%] w-[520px] h-[360px] -translate-x-1/2 blur-[120px]"
-          style={{ background: "radial-gradient(circle, rgba(184,242,92,0.10), rgba(184,242,92,0) 70%)" }}
+          style={{ background: "radial-gradient(circle, rgb(var(--glow)/0.10), rgb(var(--glow)/0) 70%)" }}
         />
       </div>
 
@@ -77,7 +77,7 @@ export function WelcomeScreen() {
                 variants={item}
                 className="inline-flex items-center gap-2 rounded-badge bg-mist-100/80 backdrop-blur border border-mist-200 pl-2 pr-3 py-1.5 mb-7"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-signal shadow-[0_0_8px_rgba(184,242,92,0.9)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-signal shadow-[0_0_8px_rgb(var(--glow)/0.9)]" />
                 <span className="text-micro font-mono uppercase tracking-wider text-ink-500">
                   Local-first · Optimization tool
                 </span>

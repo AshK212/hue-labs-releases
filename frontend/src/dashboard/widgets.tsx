@@ -57,7 +57,7 @@ export function EmptyState({
   );
 }
 
-/** Kept as a stable alias — the real bar chart lives in the brand chart module. */
+/** Kept as a stable alias - the real bar chart lives in the brand chart module. */
 export function MiniBarChart({ values, height = 120 }: { values: number[]; height?: number }) {
   return <BrandBarChart values={values} height={height} />;
 }
