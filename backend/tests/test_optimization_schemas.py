@@ -62,12 +62,35 @@ def test_failed_benchmark_result_can_be_represented() -> None:
     assert json.loads(failed.model_dump_json())["error_message"]
 
 
+def test_assignment_validation_catches_invalid_values() -> None:
+    from pydantic import ValidationError
+
+    # BenchmarkResult.status is a Literal — an invalid post-construction write raises.
+    result = BenchmarkResult(benchmark_id="b1", candidate_id="c1")
+    raised = False
+    try:
+        result.status = "not_a_valid_status"  # type: ignore[assignment]
+    except ValidationError:
+        raised = True
+    assert raised, "invalid status assignment should raise ValidationError"
+
+    # OptimizationRun mutated fields are validated on assignment too.
+    run = OptimizationRun(run_id="r1")
+    raised = False
+    try:
+        run.baseline_result = "not a benchmark result"  # type: ignore[assignment]
+    except ValidationError:
+        raised = True
+    assert raised, "invalid baseline_result assignment should raise ValidationError"
+
+
 def _run_all() -> None:
     tests = [
         test_optimization_run_can_be_created,
         test_optimization_run_serializes_to_json,
         test_default_schema_version_is_optimization_run_v1,
         test_failed_benchmark_result_can_be_represented,
+        test_assignment_validation_catches_invalid_values,
     ]
     for test in tests:
         test()

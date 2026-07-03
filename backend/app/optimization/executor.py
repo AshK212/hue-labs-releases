@@ -1,9 +1,27 @@
-"""Benchmark executor for the Measured Optimization Engine (Milestone 2, scaffold).
+"""Benchmark executor for the Measured Optimization Engine (Milestone 2).
 
 Runs candidate configurations **sequentially** and maps each real measured run
 into the new :class:`BenchmarkResult` schema, then attaches spill analysis. It
 does not select a winner, recommend a quant, or build a share card — those stay
 in their own modules.
+
+Failure handling
+----------------
+Two kinds of failure are treated differently:
+
+* **Candidate-specific failure** (a bad option, an invalid output, an unexpected
+  error while running one candidate) — recorded as a ``failed`` result; the
+  session **continues** with the remaining candidates.
+* **Infrastructure failure** (Ollama unavailable / unreachable, the model is
+  missing, the backend is down) — recorded for the current candidate and the
+  whole session **stops**, since retrying the rest would fail the same way.
+
+Whether an error is "infrastructure" is decided by an injectable classifier
+(default: :func:`_default_is_infrastructure_error`).
+
+Hardware is detected **once** per session (off the event loop, via
+``asyncio.to_thread``) and reused for every candidate — never re-detected per
+candidate.
 
 Reuse, not duplication
 ----------------------
@@ -26,6 +44,7 @@ populated — unmeasured fields stay ``None``.
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -50,6 +69,46 @@ BenchmarkRunner = Callable[
 _PROMPT_ID = "milestone1-fixed-prompt"
 
 
+class InfrastructureError(Exception):
+    """A failure that dooms the whole session (Ollama/model/backend unavailable).
+
+    Distinct from a candidate-specific failure: the executor records the current
+    candidate as failed and then stops, because the remaining candidates would
+    fail the same way.
+    """
+
+
+# Substrings that mark an error as infrastructure-level rather than candidate-
+# specific. Matched case-insensitively against the error message. These mirror
+# the user-safe messages the Milestone 1 Ollama client raises.
+_INFRA_MESSAGE_MARKERS: tuple[str, ...] = (
+    "couldn't connect to ollama",
+    "make sure the ollama app is running",
+    "couldn't reach ollama",
+    "model not found",
+    "no such model",
+    "not installed",
+    "http 500",
+    "http 502",
+    "http 503",
+    "http 504",
+)
+
+
+def _default_is_infrastructure_error(error: Exception) -> bool:
+    """Classify an error as infrastructure-level (fatal) vs candidate-specific.
+
+    Infrastructure = Ollama unavailable/unreachable, model missing, or backend
+    down. A connection error (by exception type) or a known infra message marks
+    the session as doomed. Timeouts and other per-run errors are treated as
+    candidate-specific so the session can continue.
+    """
+    if "connect" in type(error).__name__.lower():  # ConnectError / ConnectTimeout
+        return True
+    message = str(error).lower()
+    return any(marker in message for marker in _INFRA_MESSAGE_MARKERS)
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -65,6 +124,7 @@ class BenchmarkSession:
     cancelled: bool = False
     started_at: Optional[str] = None
     finished_at: Optional[str] = None
+    aborted: bool = False  # set when an infrastructure failure stopped the session
 
 
 async def _default_benchmark_runner(
@@ -74,16 +134,10 @@ async def _default_benchmark_runner(
 
     The candidate's runtime settings are converted to Ollama options and passed
     explicitly via ``runtime_options`` so the candidate runs with its own config.
-    Imported lazily so this module (and its tests) don't pull in the Ollama HTTP
-    client unless a real run is actually performed.
+    ``hardware`` is resolved once by the executor and passed in; this runner never
+    detects hardware itself. Imported lazily so this module (and its tests) don't
+    pull in the Ollama HTTP client unless a real run is actually performed.
     """
-    if hardware is None:
-        # Hardware is only used by the profile path, but the service signature
-        # requires it; detect on demand for real runs.
-        from app.services import hardware as hardware_service
-
-        hardware = hardware_service.detect_hardware()
-
     from app.optimization.adapter import runtime_to_ollama_options
     from app.services import benchmark as m1_benchmark
 
@@ -145,15 +199,31 @@ class BenchmarkExecutor:
         self,
         benchmark_runner: Optional[BenchmarkRunner] = None,
         spill_detector: Callable = detect_vram_spill,
+        is_infrastructure_error: Callable[[Exception], bool] = _default_is_infrastructure_error,
     ) -> None:
         self._runner: BenchmarkRunner = benchmark_runner or _default_benchmark_runner
         self._detect_spill = spill_detector
+        self._is_infra = is_infrastructure_error
         self.session: Optional[BenchmarkSession] = None
 
     def cancel(self) -> None:
         """Request cancellation. The current candidate finishes; no new one starts."""
         if self.session is not None:
             self.session.cancelled = True
+
+    async def _resolve_hardware(
+        self, hardware: Optional[HardwareInfo]
+    ) -> HardwareInfo:
+        """Return the given hardware, or detect it once — off the event loop.
+
+        Detection shells out to ``nvidia-smi``/PowerShell (blocking), so it runs
+        in a worker thread via ``asyncio.to_thread`` to avoid stalling the loop.
+        """
+        if hardware is not None:
+            return hardware
+        from app.services import hardware as hardware_service
+
+        return await asyncio.to_thread(hardware_service.detect_hardware)
 
     async def execute_candidate(
         self,
@@ -163,13 +233,18 @@ class BenchmarkExecutor:
     ) -> BenchmarkResult:
         """Benchmark one candidate and attach spill analysis.
 
-        Never raises for a benchmark failure — returns a ``failed`` result so the
-        caller can decide whether to stop. ``baseline_result`` (when provided) lets
-        spill detection compare throughput against the baseline.
+        Returns a ``failed`` result for a candidate-specific failure (the caller
+        can continue). Raises :class:`InfrastructureError` for an infrastructure
+        failure (Ollama/model/backend unavailable), signalling the caller to stop.
+        ``baseline_result`` (when provided) lets spill detection compare throughput
+        against the baseline.
         """
+        hardware = await self._resolve_hardware(hardware)
         try:
             legacy = await self._runner(candidate, hardware)
-        except Exception as error:  # noqa: BLE001 - convert any failure to a result
+        except Exception as error:  # noqa: BLE001 - classify, then convert or re-raise
+            if self._is_infra(error):
+                raise InfrastructureError(str(error)) from error
             return _failed_result(candidate, error)
 
         result = _map_result(candidate, legacy)
@@ -186,11 +261,13 @@ class BenchmarkExecutor:
         hardware: Optional[HardwareInfo] = None,
         run_id: str = "",
     ) -> list[BenchmarkResult]:
-        """Execute candidates sequentially. Stop on cancellation or fatal failure.
+        """Execute candidates sequentially, resilient to per-candidate failures.
 
-        The first candidate (the baseline, by generation order) becomes the
-        reference for spill detection on later candidates. A ``failed`` result is
-        treated as fatal: it is recorded and the sequence stops.
+        Hardware is resolved **once** up front and reused for every candidate. A
+        candidate-specific failure is recorded and the session continues; an
+        infrastructure failure is recorded and stops the session. The first
+        *successful* candidate (the baseline, by generation order) becomes the
+        reference for spill detection on later candidates.
         """
         session = BenchmarkSession(
             run_id=run_id,
@@ -198,6 +275,9 @@ class BenchmarkExecutor:
             started_at=_now(),
         )
         self.session = session
+
+        # Detect hardware once, off the event loop, and reuse it for all candidates.
+        hardware = await self._resolve_hardware(hardware)
 
         results: list[BenchmarkResult] = []
         baseline_result: Optional[BenchmarkResult] = None
@@ -207,16 +287,23 @@ class BenchmarkExecutor:
                 break
 
             session.current_candidate = candidate.candidate_id
-            result = await self.execute_candidate(candidate, hardware, baseline_result)
+            try:
+                result = await self.execute_candidate(candidate, hardware, baseline_result)
+            except InfrastructureError as error:
+                # Infrastructure failure: record this candidate, then stop.
+                results.append(_failed_result(candidate, error))
+                session.completed += 1
+                session.aborted = True
+                break
+
             results.append(result)
             session.completed += 1
 
-            # First successfully executed candidate is the baseline reference.
-            if baseline_result is None:
+            # First *successful* candidate is the baseline reference for spill.
+            if baseline_result is None and result.status == "success":
                 baseline_result = result
 
-            if result.status == "failed":
-                break  # fatal — stop the sequence
+            # A candidate-specific failure is recorded but does NOT stop the run.
 
         session.current_candidate = None
         session.finished_at = _now()

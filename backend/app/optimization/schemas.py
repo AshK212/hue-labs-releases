@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas import HardwareInfo
 
@@ -119,7 +119,13 @@ class BenchmarkResult(BaseModel):
     which stays unchanged. A *failed* run is fully representable: set ``status``
     to ``"failed"``, ``valid_output`` to ``False``, and fill ``error_message`` —
     the measured metrics simply stay ``None``.
+
+    ``validate_assignment`` is enabled because the executor mutates fields
+    (``detected_vram_spill`` / ``spill_signals``) after construction; validating
+    on assignment keeps those writes type-safe.
     """
+
+    model_config = ConfigDict(validate_assignment=True)
 
     benchmark_id: str
     candidate_id: str
@@ -238,7 +244,13 @@ class AppInfo(BaseModel):
 
 
 class RunTiming(BaseModel):
-    """Wall-clock envelope for the whole optimization run."""
+    """Wall-clock envelope for the whole optimization run.
+
+    ``validate_assignment`` is enabled because the engine fills these fields after
+    construction (started/completed/duration).
+    """
+
+    model_config = ConfigDict(validate_assignment=True)
 
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
@@ -251,7 +263,13 @@ class OptimizationRun(BaseModel):
     This is the object the engine builds up and the frontend renders. It is the
     single source of truth that share card, submission, telemetry, and QA all
     read from, so keep it JSON-serializable and additive across schema versions.
+
+    ``validate_assignment`` is enabled because the engine mutates most fields
+    (results, winner, recommendation, submission, share card, timing) after the
+    run is constructed; validating on assignment catches bad writes early.
     """
+
+    model_config = ConfigDict(validate_assignment=True)
 
     run_id: str
     schema_version: str = SCHEMA_VERSION

@@ -99,22 +99,39 @@ def test_no_winner_reports_honestly() -> None:
     assert run.recommendation.recommended_candidate_id is None
 
 
-def test_benchmark_failure_does_not_crash() -> None:
+def test_candidate_failure_continues_and_still_finds_winner() -> None:
     async def runner(candidate, hardware):
-        # The first tuned candidate fails → sequence stops (fatal).
+        # One tuned candidate fails (candidate-specific); the rest still run.
         if candidate.candidate_id == "balanced":
-            raise RuntimeError("ollama died mid-run")
+            raise RuntimeError("bad option on this candidate")
         return _legacy(candidate, 20.0 if candidate.candidate_id == "baseline" else 30.0)
 
     engine = MeasuredOptimizationEngine()
     run = asyncio.run(
         engine.optimize("m", hardware=_hardware(), executor=_executor_with(runner))
     )
-    # A run is still returned; the failure is recorded, nothing crashes.
-    statuses = [run.baseline_result.status] + [r.status for r in run.candidate_results]
-    assert "failed" in statuses
+    # A run is returned; the failure is recorded but did NOT abort the session,
+    # so a later successful candidate can still win.
+    statuses = [r.status for r in run.candidate_results]
+    assert "failed" in statuses           # the failure was recorded
+    assert "success" in statuses          # later candidates still ran
+    assert run.winner is not None         # a good candidate still won
+
+
+def test_infrastructure_failure_returns_run_without_crashing() -> None:
+    from app.services.ollama_client import OllamaError
+
+    async def runner(candidate, hardware):
+        raise OllamaError("Couldn't connect to Ollama. Make sure the Ollama app is running...")
+
+    engine = MeasuredOptimizationEngine()
+    run = asyncio.run(
+        engine.optimize("m", hardware=_hardware(), executor=_executor_with(runner))
+    )
+    # Infrastructure failure stops the session, but a valid run is still returned.
     assert run.winner is None
     assert run.recommendation.summary == "No measured improvement was found."
+    assert run.baseline_result.status == "failed"
 
 
 def test_optimization_run_json_serializable() -> None:
@@ -137,7 +154,8 @@ def _run_all() -> None:
         test_successful_flow_selects_winner,
         test_recommendation_generated,
         test_no_winner_reports_honestly,
-        test_benchmark_failure_does_not_crash,
+        test_candidate_failure_continues_and_still_finds_winner,
+        test_infrastructure_failure_returns_run_without_crashing,
         test_optimization_run_json_serializable,
     ]
     for test in tests:

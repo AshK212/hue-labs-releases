@@ -59,24 +59,37 @@ def test_budget_exceeded() -> None:
     assert a.recommendation == "Reduce GPU layers or use a lighter quant."
 
 
-def test_tps_regression() -> None:
+def test_tps_regression_alone_is_advisory() -> None:
+    # Soft signal only → surfaced + raises confidence, but NOT a confirmed spill.
     a = analyze_spill(tokens_per_second=10.0, baseline_tokens_per_second=20.0)
-    assert a.detected is True
+    assert a.detected is False                       # advisory, not confirmed
     assert a.signals == [SIGNAL_TOKENS_PER_SECOND_REGRESSION]
     assert a.confidence == "low"
-    assert a.severity == "low"          # soft signal → not escalated
+    assert a.severity == "low"
     assert a.recommendation == "Reduce context size or batch size."
 
 
-def test_ram_growth() -> None:
+def test_ram_growth_alone_is_advisory() -> None:
     a = analyze_spill(system_ram_growth_mb=4096)
-    assert a.detected is True
+    assert a.detected is False                       # soft signal only
     assert a.signals == [SIGNAL_SYSTEM_RAM_GROWTH]
     assert a.recommendation == "Reduce context size."
 
 
-def test_gpu_pressure() -> None:
-    # 5900 >= 0.95 * 6000 (5700) → pressure.
+def test_soft_signals_alone_never_confirm_spill() -> None:
+    # Two soft signals raise confidence/severity but still don't confirm a spill.
+    a = analyze_spill(
+        tokens_per_second=10.0, baseline_tokens_per_second=20.0,
+        system_ram_growth_mb=4096,
+    )
+    assert a.detected is False
+    assert len(a.signals) == 2
+    assert a.confidence == "medium"                  # confidence still rises
+    assert a.severity == "medium"
+
+
+def test_gpu_pressure_is_a_hard_signal() -> None:
+    # 5900 >= 0.95 * 6000 (5700) → pressure, now a HARD signal → confirmed spill.
     a = analyze_spill(gpu_memory_used_mb=5900, max_allowed_vram_mb=6000)
     assert a.detected is True
     assert a.signals == [SIGNAL_GPU_MEMORY_PRESSURE]
@@ -149,9 +162,10 @@ def _run_all() -> None:
     tests = [
         test_no_spill,
         test_budget_exceeded,
-        test_tps_regression,
-        test_ram_growth,
-        test_gpu_pressure,
+        test_tps_regression_alone_is_advisory,
+        test_ram_growth_alone_is_advisory,
+        test_soft_signals_alone_never_confirm_spill,
+        test_gpu_pressure_is_a_hard_signal,
         test_allocation_warning,
         test_multiple_signals_increase_confidence,
         test_confidence_ladder,

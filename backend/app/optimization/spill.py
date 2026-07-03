@@ -41,11 +41,21 @@ ALL_SPILL_SIGNALS: list[str] = [
     SIGNAL_OLLAMA_ALLOCATION_WARNING,
 ]
 
-# "Hard" signals are direct evidence of running out of VRAM (vs. softer,
-# correlative signals like a TPS dip). They bump severity.
+# "Hard" signals are direct evidence of running out of VRAM. Any hard signal
+# confirms a spill (``detected=True``) and bumps severity.
 _HARD_SIGNALS: set[str] = {
     SIGNAL_ESTIMATED_VRAM_EXCEEDS_BUDGET,
+    SIGNAL_GPU_MEMORY_PRESSURE,
     SIGNAL_OLLAMA_ALLOCATION_WARNING,
+}
+
+# "Soft" signals are correlative, not conclusive (a TPS dip or RAM growth can have
+# non-spill causes). They raise confidence/severity but never *alone* confirm a
+# spill — otherwise a merely-slow candidate would be wrongly flagged and unfairly
+# disqualified during winner selection.
+_SOFT_SIGNALS: set[str] = {
+    SIGNAL_TOKENS_PER_SECOND_REGRESSION,
+    SIGNAL_SYSTEM_RAM_GROWTH,
 }
 
 # --- Thresholds (documented, deterministic) ------------------------------
@@ -186,8 +196,13 @@ def analyze_spill(
     # Deterministic ordering by the canonical signal list.
     ordered = [s for s in ALL_SPILL_SIGNALS if s in signals]
 
+    # A spill is only *confirmed* by a hard signal. Soft signals (TPS regression,
+    # RAM growth) still surface as signals and raise confidence/severity, but on
+    # their own they leave ``detected=False`` (advisory only).
+    has_hard_signal = any(signal in _HARD_SIGNALS for signal in ordered)
+
     return SpillAnalysis(
-        detected=len(ordered) >= 1,
+        detected=has_hard_signal,
         confidence=_confidence(len(ordered)),
         signals=ordered,
         severity=_severity(ordered),
