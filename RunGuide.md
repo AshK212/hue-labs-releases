@@ -173,3 +173,5 @@ This is a standard electron-builder-on-Windows requirement and is unrelated to t
 | Benchmarks fail with "Couldn't reach Ollama" | Ollama isn't running. Start Ollama (or install it); the rest of the app still works without it. |
 | Icon/metadata not updating in a rebuild | Delete `release/` and rebuild so electron-builder re-stamps the executable. |
 
+
+Milestone 1 is Completed
