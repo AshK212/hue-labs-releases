@@ -1,30 +1,36 @@
-"""Measured Optimization Engine (placeholder shell).
+"""Measured Optimization Engine (assembly stage).
 
 Milestone 2 introduces a *measured* optimization loop: try several candidate
 runtime configurations, benchmark each honestly, and pick a winner. This module
 is the entry point for that loop.
 
-For this milestone we only stand up the structure. ``create_run`` assembles a
-valid, JSON-serializable :class:`OptimizationRun` from data we *already* have
-(the Milestone 1 baseline/optimized benchmark results, if provided). It does not
-run any search, generate candidates, or fabricate numbers — unmeasured fields
-stay ``None``. Existing benchmark and optimization flows are untouched.
+At this stage ``create_run`` does two things and nothing more:
+
+1. Uses :class:`CandidateGenerator` to build the baseline + tuned candidate
+   configurations for the machine (no Ollama call, no benchmarking).
+2. Assembles a valid, JSON-serializable :class:`OptimizationRun` around them,
+   attaching *placeholder* benchmark results — ``skipped`` for tuned candidates,
+   and a real result for the baseline only when real Milestone 1 data is passed
+   in (otherwise a safe ``pending`` placeholder).
+
+No candidate is executed and no metric is fabricated: unmeasured performance
+fields stay ``None``. Existing benchmark and optimization flows are untouched.
 """
 
 from __future__ import annotations
 
 import uuid
-from typing import Optional
+from typing import Optional, Union
 
 from app import config
 from app import schemas as api_schemas  # Milestone 1 API contract
 from app.optimization import winner as winner_module
+from app.optimization.candidates import CandidateGenerator
 from app.optimization.schemas import (
     SCHEMA_VERSION,
     AppInfo,
     BenchmarkResult,
     BenchmarkTiming,
-    CandidateConfig,
     ModelInfo,
     OptimizationRun,
     RunTiming,
@@ -52,22 +58,15 @@ def _runtime_from_options(options: dict) -> RuntimeSettings:
     return RuntimeSettings(**mapped)
 
 
-def _candidate_from_legacy(
-    label: str, model: ModelInfo, legacy: api_schemas.BenchmarkResult
-) -> tuple[CandidateConfig, BenchmarkResult]:
-    """Build a (config, result) pair from a Milestone 1 BenchmarkResult.
+def _real_baseline_result(
+    candidate_id: str, legacy: api_schemas.BenchmarkResult
+) -> BenchmarkResult:
+    """Map a real Milestone 1 baseline run into a measured BenchmarkResult.
 
-    The numbers are copied straight from the real measured run — nothing here is
-    synthesized. Metrics the old schema didn't capture stay ``None``.
+    Numbers are copied straight from the real run — nothing is synthesized.
+    Metrics the old schema didn't capture stay ``None``.
     """
-    candidate_id = str(uuid.uuid4())
-    config_obj = CandidateConfig(
-        candidate_id=candidate_id,
-        label=label,
-        model=model,
-        runtime=_runtime_from_options(legacy.options or {}),
-    )
-    result = BenchmarkResult(
+    return BenchmarkResult(
         benchmark_id=str(uuid.uuid4()),
         candidate_id=candidate_id,
         status="success",
@@ -79,32 +78,80 @@ def _candidate_from_legacy(
         tokens_per_sec=legacy.tokens_per_sec,
         total_tokens=legacy.output_tokens,
         valid_output=True,
+        # The M1 result didn't quantify measurement confidence; leave unset.
+        confidence=None,
     )
-    return config_obj, result
+
+
+def _placeholder_result(
+    candidate_id: str, status: str, note: str
+) -> BenchmarkResult:
+    """A non-measured placeholder result — no fake metrics.
+
+    Used for tuned candidates (``skipped``) and, when no real baseline data was
+    provided, the baseline (``pending``). ``confidence`` is left ``None`` because
+    nothing has been measured yet: the schema types confidence as a float, so a
+    low/absent confidence is honestly represented as "no value" rather than a
+    fabricated number. The reason for the empty result is carried in
+    ``error_message``.
+    """
+    return BenchmarkResult(
+        benchmark_id=str(uuid.uuid4()),
+        candidate_id=candidate_id,
+        status=status,  # "skipped" | "pending"
+        valid_output=False,
+        confidence=None,
+        error_message=note,
+    )
 
 
 class MeasuredOptimizationEngine:
-    """Placeholder engine for the measured optimization loop.
+    """Assembles an OptimizationRun from generated candidates.
 
-    Only ``create_run`` is implemented so far, and it merely *assembles* a run
-    from existing data. The candidate search will be added in a later milestone.
+    ``create_run`` generates candidates and wraps them in a valid run with
+    placeholder results. The actual benchmarking/search and winner scoring are
+    added in later steps.
     """
 
     def create_run(
         self,
-        model: str,
+        model: Union[str, ModelInfo],
         hardware: Optional[HardwareInfo] = None,
-        app_version: Optional[str] = None,
+        baseline_runtime: Optional[RuntimeSettings] = None,
         baseline_result: Optional[api_schemas.BenchmarkResult] = None,
-        optimized_result: Optional[api_schemas.BenchmarkResult] = None,
+        strategy: str = "balanced",
+        app_version: Optional[str] = None,
     ) -> OptimizationRun:
-        """Build a valid OptimizationRun from whatever data we already have.
+        """Build a valid OptimizationRun with generated candidates.
 
-        No search is executed. If Milestone 1 benchmark results are passed in,
-        they are reflected into baseline/candidate entries; otherwise the run is
-        an empty-but-valid shell ready to be filled by the search phase later.
+        Args:
+            model: selected model tag or a full :class:`ModelInfo`.
+            hardware: detected machine info (``None`` → conservative candidates).
+            baseline_runtime: the machine's current runtime. If omitted, it is
+                derived from ``baseline_result.options`` when available, else
+                left at Ollama's defaults (empty RuntimeSettings).
+            baseline_result: a real Milestone 1 baseline run, if one exists. When
+                provided it becomes the baseline's measured result; otherwise a
+                safe ``pending`` placeholder is used.
+            strategy: ``"balanced" | "performance" | "memory_safe"`` (passed to
+                the generator; unknown values fall back to balanced).
+            app_version: app version string for reproducibility.
+
+        No search runs and no metrics are fabricated.
         """
-        model_info = ModelInfo(name=model)
+        model_info = ModelInfo(name=model) if isinstance(model, str) else model
+
+        # Derive the baseline runtime: explicit > reflected from real data > defaults.
+        if baseline_runtime is None and baseline_result is not None:
+            baseline_runtime = _runtime_from_options(baseline_result.options or {})
+        baseline_runtime = baseline_runtime or RuntimeSettings()
+
+        # Generate baseline + tuned candidates (no Ollama, no benchmarking).
+        candidates = CandidateGenerator().generate(
+            hardware, model_info, baseline_runtime, strategy
+        )
+        baseline_candidate = candidates[0]
+        tuned_candidates = candidates[1:]
 
         run = OptimizationRun(
             run_id=str(uuid.uuid4()),
@@ -112,25 +159,32 @@ class MeasuredOptimizationEngine:
             app=AppInfo(name="Hue Labs", version=app_version),
             hardware=hardware,
             model=model_info,
+            baseline_config=baseline_candidate,
+            candidate_configs=tuned_candidates,
             timing=RunTiming(),
         )
 
-        # Reflect an existing baseline run, if available.
+        # Baseline result: real measured data if provided, else a safe placeholder.
         if baseline_result is not None:
-            b_config, b_result = _candidate_from_legacy(
-                "Baseline (Ollama defaults)", model_info, baseline_result
+            run.baseline_result = _real_baseline_result(
+                baseline_candidate.candidate_id, baseline_result
             )
-            b_config.safety.reason = "Ollama's own defaults — reference point."
-            run.baseline_config = b_config
-            run.baseline_result = b_result
+        else:
+            run.baseline_result = _placeholder_result(
+                baseline_candidate.candidate_id,
+                status="pending",
+                note="Baseline not benchmarked yet — awaiting a real run.",
+            )
 
-        # Reflect an existing optimized run as the first candidate, if available.
-        if optimized_result is not None:
-            o_config, o_result = _candidate_from_legacy(
-                "Optimized (hardware-aware)", model_info, optimized_result
+        # Tuned candidates are generated but not benchmarked yet → skipped.
+        run.candidate_results = [
+            _placeholder_result(
+                candidate.candidate_id,
+                status="skipped",
+                note="Candidate generated but not benchmarked yet (search not implemented).",
             )
-            run.candidate_configs.append(o_config)
-            run.candidate_results.append(o_result)
+            for candidate in tuned_candidates
+        ]
 
         # Winner selection is still a placeholder; it falls back to baseline.
         run.winner = winner_module.select_winner(
