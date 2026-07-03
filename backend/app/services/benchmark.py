@@ -14,17 +14,29 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from typing import Optional
+
 from app import config
 from app.schemas import BenchmarkResult, HardwareInfo
 from app.services import ollama_client
 from app.services.ollama_client import OllamaError
-from app.services.optimization import options_for_profile
+from app.services.optimization import baseline_options, options_for_profile
 
 
 async def run_benchmark(
-    model: str, profile: str, hardware: HardwareInfo
+    model: str,
+    profile: str,
+    hardware: HardwareInfo,
+    runtime_options: Optional[dict] = None,
 ) -> BenchmarkResult:
-    options = options_for_profile(profile, hardware)
+    # Backward compatible: when no explicit runtime options are given, keep the
+    # existing profile-based behavior ("baseline" | "optimized"). When they are
+    # given (e.g. from a measured-optimization candidate), start from the shared
+    # repeatability settings so runs stay fair and bounded, then overlay them.
+    if runtime_options is not None:
+        options = {**baseline_options(), **runtime_options}
+    else:
+        options = options_for_profile(profile, hardware)
 
     response = await ollama_client.generate(
         model=model,

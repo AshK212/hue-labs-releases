@@ -14,15 +14,14 @@ Ollama's own timing. This executor reuses that service through a small,
 benchmarking. Tests inject a deterministic stub adapter, so no Ollama call and no
 fabricated numbers are involved.
 
-Scaffold limitation (documented on purpose)
--------------------------------------------
-The Milestone 1 service derives Ollama options from a *profile name*
-("baseline" | "optimized"), not from a candidate's full :class:`RuntimeSettings`.
-So for now the default adapter maps the baseline candidate → "baseline" and every
-tuned candidate → "optimized". Applying each candidate's exact runtime settings
-requires extending the benchmark service to accept explicit options; that is a
-later step. Until then, only real values returned by the service are populated —
-unmeasured fields stay ``None``.
+Per-candidate runtime settings
+------------------------------
+Each candidate's :class:`RuntimeSettings` is translated into an Ollama ``options``
+dict by :mod:`app.optimization.adapter` and passed to the benchmark service via
+its ``runtime_options`` parameter, so every candidate runs with its *own* explicit
+settings. The Milestone 1 profile-based path ("baseline" | "optimized") is left
+untouched for existing callers. Only real values returned by the service are
+populated — unmeasured fields stay ``None``.
 """
 
 from __future__ import annotations
@@ -73,21 +72,30 @@ async def _default_benchmark_runner(
 ) -> api_schemas.BenchmarkResult:
     """Default adapter: reuse the Milestone 1 benchmark service.
 
+    The candidate's runtime settings are converted to Ollama options and passed
+    explicitly via ``runtime_options`` so the candidate runs with its own config.
     Imported lazily so this module (and its tests) don't pull in the Ollama HTTP
-    client unless a real run is actually performed. See the module docstring for
-    the profile-mapping scaffold limitation.
+    client unless a real run is actually performed.
     """
     if hardware is None:
-        # The M1 service needs hardware to build its options; detect on demand.
+        # Hardware is only used by the profile path, but the service signature
+        # requires it; detect on demand for real runs.
         from app.services import hardware as hardware_service
 
         hardware = hardware_service.detect_hardware()
 
+    from app.optimization.adapter import runtime_to_ollama_options
     from app.services import benchmark as m1_benchmark
 
-    is_baseline = bool(candidate.metadata.get("is_baseline")) or candidate.candidate_id == "baseline"
-    profile = "baseline" if is_baseline else "optimized"
-    return await m1_benchmark.run_benchmark(candidate.model.name, profile, hardware)
+    runtime_options = runtime_to_ollama_options(candidate.runtime)
+    # The candidate id is recorded as the run's profile label; the explicit
+    # runtime options are what actually drive the benchmark.
+    return await m1_benchmark.run_benchmark(
+        candidate.model.name,
+        candidate.candidate_id,
+        hardware,
+        runtime_options=runtime_options,
+    )
 
 
 def _map_result(
