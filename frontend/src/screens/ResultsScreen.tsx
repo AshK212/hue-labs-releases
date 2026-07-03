@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useJourney } from "../journey/JourneyContext";
 import { Column, Reveal } from "../components/Screen";
@@ -8,6 +9,15 @@ import { TechnicalDetails } from "../components/TechnicalDetails";
 import { useCountUp } from "../components/useCountUp";
 import { friendlySetting } from "../journey/labels";
 import { ArrowRightIcon, ArrowUpIcon, CheckIcon, ChipIcon, GpuIcon, SparkIcon } from "../components/Icons";
+import {
+  ResultCard,
+  buildResultCardData,
+  copyToClipboard,
+  defaultFileName,
+  savePNG,
+  shareToX,
+} from "../features/result-card";
+import type { BenchmarkResult, HardwareInfo, OptimizationRun } from "../types";
 
 function changeIcon(label: string): ReactNode {
   const s = label.toLowerCase();
@@ -16,19 +26,101 @@ function changeIcon(label: string): ReactNode {
   return <SparkIcon className="w-[18px] h-[18px]" />;
 }
 
+/**
+ * Adapt the Milestone 1 completion data (baseline/optimized runs) into an
+ * OptimizationRun shape so the shared ResultCardBuilder can consume it.
+ *
+ * The Measured Optimization Engine isn't wired to a UI endpoint yet, so this is
+ * a thin, honest mapping — no fabricated numbers. There is a "winner" only when
+ * the optimized run was actually faster; otherwise winner is null and the card
+ * shows "No measured gain". The optimization score is unknown here (Milestone 1
+ * doesn't produce one), so it stays null → the card renders "—".
+ */
+function toOptimizationRun(args: {
+  hardware: HardwareInfo | null;
+  model: string;
+  baseline: BenchmarkResult;
+  optimized: BenchmarkResult;
+}): OptimizationRun {
+  const { hardware, model, baseline, optimized } = args;
+  const before = baseline.tokens_per_sec;
+  const after = optimized.tokens_per_sec;
+  const gainPercent = before > 0 ? ((after - before) / before) * 100 : 0;
+  const hasGain = gainPercent >= 1; // same threshold the page uses for "improved"
+
+  return {
+    baseline_result: { tokens_per_sec: before },
+    candidate_results: [{ candidate_id: "optimized", tokens_per_sec: after }],
+    winner: hasGain ? { candidate_id: "optimized", total_score: null } : null,
+    recommendation: null,
+    model: { name: model },
+    hardware,
+    app: { version: null },
+    timing: { completed_at: optimized.created_at, started_at: baseline.created_at },
+  } as unknown as OptimizationRun;
+}
+
+type BusyAction = "export" | "copy" | "share" | null;
+type Notice = { tone: "ok" | "error"; text: string } | null;
+
 export function ResultsScreen() {
-  const { baseline, optimized, profile, reset, openDashboard } = useJourney();
+  const { baseline, optimized, profile, reset, openDashboard, hardware, selectedModel } = useJourney();
   const before = baseline?.tokens_per_sec ?? 0;
   const after = optimized?.tokens_per_sec ?? 0;
   const pct = before > 0 ? ((after - before) / before) * 100 : 0;
-  // Hook must run unconditionally (before any early return).
+  // Hooks must run unconditionally (before any early return).
   const animatedPct = useCountUp(Math.abs(pct), 1000);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [busyAction, setBusyAction] = useState<BusyAction>(null);
+  const [notice, setNotice] = useState<Notice>(null);
 
   if (!baseline || !optimized) return null;
 
   const improved = pct >= 1;
   const aboutSame = Math.abs(pct) < 1;
   const changes = Array.from(new Set((profile?.changed_settings ?? []).map(friendlySetting)));
+
+  // Presentation-only card data (built from the run adapter above).
+  const run = toOptimizationRun({ hardware, model: selectedModel ?? "", baseline, optimized });
+  const cardData = buildResultCardData(run);
+  const busy = busyAction !== null;
+
+  // One place for the "disable while running + friendly error, never fail silently" flow.
+  async function runAction(name: Exclude<BusyAction, null>, action: () => Promise<void>) {
+    if (busy) return;
+    setBusyAction(name);
+    setNotice(null);
+    try {
+      await action();
+    } catch (e) {
+      const message = (e as Error)?.message || "Something went wrong. Please try again.";
+      setNotice({ tone: "error", text: message });
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  const onExport = () =>
+    runAction("export", async () => {
+      const node = cardRef.current;
+      if (!node) throw new Error("The card isn't ready yet — try again in a moment.");
+      await savePNG(node, defaultFileName(cardData));
+      setNotice({ tone: "ok", text: "Saved as PNG." });
+    });
+
+  const onCopy = () =>
+    runAction("copy", async () => {
+      const node = cardRef.current;
+      if (!node) throw new Error("The card isn't ready yet — try again in a moment.");
+      await copyToClipboard(node);
+      setNotice({ tone: "ok", text: "Card copied to clipboard." });
+    });
+
+  const onShareX = () =>
+    runAction("share", async () => {
+      shareToX(cardData);
+      setNotice({ tone: "ok", text: "Opening X…" });
+    });
 
   return (
     <Column width="results">
@@ -129,7 +221,35 @@ export function ResultsScreen() {
         </Reveal>
       )}
 
-      <Reveal index={4} className="mt-8 flex items-center justify-center gap-3">
+      {/* Shareable result card — sits below the existing summary, never replaces it. */}
+      <Reveal index={4} className="mt-8">
+        <div className="text-caption font-semibold text-ink-900 mb-4 text-center">Share your result</div>
+        <div className="flex justify-center">
+          <ResultCard ref={cardRef} data={cardData} />
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <Button variant="secondary" onClick={onExport} loading={busyAction === "export"} disabled={busy}>
+            Export PNG
+          </Button>
+          <Button variant="secondary" onClick={onCopy} loading={busyAction === "copy"} disabled={busy}>
+            Copy card
+          </Button>
+          <Button variant="secondary" onClick={onShareX} loading={busyAction === "share"} disabled={busy}>
+            Share on X
+          </Button>
+        </div>
+        {notice && (
+          <p
+            className="text-caption text-center mt-3"
+            style={{ color: notice.tone === "error" ? "#E5646A" : "rgb(var(--a500))" }}
+            role="status"
+          >
+            {notice.text}
+          </p>
+        )}
+      </Reveal>
+
+      <Reveal index={5} className="mt-8 flex items-center justify-center gap-3">
         <Button variant="ghost" onClick={reset}>
           Start over
         </Button>
