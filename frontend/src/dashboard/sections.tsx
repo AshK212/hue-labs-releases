@@ -9,6 +9,12 @@ import {
   setStoredPrivacy,
   type PrivacySettings,
 } from "../privacy";
+import {
+  activateLicense,
+  clearLicense,
+  getStoredLicense,
+  type LicenseState,
+} from "../license";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
@@ -25,6 +31,7 @@ import {
   Cpu,
   Database,
   Gauge,
+  KeyRound,
   Palette,
   Play,
   RefreshCw,
@@ -427,6 +434,27 @@ export function SettingsSection() {
     setStoredPrivacy(next); // persist via the existing localStorage mechanism
   };
 
+  const [license, setLicense] = useState<LicenseState>(() => getStoredLicense());
+  const [licenseKeyInput, setLicenseKeyInput] = useState("");
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+
+  const onActivate = () => {
+    const next = activateLicense(licenseKeyInput);
+    setLicense(next);
+    if (next.status === "INVALID") {
+      setLicenseError("That license key wasn't recognized.");
+    } else {
+      setLicenseError(null);
+      setLicenseKeyInput("");
+    }
+  };
+
+  const onClearLicense = () => {
+    setLicense(clearLicense());
+    setLicenseKeyInput("");
+    setLicenseError(null);
+  };
+
   return (
     <div className="space-y-5 max-w-[40rem]">
       <DashCard title="Appearance" icon={<Palette className="w-5 h-5" strokeWidth={1.8} />}>
@@ -473,6 +501,41 @@ export function SettingsSection() {
             disabled
           />
         </div>
+      </DashCard>
+
+      <DashCard title="License" icon={<KeyRound className="w-5 h-5" strokeWidth={1.8} />}>
+        <p className="text-caption text-ink-500 leading-relaxed">
+          Enter a license key to unlock Pro features. Hue Labs works fully without one.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <input
+            value={licenseKeyInput}
+            onChange={(e) => setLicenseKeyInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && onActivate()}
+            placeholder="Enter license key"
+            aria-label="License key"
+            className="min-w-0 flex-1 h-11 px-3 rounded-tile bg-mist-50 border border-mist-200 text-body text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-sky-300"
+          />
+          <Button variant="secondary" onClick={onActivate}>
+            Activate
+          </Button>
+        </div>
+        {licenseError && (
+          <p className="text-micro mt-2" style={{ color: "#E5646A" }}>
+            {licenseError}
+          </p>
+        )}
+        <div className="mt-4 divide-y divide-mist-200">
+          <StatLine label="Current status" value={license.status} />
+          <StatLine label="Current plan" value={license.plan} />
+        </div>
+        {(license.status === "ACTIVE" || license.status === "TRIAL") && (
+          <div className="mt-3">
+            <Button variant="ghost" onClick={onClearLicense}>
+              Remove license
+            </Button>
+          </div>
+        )}
       </DashCard>
 
       <DashCard title="Data" icon={<Database className="w-5 h-5" strokeWidth={1.8} />}>
