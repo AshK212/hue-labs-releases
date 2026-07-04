@@ -11,6 +11,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
+from typing import Optional
 
 from app import config
 from app.schemas import BenchmarkResult
@@ -33,6 +34,7 @@ def init_db() -> None:
             )
             """
         )
+        _ensure_settings_table(conn)
 
 
 @contextmanager
@@ -73,3 +75,39 @@ def recent_runs(limit: int = 20) -> list[dict]:
             "SELECT * FROM benchmark_runs ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(row) for row in rows]
+
+
+# --- Simple key/value settings (reuses this same SQLite DB, no new store) ---
+
+def _ensure_settings_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+        """
+    )
+
+
+def get_setting(key: str) -> Optional[str]:
+    """Read a stored settings value, or None if unset."""
+    with _connect() as conn:
+        _ensure_settings_table(conn)
+        row = conn.execute(
+            "SELECT value FROM app_settings WHERE key = ?", (key,)
+        ).fetchone()
+        return row["value"] if row else None
+
+
+def set_setting(key: str, value: str) -> None:
+    """Insert or update a settings value."""
+    with _connect() as conn:
+        _ensure_settings_table(conn)
+        conn.execute(
+            """
+            INSERT INTO app_settings (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (key, value),
+        )

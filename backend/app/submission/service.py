@@ -29,9 +29,13 @@ class SubmissionService:
         self,
         client: Optional[SubmissionClient] = None,
         builder: Optional[SubmissionBuilder] = None,
+        enabled: bool = True,
     ) -> None:
         self._client = client or SubmissionClient()  # defaults to the local mock
         self._builder = builder or SubmissionBuilder()
+        # Gated by PrivacySettings.benchmark_submission_enabled when constructed
+        # via PrivacyService. Defaults to True for direct/backward-compatible use.
+        self.enabled = enabled
 
     def build_payload(self, run: OptimizationRun) -> SubmissionPayload:
         """Expose the mapping without sending anything (inspection / preview)."""
@@ -40,10 +44,15 @@ class SubmissionService:
     async def submit_run(self, run: OptimizationRun) -> OptimizationRun:
         """Submit a run and update its ``submission`` state. Never raises.
 
-        On success → ``state="submitted"`` with an id + timestamp. On any failure
-        (build error, transport error, rejection) → ``state="failed"`` with a
-        user-safe error. The run is returned either way.
+        When submission is disabled (opt-out) → ``state="opted_out"`` and nothing
+        is sent. On success → ``state="submitted"`` with an id + timestamp. On any
+        failure (build error, transport error, rejection) → ``state="failed"``.
+        The run is returned either way.
         """
+        if not self.enabled:
+            run.submission = SubmissionStatus(state="opted_out")
+            return run
+
         try:
             payload = self._builder.build(run)
             response = await self._client.submit(payload)

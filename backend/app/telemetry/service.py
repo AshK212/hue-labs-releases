@@ -33,10 +33,12 @@ class TelemetryService:
 
     def __init__(
         self,
+        enabled: bool,
         builder: Optional[TelemetryEventBuilder] = None,
         client: Optional[TelemetryClient] = None,
-        enabled: bool = True,
     ) -> None:
+        # `enabled` is required and sourced from PrivacySettings — there is no
+        # hardcoded default for whether telemetry is on.
         self._builder = builder or TelemetryEventBuilder()
         self._client = client or TelemetryClient()  # defaults to the local mock
         self.enabled = enabled

@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { useJourney } from "../journey/JourneyContext";
 import { STEP } from "../journey/steps";
 import { useTheme } from "../ThemeProvider";
 import { THEMES } from "../theme";
+import {
+  DEFAULT_PRIVACY,
+  getStoredPrivacy,
+  setStoredPrivacy,
+  type PrivacySettings,
+} from "../privacy";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
@@ -412,6 +419,14 @@ export function OptimizationSection() {
 
 export function SettingsSection() {
   const { reset } = useJourney();
+  const [privacy, setPrivacy] = useState<PrivacySettings>(() => getStoredPrivacy());
+
+  const updatePrivacy = (patch: Partial<PrivacySettings>) => {
+    const next = { ...privacy, ...patch };
+    setPrivacy(next);
+    setStoredPrivacy(next); // persist via the existing localStorage mechanism
+  };
+
   return (
     <div className="space-y-5 max-w-[40rem]">
       <DashCard title="Appearance" icon={<Palette className="w-5 h-5" strokeWidth={1.8} />}>
@@ -433,6 +448,33 @@ export function SettingsSection() {
         </div>
       </DashCard>
 
+      <DashCard title="Help improve Hue Labs" icon={<ShieldCheck className="w-5 h-5" strokeWidth={1.8} />}>
+        <p className="text-caption text-ink-500 leading-relaxed">
+          Optional and anonymous. No prompts, no personal data — and you can change these anytime.
+        </p>
+        <div className="mt-3 divide-y divide-mist-200">
+          <ToggleRow
+            label="Anonymous usage analytics"
+            description="Share anonymous usage events to help us prioritize what to improve."
+            checked={privacy.telemetry_enabled}
+            onChange={(v) => updatePrivacy({ telemetry_enabled: v })}
+          />
+          <ToggleRow
+            label="Anonymous benchmark submission"
+            description="Contribute your measured results (no prompts, no personal data) to the community dataset."
+            checked={privacy.benchmark_submission_enabled}
+            onChange={(v) => updatePrivacy({ benchmark_submission_enabled: v })}
+          />
+          <ToggleRow
+            label="Crash reporting"
+            description="Coming soon."
+            checked={DEFAULT_PRIVACY.crash_reports_enabled}
+            onChange={() => {}}
+            disabled
+          />
+        </div>
+      </DashCard>
+
       <DashCard title="Data" icon={<Database className="w-5 h-5" strokeWidth={1.8} />}>
         <StatLine label="Benchmark history" value="Stored locally" />
         <StatLine label="Models" value="Managed by Ollama" />
@@ -449,6 +491,52 @@ export function SettingsSection() {
           </Button>
         </div>
       </DashCard>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-4 py-3">
+      <div className="min-w-0 flex-1">
+        <div className="text-body font-medium text-ink-800">{label}</div>
+        {description && <div className="text-micro text-ink-400 mt-0.5">{description}</div>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!checked)}
+        className={[
+          "relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200",
+          disabled
+            ? "bg-mist-200 opacity-50 cursor-not-allowed"
+            : checked
+            ? "bg-sky-500"
+            : "bg-mist-300 hover:bg-mist-400",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200",
+            checked ? "translate-x-[22px]" : "translate-x-0.5",
+          ].join(" ")}
+        />
+      </button>
     </div>
   );
 }
