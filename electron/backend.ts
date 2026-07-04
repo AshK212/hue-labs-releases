@@ -29,6 +29,12 @@ import { log } from "./logger";
 let backendProcess: ChildProcess | null = null;
 /** Guard so we only ever send one shutdown signal. */
 let stopping = false;
+/**
+ * Resolves when the current backend process has actually exited. Lets callers
+ * (the updater) wait for the process to die before replacing its files. Starts
+ * resolved because nothing is running yet.
+ */
+let backendExited: Promise<void> = Promise.resolve();
 
 /**
  * Launch the backend process.
@@ -103,6 +109,15 @@ export function startBackend(): ChildProcess {
   backendProcess.on("error", (err) => {
     log.error("backend", `failed to start backend process: ${err.message}`);
   });
+
+  // Track this process's exit so callers can await a clean shutdown. The handle
+  // is captured now because stopBackend() clears `backendProcess` eagerly.
+  const started = backendProcess;
+  backendExited = new Promise<void>((resolve) => {
+    started.once("exit", () => resolve());
+  });
+  // A fresh process means a fresh shutdown cycle.
+  stopping = false;
 
   return backendProcess;
 }
@@ -181,4 +196,24 @@ export function stopBackend(): void {
   } finally {
     backendProcess = null;
   }
+}
+
+/**
+ * Stop the backend and wait until the process has *actually* exited (or a
+ * timeout elapses), so its files are unlocked before an in-place update replaces
+ * them. Used by the updater immediately before quitAndInstall.
+ *
+ * Shutdown sequence:
+ *   1. stopBackend() sends taskkill /T /F (Windows) or SIGTERM to the process
+ *      tree — this reaps uvicorn's children and the PyInstaller subprocess.
+ *   2. We await the process's real "exit" event (tracked in `backendExited`).
+ *   3. If it hasn't exited within `timeoutMs`, we resolve anyway (best effort)
+ *      rather than blocking the update forever.
+ */
+export async function stopBackendAndWait(timeoutMs = 8000): Promise<void> {
+  stopBackend();
+  await Promise.race([
+    backendExited,
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
 }

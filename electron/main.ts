@@ -9,10 +9,11 @@
  */
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
-import { startBackend, stopBackend, waitForBackendReady } from "./backend";
+import { startBackend, stopBackend, stopBackendAndWait, waitForBackendReady } from "./backend";
 import { DEV_SERVER_URL, WINDOW_TITLE, isDev } from "./config";
 import { log } from "./logger";
 import { startProdServer, stopProdServer } from "./server";
+import { initAutoUpdater } from "./updater";
 import { createMainWindow, createSplashWindow } from "./window";
 
 let mainWindow: BrowserWindow | null = null;
@@ -99,6 +100,14 @@ async function bootstrap(): Promise<void> {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
+  });
+
+  // Wire auto-updates. No-op in development; safe if no feed is configured. The
+  // install step waits for the backend to stop cleanly (stopBackendAndWait) so
+  // no files are locked when the NSIS installer swaps them.
+  initAutoUpdater({
+    getWindow: () => mainWindow,
+    onBeforeInstall: () => stopBackendAndWait(),
   });
 }
 

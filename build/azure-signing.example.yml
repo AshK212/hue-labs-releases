@@ -1,0 +1,32 @@
+# Azure Trusted Signing — PLACEHOLDER configuration (NOT active by default).
+#
+# This file is intentionally NOT wired into the build. Default `npm run dist`
+# produces an UNSIGNED build so contributors without Azure credentials can still
+# package locally. To sign a release, merge the `win.azureSignOptions` block
+# below into `package.json` → `build.win`, or pass this file to electron-builder
+# with a config override, then run the signed build on a machine/CI that has the
+# environment variables set.
+#
+# electron-builder 25+ signs the app's own executables automatically. The bundled
+# Python backend (extraResources → backend/lao-backend.exe and any child exes)
+# is NOT covered by that automatic pass and MUST be signed separately (sign the
+# PyInstaller output before `electron-builder` packages it, e.g. in the
+# `scripts/build_backend.py` step or a dedicated signing step). See docs/RELEASE.md.
+#
+# Enable signing (example):
+#   electron-builder --win -c ./build/azure-signing.example.yml
+#
+# Required environment variables (never commit real values):
+#   AZURE_TENANT_ID              # service principal tenant
+#   AZURE_CLIENT_ID              # service principal / app registration id
+#   AZURE_CLIENT_SECRET          # service principal secret (or use OIDC)
+#   AZURE_CODE_SIGNING_ENDPOINT  # e.g. https://wus2.codesigning.azure.net/
+#   AZURE_CODE_SIGNING_ACCOUNT   # Trusted Signing account name
+#   AZURE_CERT_PROFILE_NAME      # certificate profile name
+
+win:
+  azureSignOptions:
+    publisherName: "Hue Labs"
+    endpoint: "${env.AZURE_CODE_SIGNING_ENDPOINT}"
+    codeSigningAccountName: "${env.AZURE_CODE_SIGNING_ACCOUNT}"
+    certificateProfileName: "${env.AZURE_CERT_PROFILE_NAME}"

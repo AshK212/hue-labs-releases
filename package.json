@@ -44,16 +44,28 @@
       {
         "from": "backend/dist/lao-backend",
         "to": "backend",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "${productName}-${version}-Setup.${ext}"
+      "artifactName": "HueLabs-${version}-${os}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -67,7 +79,17 @@
       "uninstallerIcon": "build/icon.ico"
     },
     "portable": {
-      "artifactName": "${productName}-${version}-Portable.${ext}"
-    }
+      "artifactName": "HueLabs-${version}-${os}-${arch}-Portable.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "${env.HUE_LABS_UPDATE_FEED_URL}",
+        "channel": "latest"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
