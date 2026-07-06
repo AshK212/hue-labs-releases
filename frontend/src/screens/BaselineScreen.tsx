@@ -44,7 +44,7 @@ export function BaselineScreen() {
             </StatusBadge>
           </Reveal>
           <Reveal index={3} className="mt-4">
-            <p className="text-micro font-mono uppercase tracking-wide text-ink-400">
+            <p className="text-micro font-mono uppercase tracking-wide text-ink-500">
               Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s
             </p>
           </Reveal>

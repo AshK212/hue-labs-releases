@@ -27,9 +27,12 @@ function nodeToSvgDataUrl(node: HTMLElement, width: number, height: number): str
 
 /** Core: rasterize a node to a PNG Blob. Everything else builds on this. */
 async function nodeToPngBlob(node: HTMLElement, scale = DEFAULT_SCALE): Promise<Blob> {
+  // Use the node's own layout box (offsetWidth/Height), which ignores any CSS
+  // transform applied to an ancestor. This keeps the exported PNG at the card's
+  // true, full resolution even when it's shown as a scaled-down on-screen preview.
   const rect = node.getBoundingClientRect();
-  const width = Math.max(1, Math.ceil(rect.width));
-  const height = Math.max(1, Math.ceil(rect.height));
+  const width = Math.max(1, Math.ceil(node.offsetWidth || rect.width));
+  const height = Math.max(1, Math.ceil(node.offsetHeight || rect.height));
 
   const image = new Image();
   const loaded = new Promise<void>((resolve, reject) => {

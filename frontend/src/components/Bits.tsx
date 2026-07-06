@@ -37,7 +37,7 @@ export function StatTile({
       </div>
       <div className="min-w-0">
         <div className="text-micro font-mono uppercase tracking-wide text-ink-400">{label}</div>
-        <div className="text-body font-semibold text-ink-900 mt-1 truncate" title={value}>
+        <div className="text-body font-semibold text-ink-900 mt-1 break-words leading-snug" title={value}>
           {value}
         </div>
         {hint && <div className="text-micro font-mono text-ink-400 mt-1">{hint}</div>}

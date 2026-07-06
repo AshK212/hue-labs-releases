@@ -143,24 +143,24 @@ function AltCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-center gap-4 surface-quiet",
+        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-start gap-4 surface-quiet",
         selected ? "!border-sky-300 ring-2 ring-sky-100" : "hover:!border-sky-300/60",
       ].join(" ")}
     >
       <div
         className={[
-          "flex-shrink-0 grid place-items-center w-11 h-11 rounded-tile",
+          "flex-shrink-0 grid place-items-center w-11 h-11 rounded-tile mt-0.5",
           selected ? "bg-sky-500 text-carbon" : "bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100",
         ].join(" ")}
       >
         {selected ? <CheckIcon className="w-5 h-5" /> : <SparkIcon className="w-5 h-5" />}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-body font-semibold text-ink-900">{rec.display_name}</h3>
           <StatusBadge tone="neutral">{rec.download_size_gb} GB</StatusBadge>
         </div>
-        <p className="text-caption text-ink-500 mt-0.5 line-clamp-1">{cleanCopy(rec.reason)}</p>
+        <p className="text-caption text-ink-500 mt-1.5 leading-relaxed line-clamp-2">{cleanCopy(rec.reason)}</p>
       </div>
     </button>
   );
