@@ -44,11 +44,11 @@ export function OptimizeScreen() {
             </p>
           </Reveal>
           {profile && (
-            <Reveal index={3} className="mt-5 w-full max-w-[26rem]">
+            <Reveal index={3} className="mt-6 w-full max-w-[26rem]">
               <TechnicalDetails options={profile.options} />
             </Reveal>
           )}
-          <Reveal index={4} className="mt-9">
+          <Reveal index={4} className="mt-8">
             <Button onClick={next} rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
               See the difference
             </Button>

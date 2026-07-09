@@ -514,7 +514,7 @@ export function SettingsSection() {
             onKeyDown={(e) => e.key === "Enter" && onActivate()}
             placeholder="Enter license key"
             aria-label="License key"
-            className="min-w-0 flex-1 h-11 px-3 rounded-tile bg-mist-50 border border-mist-200 text-body text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-sky-300"
+            className="min-w-0 flex-1 h-[52px] px-4 rounded-tile bg-mist-50 border border-mist-200 text-body text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
           />
           <Button variant="secondary" onClick={onActivate}>
             Activate

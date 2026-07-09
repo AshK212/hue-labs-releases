@@ -35,7 +35,7 @@ export function StatTile({
       <div className="flex-shrink-0 grid place-items-center w-12 h-12 rounded-tile bg-sky-50 text-sky-500 ring-1 ring-inset ring-sky-100">
         {icon}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-micro font-mono uppercase tracking-wide text-ink-400">{label}</div>
         <div className="text-body font-semibold text-ink-900 mt-1 break-words leading-snug" title={value}>
           {value}

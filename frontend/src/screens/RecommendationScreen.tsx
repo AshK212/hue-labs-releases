@@ -143,7 +143,7 @@ function AltCard({
     <button
       onClick={onSelect}
       className={[
-        "w-full text-left rounded-card p-5 border transition-all duration-200 flex items-start gap-4 surface-quiet",
+        "w-full text-left rounded-card p-6 border transition-all duration-200 flex items-start gap-4 surface-quiet",
         selected ? "!border-sky-300 ring-2 ring-sky-100" : "hover:!border-sky-300/60",
       ].join(" ")}
     >
@@ -160,7 +160,7 @@ function AltCard({
           <h3 className="text-body font-semibold text-ink-900">{rec.display_name}</h3>
           <StatusBadge tone="neutral">{rec.download_size_gb} GB</StatusBadge>
         </div>
-        <p className="text-caption text-ink-500 mt-1.5 leading-relaxed line-clamp-2">{cleanCopy(rec.reason)}</p>
+        <p className="text-caption text-ink-500 mt-2 leading-relaxed">{cleanCopy(rec.reason)}</p>
       </div>
     </button>
   );
