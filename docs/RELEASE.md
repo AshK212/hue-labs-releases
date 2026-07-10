@@ -85,23 +85,53 @@ still locked. The sequence (see `stopBackendAndWait` in
 
 ---
 
-## 4. Release feed configuration
+## 4. Release feed configuration (GitHub Releases)
 
-The feed is a **generic** provider, configured in `package.json` → `build.publish`:
+The update feed is hosted on **GitHub Releases**, configured in `package.json` →
+`build.publish`:
 
 ```json
-{ "provider": "generic", "url": "${env.HUE_LABS_UPDATE_FEED_URL}", "channel": "latest" }
+{ "provider": "github", "owner": "AshK212", "repo": "hue-labs-releases", "releaseType": "draft" }
 ```
 
-- **No production URL is committed.** Set `HUE_LABS_UPDATE_FEED_URL` at build/release
-  time to the real feed root (e.g. an Azure Blob container, S3 bucket, or any static
-  HTTPS host that serves `latest.yml`, the installer, and `.blockmap`, and honors
-  HTTP range requests for differential updates).
-- Publish with `electron-builder --win --publish always` once the env var and (for
-  private hosts) storage credentials are set.
-- **Where the real feed goes:** replace `HUE_LABS_UPDATE_FEED_URL` in CI secrets /
-  the release environment. GitHub Releases is a valid alternative (`provider: github`
-  + `GH_TOKEN`); switch the provider block if that's chosen.
+- **`owner`/`repo`** point at the releases repository (`AshK212/hue-labs-releases`).
+  electron-builder writes these into the app's `app-update.yml`, so the installed
+  app's updater knows to check that repo's Releases for `latest.yml` + the installer
+  + `.blockmap` (GitHub serves range requests, so differential updates work).
+- **`releaseType: "draft"`** — publishing uploads assets to a **draft** release. It
+  stays invisible to users until a human reviews and clicks *Publish release* on
+  GitHub. This is the safety gate: nothing auto-ships.
+- **No token is needed to build.** `owner`/`repo` are static config, so local builds
+  work with **`--publish never`** and **without `GH_TOKEN`**. The token is only read
+  when you explicitly publish.
+
+### Local build (no publish, no token)
+
+```
+npm run dist -- --publish never
+```
+
+Produces the installer + `latest.yml` + `.blockmap` in `release/` and uploads nothing.
+
+### Publish a release (draft on GitHub)
+
+```
+# PowerShell
+$env:GH_TOKEN="ghp_xxx"; npm run dist -- --publish always
+
+# bash
+GH_TOKEN=ghp_xxx npm run dist -- --publish always
+```
+
+- `GH_TOKEN` must be a token with write access to `AshK212/hue-labs-releases`
+  (classic PAT with `repo` scope, or a fine-grained token with *Contents: write*).
+- This creates/updates a **draft** GitHub release for the current `version` and
+  uploads the installer, `latest.yml`, and `.blockmap`.
+- Go to the repo's **Releases** tab, verify the assets, then **Publish** the draft.
+  Only then will installed apps see the update.
+
+> Bump `version` in `package.json` before publishing — GitHub releases are keyed by
+> the `v<version>` tag, and the updater compares against it.
 
 ---
 
@@ -152,9 +182,9 @@ runs the same Trusted Signing credentials against the backend binaries.
 - Node + npm, Python (for the PyInstaller backend build).
 - Pipeline: `npm ci` → `npm run build` → `npm run backend:build` → **sign backend**
   → `electron-builder --win --publish always` (with signing config).
-- **Secrets:** the Azure signing env vars (§5), `HUE_LABS_UPDATE_FEED_URL`, and any
-  feed storage credentials (Azure Blob / S3 access key), injected as CI secrets —
-  prefer OIDC/federated credentials over long-lived secrets.
+- **Secrets:** `GH_TOKEN` (write access to `AshK212/hue-labs-releases`, for publishing
+  to GitHub Releases — §4) and the Azure signing env vars (§5), injected as CI secrets —
+  prefer OIDC/federated credentials over long-lived secrets where possible.
 - **Verification gate:** install the produced installer, then install the next
   version over it and confirm auto-update applies (see checklist below).
 

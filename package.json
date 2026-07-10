@@ -83,9 +83,10 @@
     },
     "publish": [
       {
-        "provider": "generic",
-        "url": "${env.HUE_LABS_UPDATE_FEED_URL}",
-        "channel": "latest"
+        "provider": "github",
+        "owner": "AshK212",
+        "repo": "hue-labs-releases",
+        "releaseType": "draft"
       }
     ]
   },
