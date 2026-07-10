@@ -116,6 +116,8 @@ Produces the installer + `latest.yml` + `.blockmap` in `release/` and uploads no
 ### Publish a release (draft on GitHub)
 
 ```
+# npm pkg get version
+
 # PowerShell
 $env:GH_TOKEN="ghp_xxx"; npm run dist -- --publish always
 

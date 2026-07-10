@@ -86,7 +86,7 @@
         "provider": "github",
         "owner": "AshK212",
         "repo": "hue-labs-releases",
-        "releaseType": "draft"
+        "releaseType": "release"
       }
     ]
   },
