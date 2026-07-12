@@ -1,86 +1,148 @@
 # Hue Labs
 
-A friendly control layer on top of [Ollama](https://ollama.com) that makes running and
-optimizing local AI models easy for **non-technical users** — zero terminal required.
+**Run and tune local AI on your own computer — no terminal, no guesswork.**
 
-> We are **not** replacing Ollama. We are building a calm, polished **native desktop app**
-> that sits on top of Ollama and guides a person through the whole workflow with one-click
-> actions.
+Hue Labs is a calm, native **Windows desktop app** that sits on top of
+[Ollama](https://ollama.com) and walks anyone through running a local AI model,
+measuring how fast it goes, and making it faster — with **honest, measured
+results** and one‑click actions. Everything runs on your machine. Nothing about
+your prompts or your work ever leaves it.
 
-**Looking to run or build it?** See **[RunGuide.md](RunGuide.md)**.
+> We don't replace Ollama. We put a warm, polished experience in front of it so
+> that "running AI locally" feels less like a command line and more like a good
+> Mac app.
 
-## What it is
+**Want to run or build it?** Start with **[RunGuide.md](RunGuide.md)**.
 
-Hue Labs ships as a **native Windows desktop application** (Electron). The user
-double-clicks one icon; the app starts its own backend, waits until it's ready, and opens a
-single clean window. There is no browser, no URL bar, and nothing to start by hand.
+---
 
-Under the hood it is three parts wrapped in a desktop shell:
+## What it feels like to use
 
-- a **FastAPI** service that detects hardware, talks to Ollama, and runs benchmarks,
-- a **React + TypeScript** UI (the calm sky/cloud dashboard), and
-- an **Electron** shell that launches both, hosts the UI, and shuts everything down on exit.
-
-## The Milestone 1 workflow
-
-```
-Detect hardware → Recommend a model → One-click run (Ollama)
-   → Baseline benchmark → Apply a safe optimization → Re-benchmark
-   → Show honest before/after improvement
-```
-
-Everything happens in a clean UI. The only "honest" promise we make is:
-**measured improvement on *this* machine** — no fake numbers.
-
-## How the desktop app starts
-
-When the user launches the app:
+You double‑click one icon. The app starts its own engine in the background, waits
+until it's ready, and opens a single clean window — no browser, no URL bar,
+nothing to start by hand. From there a short, friendly setup guides you through:
 
 ```
-Splash screen → Backend starts → Health check → Frontend loads → Main window opens
+Detect your hardware  →  Recommend a model  →  Download it (one click)
+   →  Measure your speed  →  Tune for your machine  →  Measure again
+   →  See the honest before/after  →  Share your result
 ```
 
-- **Development:** Vite serves the UI and proxies `/api` to the backend.
-- **Production:** a tiny local server inside the shell serves the built UI and proxies
-  `/api` to the backend — mirroring the dev proxy so the React app's relative `/api` calls
-  (and the streaming model download) work identically with **no frontend changes**.
+The one promise we make everywhere: **the numbers are real.** Speed is measured
+on *your* computer using the model's own timing — never faked, never rounded up.
+If a tune doesn't help on your hardware, the app says so plainly.
 
-The backend is terminated automatically whenever the window closes.
+## What's inside
 
-## Repository structure
+Hue Labs is one desktop app made of three cooperating parts:
+
+- **A local backend** (Python / FastAPI) that detects your hardware, talks to
+  Ollama, runs benchmarks, and powers the optimization engine.
+- **A React + TypeScript interface** — the calm, warm dashboard and the guided
+  setup you actually see.
+- **An Electron shell** that launches the backend, hosts the UI, keeps everything
+  in sync, and shuts it all down cleanly when you close the window.
+
+When you launch the app:
+
+```
+Splash  →  Backend starts  →  Health check  →  UI loads  →  Window opens
+```
+
+The backend is stopped automatically whenever you quit — no stray processes, no
+leftovers.
+
+## Highlights
+
+**Measured Optimization Engine.** Instead of guessing, Hue Labs tries a small,
+safe set of runtime configurations tuned to your GPU/CPU, benchmarks each one
+honestly, watches for VRAM "spill" (when a model overflows your graphics memory
+and slows down), and picks a winner only when it's genuinely faster.
+
+**Shareable Result Card.** Every run produces a clean, premium result card you
+can **export as a PNG**, **copy to your clipboard**, or **share on X** — a nice
+way to show off a real, measured improvement.
+
+**Private by default.** Your models, prompts, and benchmarks never leave your
+computer. Optional, fully **anonymous** usage analytics and benchmark sharing are
+**off unless you turn them on** in Settings — and there's nothing personal in
+them, ever.
+
+**Automatic updates.** The app can keep itself up to date via GitHub Releases,
+with a careful shutdown sequence so an update never interrupts a running model.
+
+**Built for a real release.** Windows installer, auto‑start backend, code‑signing
+setup, and a full QA checklist are all in place for shipping to real users.
+
+## Honesty & privacy
+
+- **Local‑first.** All AI work happens on your machine through Ollama. No account,
+  no internet connection required to use the app.
+- **Real measurements only.** Throughput comes straight from the model's reported
+  timing. We never fabricate a result.
+- **Opt‑in, anonymous.** Usage analytics and community benchmark submission are
+  disabled by default and contain no prompts and no personal data. You control
+  them in **Settings → Privacy**.
+
+## Project layout
 
 ```
 .
-├── backend/     FastAPI local service (hardware detection, Ollama bridge, benchmark, optimization)
-├── frontend/    React + TypeScript + Vite + Tailwind UI (the calm sky/cloud dashboard)
-├── electron/    Desktop shell — main process, window, backend supervisor, prod UI server, preload
+├── backend/     FastAPI service — hardware detection, Ollama bridge, benchmarks,
+│                and the optimization/submission/telemetry/privacy/licensing modules
+├── frontend/    React + TypeScript + Vite + Tailwind UI, including the Result Card
+├── electron/    Desktop shell — main process, window, backend supervisor, auto-updater
 ├── scripts/     Dev helpers + the PyInstaller backend-bundling scripts
-├── build/       Application / installer icons (electron-builder buildResources)
-├── docs/        Scope, architecture, and the optimization note for the deliverable
-└── design/      UI direction and product positioning
+├── build/       Installer icons + the code-signing config example
+├── docs/        Architecture, release guide, and engineering notes
+├── qa/          Release validation: test matrix, smoke test, checklist, known limits
+└── design/      Product direction and UI positioning
 ```
 
-The Electron shell is intentionally thin and declarative — no business logic lives in it.
-See the module headers in [electron/](electron/) for details; ports, window size, and paths
-are all centralized in [electron/config.ts](electron/config.ts).
+The Electron shell is intentionally thin — no business logic lives in it. Ports,
+window size, and paths are centralized in
+[electron/config.ts](electron/config.ts).
 
-## Window & platform
+## Tech stack
 
-- **Window:** 1600 × 1000, minimum 1200 × 800, centered, native title bar,
-  title "Hue Labs", background matching the app (`#f5f7fc`).
-- **Target platform for Milestone 1:** **Windows 11.** One platform, one or two models,
-  honest and measurable gains. See [docs/milestone-1-scope.md](docs/milestone-1-scope.md)
-  for the full scope and [docs/optimization-notes.md](docs/optimization-notes.md) for the
-  deliverable note.
+- **Desktop:** Electron 33, packaged with electron-builder (NSIS installer),
+  auto-updates via electron-updater.
+- **Backend:** Python 3 + FastAPI, bundled into a standalone executable with
+  PyInstaller. Talks to Ollama over its local HTTP API.
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS.
+- **Platform:** Windows 11 (x64).
 
-## Ollama
+## Getting started
 
-**[Ollama](https://ollama.com/download)** is recommended but optional. The app runs fine
-without it installed — it detects that and shows friendly setup guidance instead of failing.
+- **Run or build the app:** **[RunGuide.md](RunGuide.md)** — the step‑by‑step guide
+  for development and for producing the installer.
+- **Ship a release:** **[docs/RELEASE.md](docs/RELEASE.md)** — the GitHub Releases
+  update flow, code‑signing setup, and CI notes.
+- **Validate a build:** **[qa/](qa/)** — the test matrix, smoke test, and release
+  checklist used before shipping.
 
-## Status
+[Ollama](https://ollama.com/download) is recommended but optional — if it isn't
+installed or running, the app detects that and shows friendly guidance instead of
+failing.
 
-This is the **initial working scaffold**, now packaged as a desktop application. Hardware
-detection, the Ollama bridge, and the benchmark measure **real** values (Ollama reports true
-`eval_count` / `eval_duration`). Any temporary mock data is clearly marked with `MOCK:` in
-code and never used as final logic.
+## Current status
+
+The core product is **complete and packaged as a Windows desktop app**: guided
+setup, hardware detection, model recommendation and download, honest baseline and
+optimized benchmarks, the measured optimization engine, and the shareable result
+card all work end to end.
+
+A few integrations are intentionally **staged for the client's own services** and
+currently run against safe placeholders:
+
+- **Auto‑updates** are wired to **GitHub Releases** (configured; publishing is a
+  deliberate, token‑gated step).
+- **Community benchmark submission** and **anonymous telemetry** are complete and
+  opt‑in, pointing at mock endpoints until the production URLs are provided.
+- **Licensing / Pro features** ship as a working scaffold, ready to connect to the
+  billing provider.
+- **Code signing** (Azure Trusted Signing) is set up but not enabled by default, so
+  local builds stay simple.
+
+Every placeholder is documented — see [qa/KNOWN_LIMITATIONS.md](qa/KNOWN_LIMITATIONS.md)
+and [docs/RELEASE.md](docs/RELEASE.md).
