@@ -1,7 +1,7 @@
 {
   "name": "local-ai-optimizer",
   "productName": "Hue Labs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A friendly control layer on top of Ollama that makes running and optimizing local AI easy for non-technical users.",
   "author": "8KCool <fivestar8859@gmail.com>",
   "license": "MIT",
