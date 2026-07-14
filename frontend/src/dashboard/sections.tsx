@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useJourney } from "../journey/JourneyContext";
 import { STEP } from "../journey/steps";
 import { useTheme } from "../ThemeProvider";
@@ -31,6 +31,7 @@ import {
   Cpu,
   Database,
   Gauge,
+  Info,
   KeyRound,
   Palette,
   Play,
@@ -544,6 +545,8 @@ export function SettingsSection() {
         <StatLine label="App" value="Hue Labs · MVP" />
       </DashCard>
 
+      <ApplicationCard />
+
       <DashCard title="Setup">
         <p className="text-caption text-ink-500">
           Run the guided setup again from the beginning.
@@ -664,6 +667,54 @@ function ThemePicker() {
         );
       })}
     </div>
+  );
+}
+
+/**
+ * App version + build info, native to the Settings page. The version is read at
+ * runtime from the Electron app metadata (`app.getVersion()` → package.json), so
+ * there is no hardcoded/duplicated version constant. The update rows and buttons
+ * are laid out but not wired yet — electron-updater already emits `update:*` IPC
+ * events, so this is where they'll connect.
+ */
+function ApplicationCard() {
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    window.desktop
+      ?.getVersion()
+      .then((v) => alive && setVersion(v))
+      .catch(() => {
+        /* Not running in the desktop shell (e.g. plain browser) — leave blank. */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // "Development" only in the Vite dev server; packaged builds report "Production".
+  const buildMode = import.meta.env.DEV ? "Development" : "Production";
+
+  return (
+    <DashCard title="Application" icon={<Info className="w-5 h-5" strokeWidth={1.8} />}>
+      <div>
+        <StatLine label="Version" value={version ? `v${version}` : "—"} />
+        <StatLine label="Build" value={buildMode} />
+        <StatLine label="Auto updates" value="Enabled" />
+        {/* Future update controls — layout ready, wired to electron-updater later. */}
+        <StatLine label="Update status" value="—" />
+        <StatLine label="Last checked" value="—" />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2.5">
+        <Button variant="secondary" disabled title="Automatic — manual check coming soon">
+          Check for updates
+        </Button>
+        <Button variant="ghost" disabled title="Available when an update is ready">
+          Restart to update
+        </Button>
+      </div>
+    </DashCard>
   );
 }
 
