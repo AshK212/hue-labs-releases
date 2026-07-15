@@ -6,8 +6,9 @@ export interface UpdateStore {
   lastSeenVersion?: string;
   /** Epoch ms of the last successful check (for "Last checked" across launches). */
   lastChecked?: number;
-  /** Version whose restart banner the user dismissed with "Later". */
-  dismissedVersion?: string;
+  // Note: restart-banner dismissal is intentionally NOT persisted — "Later" only
+  // dismisses for the current session, so a still-staged update re-shows the
+  // banner on the next launch.
 }
 
 const STORAGE_KEY = "lao.update";

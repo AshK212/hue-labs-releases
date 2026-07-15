@@ -24,10 +24,11 @@ import { log } from "./logger";
 export type UpdateStatus =
   | "idle"
   | "checking"
-  | "up-to-date"
-  | "available"
+  | "up_to_date"
+  | "update_available"
   | "downloading"
   | "downloaded"
+  | "restart_required"
   | "error";
 
 export interface UpdateSnapshot {
@@ -129,12 +130,12 @@ export function initAutoUpdater(options: UpdaterOptions): void {
 
   autoUpdater.on("update-available", (info) => {
     log.info("updater", `update available: ${info.version}`);
-    pushState({ status: "available", availableVersion: info.version });
+    pushState({ status: "update_available", availableVersion: info.version });
   });
 
   autoUpdater.on("update-not-available", (info) => {
     log.info("updater", `no update available (current ${info.version})`);
-    pushState({ status: "up-to-date", availableVersion: null, lastChecked: Date.now() });
+    pushState({ status: "up_to_date", availableVersion: null, lastChecked: Date.now() });
   });
 
   autoUpdater.on("download-progress", (progress) => {
@@ -147,8 +148,9 @@ export function initAutoUpdater(options: UpdaterOptions): void {
 
   autoUpdater.on("update-downloaded", (info) => {
     pendingInstall = true;
-    log.info("updater", `update downloaded: ${info.version} — will install on quit`);
-    pushState({ status: "downloaded", availableVersion: info.version, percent: 100 });
+    log.info("updater", `update downloaded: ${info.version} — restart required`);
+    // Emitted once; we go straight to the actionable "restart_required" state.
+    pushState({ status: "restart_required", availableVersion: info.version, percent: 100 });
   });
 
   autoUpdater.on("error", (err) => {

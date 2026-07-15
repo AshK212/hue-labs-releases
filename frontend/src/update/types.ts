@@ -5,10 +5,11 @@
 export type UpdateStatus =
   | "idle"
   | "checking"
-  | "up-to-date"
-  | "available"
+  | "up_to_date"
+  | "update_available"
   | "downloading"
   | "downloaded"
+  | "restart_required"
   | "error";
 
 export interface UpdateSnapshot {

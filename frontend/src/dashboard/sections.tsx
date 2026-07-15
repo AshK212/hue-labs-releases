@@ -674,10 +674,11 @@ function ThemePicker() {
 const UPDATE_STATUS_LABEL: Record<ClientUpdateStatus, string> = {
   idle: "Idle",
   checking: "Checking for updates…",
-  "up-to-date": "Up to date",
-  available: "Update available",
+  up_to_date: "Up to date",
+  update_available: "Update available",
   downloading: "Downloading update…",
-  downloaded: "Restart required",
+  downloaded: "Download complete",
+  restart_required: "Restart required",
   installing: "Installing update…",
   error: "Couldn't check for updates",
 };
@@ -686,11 +687,11 @@ const UPDATE_STATUS_LABEL: Record<ClientUpdateStatus, string> = {
 function UpdateStatusValue({ status }: { status: ClientUpdateStatus }) {
   const busy = status === "checking" || status === "downloading" || status === "installing";
   const tone =
-    status === "up-to-date"
+    status === "up_to_date"
       ? "bg-sage-500"
       : status === "error"
       ? "bg-[#E5646A]"
-      : status === "downloaded" || status === "available"
+      : status === "restart_required" || status === "downloaded" || status === "update_available"
       ? "bg-sky-500"
       : "bg-ink-400";
   return (
@@ -745,18 +746,18 @@ function ApplicationCard() {
         <StatLine label="Last checked" value={formatLastChecked(u.lastChecked)} />
       </div>
 
-      {u.progress && (
+      {u.status === "downloading" && (
         <div className="mt-4">
           <div className="flex items-center justify-between text-caption mb-1.5">
             <span className="text-ink-500">Downloading update…</span>
             <span className="font-mono text-ink-700 tnum">
-              {u.progress.percent}%{formatBytesPerSec(u.progress.bytesPerSecond)}
+              {u.downloadPercent}%{formatBytesPerSec(u.downloadSpeed)}
             </span>
           </div>
           <div className="h-1.5 rounded-full bg-mist-200 overflow-hidden">
             <div
               className="h-full rounded-full bg-sky-500 transition-[width] duration-300 ease-out"
-              style={{ width: `${u.progress.percent}%` }}
+              style={{ width: `${u.downloadPercent}%` }}
             />
           </div>
         </div>

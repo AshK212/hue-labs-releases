@@ -30,10 +30,13 @@ interface UpdateContextValue {
 
   // Live state
   status: ClientUpdateStatus;
-  progress: { percent: number; bytesPerSecond: number } | null;
+  downloadPercent: number;
+  /** Bytes/sec from the updater (0 when not downloading / not supplied). */
+  downloadSpeed: number;
   lastChecked: number | null;
   availableVersion: string | null;
   restartRequired: boolean;
+  errorMessage: string | null;
 
   // First-launch-after-update
   previousVersion: string | null;
@@ -72,9 +75,9 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   const [installing, setInstalling] = useState(false);
   const [justUpdated, setJustUpdated] = useState(false);
   const [previousVersion, setPreviousVersion] = useState<string | null>(null);
-  const [dismissedVersion, setDismissedVersion] = useState<string | null>(
-    () => readUpdateStore().dismissedVersion ?? null
-  );
+  // Session-only: which staged version's restart banner was dismissed with
+  // "Later". Deliberately not persisted — reopening re-shows it if still staged.
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
 
   // Version + first-launch detection, then subscribe to state pushes.
   useEffect(() => {
@@ -138,26 +141,25 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   }, [currentVersion]);
 
   const dismissRestart = useCallback(() => {
-    const v = snapshot.availableVersion;
-    setDismissedVersion(v);
-    writeUpdateStore({ ...readUpdateStore(), dismissedVersion: v ?? undefined });
+    // Session-only dismissal — not persisted.
+    setDismissedVersion(snapshot.availableVersion);
   }, [snapshot.availableVersion]);
 
   const value = useMemo<UpdateContextValue>(() => {
-    const restartRequired = snapshot.status === "downloaded";
+    const restartRequired =
+      snapshot.status === "restart_required" || snapshot.status === "downloaded";
     return {
       currentVersion,
       buildType,
       releaseChannel: "Stable",
       autoUpdatesEnabled: snapshot.autoUpdatesEnabled,
       status: installing ? "installing" : snapshot.status,
-      progress:
-        snapshot.status === "downloading"
-          ? { percent: snapshot.percent, bytesPerSecond: snapshot.bytesPerSecond }
-          : null,
+      downloadPercent: snapshot.percent,
+      downloadSpeed: snapshot.status === "downloading" ? snapshot.bytesPerSecond : 0,
       lastChecked: snapshot.lastChecked,
       availableVersion: snapshot.availableVersion,
       restartRequired,
+      errorMessage: snapshot.error,
       previousVersion,
       justUpdated,
       restartBannerVisible:
