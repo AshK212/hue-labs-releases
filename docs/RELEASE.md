@@ -180,15 +180,18 @@ runs the same Trusted Signing credentials against the backend binaries.
 
 ## 7. CI requirements
 
-- **Windows runner** (NSIS + signtool/Trusted Signing are Windows-only).
+The production pipeline is fully automated — see **§9. Automated release pipeline**
+below for the actual workflow. In short:
+
+- **Windows runner** (NSIS + Trusted Signing are Windows-only).
 - Node + npm, Python (for the PyInstaller backend build).
 - Pipeline: `npm ci` → `npm run build` → `npm run backend:build` → **sign backend**
-  → `electron-builder --win --publish always` (with signing config).
-- **Secrets:** `GH_TOKEN` (write access to `AshK212/hue-labs-releases`, for publishing
-  to GitHub Releases — §4) and the Azure signing env vars (§5), injected as CI secrets —
-  prefer OIDC/federated credentials over long-lived secrets where possible.
-- **Verification gate:** install the produced installer, then install the next
-  version over it and confirm auto-update applies (see checklist below).
+  (Azure Trusted Signing) → `electron-builder --win --publish always` (which signs
+  the app/installer/portable and publishes the GitHub Release).
+- **Auth:** Azure OIDC (workload identity federation) — **no client secret**.
+  Publishing uses the built-in `GITHUB_TOKEN` (`contents: write`).
+- **Verification gate:** every artifact's signature is verified before the job
+  succeeds; a signing failure fails the workflow and nothing unsigned is published.
 
 ### Upgrade verification checklist
 - [ ] Fresh install succeeds; app launches; backend healthy.
@@ -211,3 +214,105 @@ runs the same Trusted Signing credentials against the backend binaries.
   alongside the new `HueLabs-*` names.
 - Per-user install (`nsis.perMachine: false`) means updates need **no elevation**.
   Switching to per-machine later would require elevation on every update.
+
+---
+
+## 9. Automated release pipeline (GitHub Actions)
+
+Workflow: [`.github/workflows/release.yml`](../.github/workflows/release.yml).
+Trigger: **manual** (`workflow_dispatch`) with a `publish` toggle (uncheck for a
+signed dry-run that builds + signs + verifies but does not publish).
+
+### Flow
+
+```
+Checkout ─► install deps ─► npm run build ─► npm run backend:build
+   ─► Azure login (OIDC) ─► sign backend exe ─► verify backend signature
+   ─► electron-builder package + sign app/installer/portable  (--publish never)
+   ─► verify ALL signatures ─► upload signed workflow artifacts
+   ─► publish GitHub Release  (electron-builder --publish always)
+```
+
+Publishing is the **last** stage and only runs after every signature is verified
+and the signed artifacts are uploaded. Signing/verification is the gate: any
+failure fails the job **before** publish, so nothing unsigned is ever uploaded or
+published. Publishing is still done entirely by electron-builder (it reads
+owner/repo/releaseType from package.json — publishing logic unchanged). A dry run
+(`publish` unchecked) builds, signs, verifies, and uploads, but skips publish.
+
+### GitHub Environment
+
+The job runs in the **`release`** environment. Create it under
+**Settings → Environments → release** and (recommended) add required reviewers
+and/or a branch/tag restriction so a human approves every production release.
+
+### Azure authentication — OIDC (no secrets)
+
+Authentication uses **workload identity federation**: the workflow requests an
+OIDC token (`permissions: id-token: write`) and `azure/login@v2` exchanges it for
+an Azure session. **There is no `AZURE_CLIENT_SECRET`.** Both the backend signing
+step and electron-builder's Trusted Signing reuse that one session.
+
+### Azure Trusted Signing
+
+All signing uses one centralized config (defined once in the workflow `env:`):
+
+| Setting | Value |
+|---|---|
+| Endpoint | `https://eus.codesigning.azure.net/` |
+| Account | `huelabs` |
+| Certificate profile | `huelabs-cert` |
+| Region | East US |
+
+What gets signed: **`lao-backend.exe`** (before packaging, via
+`azure/trusted-signing-action`), then **`Hue Labs.exe`**, the **NSIS installer**,
+and the **portable** exe (during packaging, via electron-builder's
+`win.azureSignOptions`, injected as `-c.win.azureSignOptions.*` overrides — so
+local `npm run dist` stays unsigned and no signing config is duplicated).
+
+### Required GitHub **Variables** (Settings → Secrets and variables → Actions → Variables)
+
+Non-secret identifiers — set as repository (or environment) **Variables**:
+
+| Variable | Value |
+|---|---|
+| `AZURE_TENANT_ID` | `c6b55543-4230-4cb2-88e1-b8d5fbd696a9` |
+| `AZURE_CLIENT_ID` | `9d08b865-0499-4811-9e19-a3ba3c3b6812` |
+| `AZURE_SUBSCRIPTION_ID` | `8b212489-70de-4ea9-b25f-b8b2ca1214b9` |
+
+The endpoint / account / certificate-profile are **not** IDs and live in the
+workflow `env:` block (change them there if the signing account ever changes).
+
+### Required GitHub **Secrets**
+
+**None for Azure** (OIDC = no secret). Publishing uses the automatic
+`GITHUB_TOKEN` (granted `contents: write`), which can create releases in this repo.
+
+### Recovery / troubleshooting
+
+- **`AADSTS700213` / no matching federated credential:** the federated credential
+  subject doesn't match. It must match this workflow's request, e.g.
+  `repo:AshK212/hue-labs-releases:environment:release` (environment credential) —
+  configure it on the app registration to match the `release` environment.
+- **`AuthorizationFailed` when signing:** the app registration lacks the
+  **Trusted Signing Certificate Profile Signer** role on the `huelabs` account.
+  Assign it (Access control (IAM) on the Trusted Signing account).
+- **Signature `Status` not `Valid` in the verify step:** the job fails on purpose.
+  Nothing is published. Re-run after fixing the role/credential.
+- **Publish 403:** confirm the workflow runs in the same repo as `build.publish`
+  (`AshK212/hue-labs-releases`) so `GITHUB_TOKEN` has write access; otherwise
+  supply a PAT as `GH_TOKEN`.
+- **Roll back a bad release:** delete (or unpublish) the GitHub Release and its
+  assets — installed apps won't pick it up once it's gone from the feed.
+- **Trusted-signing action version:** pinned to `azure/trusted-signing-action@v0.5.9`;
+  bump to the latest patch if Microsoft releases a newer one.
+
+### One-time client setup (before the first run)
+
+1. Create the **`release`** GitHub Environment (optional reviewers).
+2. Add the three repository **Variables** above.
+3. On the Azure app registration (`AZURE_CLIENT_ID`), add a **federated credential**
+   for GitHub Actions with subject `repo:AshK212/hue-labs-releases:environment:release`.
+4. Assign the app registration the **Trusted Signing Certificate Profile Signer**
+   role on the `huelabs` Trusted Signing account.
+5. Run **Actions → Release → Run workflow** (leave *publish* checked).
