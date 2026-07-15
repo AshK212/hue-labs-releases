@@ -62,6 +62,15 @@ async function bootstrap(): Promise<void> {
     (e) => BrowserWindow.fromWebContents(e.sender)?.isMaximized() ?? false
   );
 
+  // Wire auto-updates early so the update IPC is registered before the renderer
+  // mounts. No-op in development; safe if no feed is configured. The install step
+  // waits for the backend to stop cleanly (stopBackendAndWait) so no files are
+  // locked when the NSIS installer swaps them.
+  initAutoUpdater({
+    getWindow: () => mainWindow,
+    onBeforeInstall: () => stopBackendAndWait(),
+  });
+
   // 1. Show the splash immediately so the user gets instant feedback.
   splashWindow = createSplashWindow();
 
@@ -100,14 +109,6 @@ async function bootstrap(): Promise<void> {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
-  });
-
-  // Wire auto-updates. No-op in development; safe if no feed is configured. The
-  // install step waits for the backend to stop cleanly (stopBackendAndWait) so
-  // no files are locked when the NSIS installer swaps them.
-  initAutoUpdater({
-    getWindow: () => mainWindow,
-    onBeforeInstall: () => stopBackendAndWait(),
   });
 }
 

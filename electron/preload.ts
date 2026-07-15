@@ -11,6 +11,8 @@
  */
 import { contextBridge, ipcRenderer } from "electron";
 
+import type { UpdateSnapshot } from "./updater";
+
 const api = {
   /** True so the web app can tell it is running inside the desktop shell. */
   isDesktop: true,
@@ -18,6 +20,21 @@ const api = {
   platform: process.platform,
   /** Resolve the packaged application version from the main process. */
   getVersion: (): Promise<string> => ipcRenderer.invoke("app:getVersion"),
+  /** Auto-update state + controls (see electron/updater.ts). */
+  updates: {
+    /** Current snapshot (for seeding on mount). */
+    getState: (): Promise<UpdateSnapshot> => ipcRenderer.invoke("update:getState"),
+    /** Trigger a check now; resolves with the resulting snapshot. */
+    check: (): Promise<UpdateSnapshot> => ipcRenderer.invoke("update:check"),
+    /** Restart and install a downloaded update immediately. */
+    restart: (): void => ipcRenderer.send("update:restart"),
+    /** Subscribe to consolidated state pushes; returns an unsubscribe fn. */
+    onState: (cb: (state: UpdateSnapshot) => void): (() => void) => {
+      const handler = (_e: unknown, state: UpdateSnapshot) => cb(state);
+      ipcRenderer.on("update:state", handler);
+      return () => ipcRenderer.off("update:state", handler);
+    },
+  },
   /** Custom title-bar window controls. */
   window: {
     minimize: (): void => ipcRenderer.send("window:minimize"),

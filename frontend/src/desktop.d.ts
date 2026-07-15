@@ -1,5 +1,7 @@
 // Shape of the API the Electron preload exposes on `window.desktop`.
 // (Kept in sync with electron/preload.ts.)
+import type { DesktopUpdatesApi } from "./update/types";
+
 export {};
 
 interface DesktopWindowApi {
@@ -14,6 +16,7 @@ interface DesktopApi {
   isDesktop: boolean;
   platform: string;
   getVersion(): Promise<string>;
+  updates: DesktopUpdatesApi;
   window: DesktopWindowApi;
 }
 

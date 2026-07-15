@@ -5,6 +5,7 @@ import { StatusBadge } from "../components/Badge";
 import { ShieldCheck } from "lucide-react";
 import { useJourney } from "../journey/JourneyContext";
 import { STEP } from "../journey/steps";
+import { useUpdates } from "../update/UpdateManager";
 import { useDashboardData } from "./useDashboardData";
 import {
   OverviewSection,
@@ -42,6 +43,7 @@ export function Dashboard() {
   const [active, setActive] = useState<SectionId>("overview");
   const { history, models } = useDashboardData();
   const { enterFlowAt } = useJourney();
+  const { currentVersion } = useUpdates();
 
   const renderSection = () => {
     switch (active) {
@@ -100,10 +102,17 @@ export function Dashboard() {
           })}
         </nav>
 
-        <div className="px-2 pt-4 border-t border-mist-200">
+        <div className="px-2 pt-4 border-t border-mist-200 space-y-3">
           <StatusBadge tone="green" dot>
             <span className="font-mono uppercase tracking-wide">Private · Local only</span>
           </StatusBadge>
+          {/* Subtle build stamp — so users and support instantly know the version. */}
+          <div className="flex items-baseline justify-between px-1">
+            <span className="text-micro text-ink-400">Hue Labs</span>
+            <span className="text-micro font-mono text-ink-400 tnum">
+              {currentVersion ? `v${currentVersion}` : ""}
+            </span>
+          </div>
         </div>
       </aside>
 

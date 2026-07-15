@@ -1,5 +1,7 @@
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { ThemeProvider } from "./ThemeProvider";
+import { UpdateProvider } from "./update/UpdateManager";
+import { UpdateOverlays } from "./update/UpdateOverlays";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
 import { BrandBackground } from "./components/BrandBackground";
@@ -86,9 +88,12 @@ export default function App() {
     // Globally honor the OS "reduce motion" setting for every Framer animation.
     <MotionConfig reducedMotion="user">
       <ThemeProvider>
-        <JourneyProvider>
-          <Journey />
-        </JourneyProvider>
+        <UpdateProvider>
+          <JourneyProvider>
+            <Journey />
+          </JourneyProvider>
+          <UpdateOverlays />
+        </UpdateProvider>
       </ThemeProvider>
     </MotionConfig>
   );

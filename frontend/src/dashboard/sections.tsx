@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useJourney } from "../journey/JourneyContext";
 import { STEP } from "../journey/steps";
 import { useTheme } from "../ThemeProvider";
+import { useUpdates, type ClientUpdateStatus } from "../update/UpdateManager";
 import { THEMES } from "../theme";
 import {
   DEFAULT_PRIVACY,
@@ -670,49 +671,122 @@ function ThemePicker() {
   );
 }
 
+const UPDATE_STATUS_LABEL: Record<ClientUpdateStatus, string> = {
+  idle: "Idle",
+  checking: "Checking for updates…",
+  "up-to-date": "Up to date",
+  available: "Update available",
+  downloading: "Downloading update…",
+  downloaded: "Restart required",
+  installing: "Installing update…",
+  error: "Couldn't check for updates",
+};
+
+/** A subtle status dot whose colour/motion reflects the update state. */
+function UpdateStatusValue({ status }: { status: ClientUpdateStatus }) {
+  const busy = status === "checking" || status === "downloading" || status === "installing";
+  const tone =
+    status === "up-to-date"
+      ? "bg-sage-500"
+      : status === "error"
+      ? "bg-[#E5646A]"
+      : status === "downloaded" || status === "available"
+      ? "bg-sky-500"
+      : "bg-ink-400";
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={`w-1.5 h-1.5 rounded-full ${tone} ${busy ? "animate-pulse" : ""}`} />
+      <span>{UPDATE_STATUS_LABEL[status]}</span>
+    </span>
+  );
+}
+
+function formatBytesPerSec(bps: number): string {
+  if (!bps) return "";
+  const mb = bps / (1024 * 1024);
+  if (mb >= 1) return ` · ${mb.toFixed(1)} MB/s`;
+  return ` · ${Math.round(bps / 1024)} KB/s`;
+}
+
+function formatLastChecked(ms: number | null): string {
+  if (!ms) return "Never";
+  const d = new Date(ms);
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  if (sameDay) return `Today ${time}`;
+  if (isYesterday) return `Yesterday ${time}`;
+  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} ${time}`;
+}
+
 /**
- * App version + build info, native to the Settings page. The version is read at
- * runtime from the Electron app metadata (`app.getVersion()` → package.json), so
- * there is no hardcoded/duplicated version constant. The update rows and buttons
- * are laid out but not wired yet — electron-updater already emits `update:*` IPC
- * events, so this is where they'll connect.
+ * App version + live update state, native to the Settings page. Everything comes
+ * from the shared UpdateManager (version read at runtime from Electron — no
+ * hardcoded constant), so there is no update logic or duplicated state here.
  */
 function ApplicationCard() {
-  const [version, setVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    window.desktop
-      ?.getVersion()
-      .then((v) => alive && setVersion(v))
-      .catch(() => {
-        /* Not running in the desktop shell (e.g. plain browser) — leave blank. */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  // "Development" only in the Vite dev server; packaged builds report "Production".
-  const buildMode = import.meta.env.DEV ? "Development" : "Production";
+  const u = useUpdates();
+  const busy = u.status === "checking" || u.status === "downloading" || u.status === "installing";
 
   return (
     <DashCard title="Application" icon={<Info className="w-5 h-5" strokeWidth={1.8} />}>
       <div>
-        <StatLine label="Version" value={version ? `v${version}` : "—"} />
-        <StatLine label="Build" value={buildMode} />
-        <StatLine label="Auto updates" value="Enabled" />
-        {/* Future update controls — layout ready, wired to electron-updater later. */}
-        <StatLine label="Update status" value="—" />
-        <StatLine label="Last checked" value="—" />
+        <StatLine label="Version" value={u.currentVersion ? `v${u.currentVersion}` : "—"} />
+        <StatLine label="Build" value={u.buildType} />
+        <StatLine label="Update status" value={<UpdateStatusValue status={u.status} />} />
+        <StatLine
+          label="Auto updates"
+          value={u.autoUpdatesEnabled ? "Enabled" : "Off in development"}
+        />
+        <StatLine label="Release channel" value={u.releaseChannel} />
+        <StatLine label="Last checked" value={formatLastChecked(u.lastChecked)} />
       </div>
+
+      {u.progress && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-caption mb-1.5">
+            <span className="text-ink-500">Downloading update…</span>
+            <span className="font-mono text-ink-700 tnum">
+              {u.progress.percent}%{formatBytesPerSec(u.progress.bytesPerSecond)}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-mist-200 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-sky-500 transition-[width] duration-300 ease-out"
+              style={{ width: `${u.progress.percent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {u.status === "error" && u.autoUpdatesEnabled && (
+        <p className="text-caption text-ink-400 mt-3">
+          We couldn't reach the update server. Hue Labs keeps working — we'll try again later.
+        </p>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-2.5">
-        <Button variant="secondary" disabled title="Automatic — manual check coming soon">
-          Check for updates
-        </Button>
-        <Button variant="ghost" disabled title="Available when an update is ready">
-          Restart to update
-        </Button>
+        {u.restartRequired ? (
+          <Button
+            variant="secondary"
+            onClick={u.restartNow}
+            leftIcon={<RefreshCw className="w-[18px] h-[18px]" strokeWidth={1.9} />}
+          >
+            Restart to update
+          </Button>
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={u.checkNow}
+            loading={u.status === "checking"}
+            disabled={busy || !u.autoUpdatesEnabled}
+          >
+            Check now
+          </Button>
+        )}
       </div>
     </DashCard>
   );
