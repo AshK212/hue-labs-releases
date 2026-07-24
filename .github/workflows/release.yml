@@ -1,13 +1,21 @@
-# Hue Labs — production release pipeline.
+# Hue Labs — production Windows release pipeline.
 #
-# Build → sign → publish, fully automated on a Windows runner. Code signing uses
-# Azure Trusted Signing via OIDC (workload identity federation) — no client
-# secrets. The GitHub Release itself is created by electron-builder using the
-# existing `build.publish` config in package.json (owner/repo/releaseType); this
-# workflow does NOT create or upload releases itself.
+# Flow:
+# Build → Azure OIDC login → sign backend → verify backend →
+# package/sign Windows artifacts → verify → upload workflow artifacts →
+# optionally publish with electron-builder → verify the published build.
 #
-# See docs/RELEASE.md §9 for the required GitHub Environment, Variables, and the
-# one-time Azure federated-credential / role setup.
+# Required GitHub Environment:
+#   release
+#
+# Required Environment Variables:
+#   AZURE_TENANT_ID
+#   AZURE_CLIENT_ID
+#   AZURE_SUBSCRIPTION_ID
+#
+# The Azure federated credential must be scoped to:
+#   Repository: AshK212/hue-labs-releases
+#   Environment: release
 
 name: Release
 
@@ -15,12 +23,11 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Publish to GitHub Releases (uncheck for a signed dry-run)"
+        description: "Publish to GitHub Releases (disable for a signed dry run)"
         type: boolean
-        default: true
+        required: true
+        default: false
 
-# OIDC token to authenticate to Azure; contents:write so electron-builder can
-# create the GitHub Release. No other permissions are granted.
 permissions:
   id-token: write
   contents: write
@@ -31,29 +38,35 @@ concurrency:
 
 jobs:
   release:
+    name: Build, sign, verify, and publish
     runs-on: windows-latest
-    # Protected GitHub Environment — add reviewers/branch rules in repo settings.
     environment: release
 
     env:
-      # --- Azure Trusted Signing config (non-secret, single source of truth) ---
+      # Azure Artifact Signing configuration
       AZURE_CODE_SIGNING_ENDPOINT: https://eus.codesigning.azure.net/
       AZURE_TRUSTED_SIGNING_ACCOUNT: huelabs
       AZURE_CERT_PROFILE: huelabs-cert
+
+      # IMPORTANT:
+      # This must exactly match the Common Name (CN) of the signing certificate.
+      # Update it after the first successful backend signing if Azure reports
+      # a different certificate subject.
       AZURE_SIGN_PUBLISHER: Hue Labs
-      # --- Azure identity (from repository Variables — no hardcoded IDs) --------
+
+      # Azure OIDC identity from GitHub Environment variables
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
           cache: npm
           cache-dependency-path: |
             package-lock.json
@@ -63,37 +76,48 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
 
-      - name: Install dependencies (root + frontend + backend)
+      - name: Install dependencies
         shell: pwsh
         run: |
           npm ci
           npm --prefix frontend ci
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt pyinstaller
+          python -m pip install -r backend/requirements.txt pyinstaller
 
-      # 1. Build the frontend + Electron main, then freeze the Python backend.
-      - name: Build frontend and Electron
+      - name: Build frontend and Electron sources
+        shell: pwsh
         run: npm run build
 
-      - name: Build backend executable (PyInstaller)
+      - name: Build Python backend executable
+        shell: pwsh
         run: npm run backend:build
 
-      # 2. Authenticate to Azure with OIDC (federated identity — no secret).
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
+      - name: Confirm backend executable exists
+        shell: pwsh
+        run: |
+          $backendExe = "backend\dist\lao-backend\lao-backend.exe"
+
+          if (-not (Test-Path -LiteralPath $backendExe)) {
+            throw "Backend executable was not created: $backendExe"
+          }
+
+          Write-Host "Backend executable found: $backendExe"
+
+      - name: Azure login using OIDC
+        uses: azure/login@v3
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      # 3. Sign the bundled backend BEFORE packaging (electron-builder cannot reach
-      #    extraResources). Same Azure account/endpoint/profile as the app.
-      - name: Sign backend executable (Azure Trusted Signing)
-        uses: azure/trusted-signing-action@v0.5.9
+      - name: Sign backend executable with Azure Artifact Signing
+        uses: azure/artifact-signing-action@v2
         with:
           endpoint: ${{ env.AZURE_CODE_SIGNING_ENDPOINT }}
-          trusted-signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT }}
           certificate-profile-name: ${{ env.AZURE_CERT_PROFILE }}
           files-folder: ${{ github.workspace }}\backend\dist\lao-backend
           files-folder-filter: exe
@@ -102,22 +126,27 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
-      - name: Verify backend signature (fail before packaging if unsigned)
+      - name: Verify backend signature
         shell: pwsh
         run: |
-          $exe = "backend\dist\lao-backend\lao-backend.exe"
-          $sig = Get-AuthenticodeSignature -FilePath $exe
-          Write-Host "$($sig.Status)  $exe"
-          if ($sig.Status -ne 'Valid') {
-            Write-Error "Backend executable is not validly signed — aborting before packaging."
-            exit 1
+          $backendExe = "backend\dist\lao-backend\lao-backend.exe"
+          $signature = Get-AuthenticodeSignature -LiteralPath $backendExe
+
+          $subject = if ($signature.SignerCertificate) {
+            $signature.SignerCertificate.Subject
+          } else {
+            "(none)"
           }
 
-      # 4. Package (NSIS installer + portable) and sign the app/installer/portable
-      #    with electron-builder's Azure Trusted Signing — but DO NOT publish yet
-      #    (--publish never). Publishing happens only after signatures are verified
-      #    and artifacts uploaded. If signing fails, electron-builder aborts here.
-      - name: Package and sign (no publish yet)
+          Write-Host "Status:  $($signature.Status)"
+          Write-Host "Subject: $subject"
+          Write-Host "File:    $backendExe"
+
+          if ($signature.Status -ne "Valid") {
+            throw "Backend executable is not validly signed."
+          }
+
+      - name: Package and sign Windows artifacts
         shell: pwsh
         run: |
           npx electron-builder --win --publish never `
@@ -126,36 +155,55 @@ jobs:
             "-c.win.azureSignOptions.codeSigningAccountName=$env:AZURE_TRUSTED_SIGNING_ACCOUNT" `
             "-c.win.azureSignOptions.certificateProfileName=$env:AZURE_CERT_PROFILE"
 
-      # 5. Final signature gate over every shipped artifact (defense in depth).
-      - name: Verify signatures on all artifacts
+      - name: Verify signatures on packaged artifacts
         shell: pwsh
         run: |
           $targets = @(
             "release\win-unpacked\Hue Labs.exe",
             "release\win-unpacked\resources\backend\lao-backend.exe"
           )
-          $targets += (Get-ChildItem "release\*.exe" | ForEach-Object { $_.FullName })
+
+          $releaseExecutables = Get-ChildItem -Path "release" -Filter "*.exe" -File |
+            ForEach-Object { $_.FullName }
+
+          $targets += $releaseExecutables
+          $targets = $targets | Select-Object -Unique
+
+          if ($targets.Count -eq 0) {
+            throw "No Windows executable artifacts were found."
+          }
 
           $failed = $false
-          foreach ($t in $targets) {
-            if (-not (Test-Path -LiteralPath $t)) {
-              Write-Host "MISSING   $t"; $failed = $true; continue
-            }
-            $sig = Get-AuthenticodeSignature -LiteralPath $t
-            $subject = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { "(none)" }
-            Write-Host "$($sig.Status.ToString().PadRight(10)) $t  $subject"
-            if ($sig.Status -ne 'Valid') { $failed = $true }
-          }
-          if ($failed) {
-            Write-Error "One or more artifacts are not validly signed."
-            exit 1
-          }
-          Write-Host "All artifacts are validly signed."
 
-      # 6. Upload the signed, verified artifacts as workflow artifacts. This runs
-      #    only after the verify step passes (a failed step aborts the job), and
-      #    strictly before publishing — so we never upload/publish unsigned output.
-      - name: Upload signed release artifacts
+          foreach ($target in $targets) {
+            if (-not (Test-Path -LiteralPath $target)) {
+              Write-Host "MISSING   $target"
+              $failed = $true
+              continue
+            }
+
+            $signature = Get-AuthenticodeSignature -LiteralPath $target
+            $subject = if ($signature.SignerCertificate) {
+              $signature.SignerCertificate.Subject
+            } else {
+              "(none)"
+            }
+
+            Write-Host "$($signature.Status.ToString().PadRight(10)) $target"
+            Write-Host "           Signer: $subject"
+
+            if ($signature.Status -ne "Valid") {
+              $failed = $true
+            }
+          }
+
+          if ($failed) {
+            throw "One or more packaged artifacts are missing or not validly signed."
+          }
+
+          Write-Host "All packaged artifacts are validly signed."
+
+      - name: Upload signed workflow artifacts
         uses: actions/upload-artifact@v4
         with:
           name: hue-labs-windows-signed
@@ -166,10 +214,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # 7. Publish the GitHub Release LAST — still electron-builder (unchanged
-      #    publishing logic: it reads owner/repo/releaseType from package.json).
-      #    Skipped on a dry run (publish=false).
-      - name: Publish GitHub Release (electron-builder)
+      # electron-builder does not provide a publish-only command for already-built
+      # artifacts, so this step packages/signs again before publishing.
+      - name: Publish GitHub Release with electron-builder
         if: ${{ inputs.publish }}
         shell: pwsh
         env:
@@ -180,3 +227,57 @@ jobs:
             "-c.win.azureSignOptions.endpoint=$env:AZURE_CODE_SIGNING_ENDPOINT" `
             "-c.win.azureSignOptions.codeSigningAccountName=$env:AZURE_TRUSTED_SIGNING_ACCOUNT" `
             "-c.win.azureSignOptions.certificateProfileName=$env:AZURE_CERT_PROFILE"
+
+      - name: Verify signatures after publishing
+        if: ${{ inputs.publish }}
+        shell: pwsh
+        run: |
+          $targets = @(
+            "release\win-unpacked\Hue Labs.exe",
+            "release\win-unpacked\resources\backend\lao-backend.exe"
+          )
+
+          $releaseExecutables = Get-ChildItem -Path "release" -Filter "*.exe" -File |
+            ForEach-Object { $_.FullName }
+
+          $targets += $releaseExecutables
+          $targets = $targets | Select-Object -Unique
+
+          if ($targets.Count -eq 0) {
+            throw "No published-build executable artifacts were found."
+          }
+
+          $failed = $false
+
+          foreach ($target in $targets) {
+            if (-not (Test-Path -LiteralPath $target)) {
+              Write-Host "MISSING   $target"
+              $failed = $true
+              continue
+            }
+
+            $signature = Get-AuthenticodeSignature -LiteralPath $target
+            $subject = if ($signature.SignerCertificate) {
+              $signature.SignerCertificate.Subject
+            } else {
+              "(none)"
+            }
+
+            Write-Host "$($signature.Status.ToString().PadRight(10)) $target"
+            Write-Host "           Signer: $subject"
+
+            if ($signature.Status -ne "Valid") {
+              $failed = $true
+            }
+          }
+
+          if ($failed) {
+            throw "The published build contains missing or invalid signatures."
+          }
+
+          Write-Host "All published-build artifacts are validly signed."
+
+      - name: Azure logout
+        if: always()
+        shell: pwsh
+        run: az logout
