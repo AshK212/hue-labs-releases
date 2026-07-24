@@ -280,4 +280,5 @@ jobs:
       - name: Azure logout
         if: always()
         shell: pwsh
+        continue-on-error: true
         run: az logout
