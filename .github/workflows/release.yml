@@ -2,8 +2,11 @@
 #
 # Flow:
 # Build → Azure OIDC login → sign backend → verify backend →
-# package/sign Windows artifacts → verify → upload workflow artifacts →
-# optionally publish with electron-builder → verify the published build.
+# create unpacked Windows app without electron-builder signing →
+# sign unpacked app with Azure Artifact Signing →
+# build installer + portable from the signed unpacked app →
+# sign final distributables → verify → upload →
+# optionally publish the exact verified files to GitHub Releases.
 #
 # Required GitHub Environment:
 #   release
@@ -13,7 +16,7 @@
 #   AZURE_CLIENT_ID
 #   AZURE_SUBSCRIPTION_ID
 #
-# The Azure federated credential must be scoped to:
+# Azure federated credential:
 #   Repository: AshK212/hue-labs-releases
 #   Environment: release
 
@@ -23,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Publish to GitHub Releases (disable for a signed dry run)"
+        description: "Publish verified artifacts to GitHub Releases"
         type: boolean
         required: true
         default: false
@@ -43,18 +46,10 @@ jobs:
     environment: release
 
     env:
-      # Azure Artifact Signing configuration
       AZURE_CODE_SIGNING_ENDPOINT: https://eus.codesigning.azure.net/
       AZURE_TRUSTED_SIGNING_ACCOUNT: huelabs
       AZURE_CERT_PROFILE: huelabs-cert
 
-      # IMPORTANT:
-      # This must exactly match the Common Name (CN) of the signing certificate.
-      # Update it after the first successful backend signing if Azure reports
-      # a different certificate subject.
-      AZURE_SIGN_PUBLISHER: Hue Labs
-
-      # Azure OIDC identity from GitHub Environment variables
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -113,40 +108,13 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Prepare OIDC token for electron-builder
-        uses: actions/github-script@v7
-        env:
-          AZURE_OIDC_TOKEN_PATH: ${{ runner.temp }}\azure-oidc-token.txt
-        with:
-          script: |
-            const fs = require("fs");
-
-            const token = await core.getIDToken(
-              "api://AzureADTokenExchange"
-            );
-
-            fs.writeFileSync(
-              process.env.AZURE_OIDC_TOKEN_PATH,
-              token,
-              { encoding: "utf8" }
-            );
-
-            fs.appendFileSync(
-              process.env.GITHUB_ENV,
-              `AZURE_FEDERATED_TOKEN_FILE=${process.env.AZURE_OIDC_TOKEN_PATH}\n`
-            );
-
-            core.info("OIDC token prepared for electron-builder.");
-
       - name: Sign backend executable with Azure Artifact Signing
         uses: azure/artifact-signing-action@v2
         with:
           endpoint: ${{ env.AZURE_CODE_SIGNING_ENDPOINT }}
           signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT }}
           certificate-profile-name: ${{ env.AZURE_CERT_PROFILE }}
-          files-folder: ${{ github.workspace }}\backend\dist\lao-backend
-          files-folder-filter: exe
-          files-folder-recurse: true
+          files: ${{ github.workspace }}\backend\dist\lao-backend\lao-backend.exe
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
@@ -171,44 +139,43 @@ jobs:
             throw "Backend executable is not validly signed."
           }
 
-      - name: Verify electron-builder Azure environment
+      # electron-builder's Azure signing path requires an auth configuration that
+      # does not work with this GitHub OIDC-only setup. We therefore package first
+      # without signing, and use Azure Artifact Signing for the generated EXEs.
+      - name: Package unpacked Windows application
         shell: pwsh
         run: |
-          $requiredVariables = @(
-            "AZURE_TENANT_ID",
-            "AZURE_CLIENT_ID",
-            "AZURE_FEDERATED_TOKEN_FILE"
-          )
+          npx electron-builder --win --dir --publish never `
+            "-c.win.signExecutable=false"
 
-          foreach ($variableName in $requiredVariables) {
-            $value = [Environment]::GetEnvironmentVariable($variableName)
+      - name: Confirm unpacked application exists
+        shell: pwsh
+        run: |
+          $appExe = "release\win-unpacked\Hue Labs.exe"
+          $bundledBackend = "release\win-unpacked\resources\backend\lao-backend.exe"
 
-            if ([string]::IsNullOrWhiteSpace($value)) {
-              throw "$variableName is missing."
-            }
-
-            if ($variableName -eq "AZURE_FEDERATED_TOKEN_FILE") {
-              if (-not (Test-Path -LiteralPath $value)) {
-                throw "OIDC token file does not exist: $value"
-              }
-
-              Write-Host "$variableName is configured and the file exists."
-            }
-            else {
-              Write-Host "$variableName is configured."
-            }
+          if (-not (Test-Path -LiteralPath $appExe)) {
+            throw "Unpacked application was not created: $appExe"
           }
 
-      - name: Package and sign Windows artifacts
-        shell: pwsh
-        run: |
-          npx electron-builder --win --publish never `
-            "-c.win.azureSignOptions.publisherName=$env:AZURE_SIGN_PUBLISHER" `
-            "-c.win.azureSignOptions.endpoint=$env:AZURE_CODE_SIGNING_ENDPOINT" `
-            "-c.win.azureSignOptions.codeSigningAccountName=$env:AZURE_TRUSTED_SIGNING_ACCOUNT" `
-            "-c.win.azureSignOptions.certificateProfileName=$env:AZURE_CERT_PROFILE"
+          if (-not (Test-Path -LiteralPath $bundledBackend)) {
+            throw "Bundled backend was not created: $bundledBackend"
+          }
 
-      - name: Verify signatures on packaged artifacts
+          Write-Host "Unpacked application and bundled backend exist."
+
+      - name: Sign unpacked Hue Labs application
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: ${{ env.AZURE_CODE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ env.AZURE_CERT_PROFILE }}
+          files: ${{ github.workspace }}\release\win-unpacked\Hue Labs.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Verify unpacked application signatures
         shell: pwsh
         run: |
           $targets = @(
@@ -216,11 +183,87 @@ jobs:
             "release\win-unpacked\resources\backend\lao-backend.exe"
           )
 
-          $releaseExecutables = Get-ChildItem -Path "release" -Filter "*.exe" -File |
+          $failed = $false
+
+          foreach ($target in $targets) {
+            if (-not (Test-Path -LiteralPath $target)) {
+              Write-Host "MISSING   $target"
+              $failed = $true
+              continue
+            }
+
+            $signature = Get-AuthenticodeSignature -LiteralPath $target
+            $subject = if ($signature.SignerCertificate) {
+              $signature.SignerCertificate.Subject
+            } else {
+              "(none)"
+            }
+
+            Write-Host "$($signature.Status.ToString().PadRight(10)) $target"
+            Write-Host "           Signer: $subject"
+
+            if ($signature.Status -ne "Valid") {
+              $failed = $true
+            }
+          }
+
+          if ($failed) {
+            throw "The unpacked application contains missing or invalid signatures."
+          }
+
+          Write-Host "The unpacked application is validly signed."
+
+      - name: Build installer and portable from signed application
+        shell: pwsh
+        run: |
+          npx electron-builder --win nsis portable `
+            --prepackaged "release\win-unpacked" `
+            --publish never `
+            "-c.win.signExecutable=false"
+
+      - name: Confirm distributable artifacts exist
+        shell: pwsh
+        run: |
+          $executables = @(Get-ChildItem -Path "release" -Filter "*.exe" -File)
+
+          if ($executables.Count -lt 2) {
+            Write-Host "EXE files found:"
+            $executables | ForEach-Object { Write-Host $_.FullName }
+            throw "Expected both installer and portable EXE artifacts."
+          }
+
+          if (-not (Test-Path -LiteralPath "release\latest.yml")) {
+            throw "latest.yml was not generated."
+          }
+
+          Write-Host "Distributable artifacts:"
+          $executables | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Sign installer and portable artifacts
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: ${{ env.AZURE_CODE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ env.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ env.AZURE_CERT_PROFILE }}
+          files-folder: ${{ github.workspace }}\release
+          files-folder-filter: exe
+          files-folder-recurse: false
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Verify all shipped executable signatures
+        shell: pwsh
+        run: |
+          $targets = @(
+            "release\win-unpacked\Hue Labs.exe",
+            "release\win-unpacked\resources\backend\lao-backend.exe"
+          )
+
+          $targets += Get-ChildItem -Path "release" -Filter "*.exe" -File |
             ForEach-Object { $_.FullName }
 
-          $targets += $releaseExecutables
-          $targets = $targets | Select-Object -Unique
+          $targets = @($targets | Select-Object -Unique)
 
           if ($targets.Count -eq 0) {
             throw "No Windows executable artifacts were found."
@@ -251,10 +294,10 @@ jobs:
           }
 
           if ($failed) {
-            throw "One or more packaged artifacts are missing or not validly signed."
+            throw "One or more shipped executable artifacts are missing or not validly signed."
           }
 
-          Write-Host "All packaged artifacts are validly signed."
+          Write-Host "All shipped executable artifacts are validly signed."
 
       - name: Upload signed workflow artifacts
         uses: actions/upload-artifact@v4
@@ -267,68 +310,59 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # electron-builder does not provide a publish-only command for already-built
-      # artifacts, so this step packages/signs again before publishing.
-      - name: Publish GitHub Release with electron-builder
+      # Publish the exact files that passed the signature checks. This avoids
+      # electron-builder rebuilding the app and re-entering its unsupported
+      # Azure authentication path.
+      - name: Publish verified GitHub Release
         if: ${{ inputs.publish }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx electron-builder --win --publish always `
-            "-c.win.azureSignOptions.publisherName=$env:AZURE_SIGN_PUBLISHER" `
-            "-c.win.azureSignOptions.endpoint=$env:AZURE_CODE_SIGNING_ENDPOINT" `
-            "-c.win.azureSignOptions.codeSigningAccountName=$env:AZURE_TRUSTED_SIGNING_ACCOUNT" `
-            "-c.win.azureSignOptions.certificateProfileName=$env:AZURE_CERT_PROFILE"
+          $package = Get-Content -Raw "package.json" | ConvertFrom-Json
+          $version = $package.version
+          $tag = "v$version"
 
-      - name: Verify signatures after publishing
-        if: ${{ inputs.publish }}
-        shell: pwsh
-        run: |
-          $targets = @(
-            "release\win-unpacked\Hue Labs.exe",
-            "release\win-unpacked\resources\backend\lao-backend.exe"
-          )
-
-          $releaseExecutables = Get-ChildItem -Path "release" -Filter "*.exe" -File |
+          $assets = @()
+          $assets += Get-ChildItem -Path "release" -Filter "*.exe" -File |
+            ForEach-Object { $_.FullName }
+          $assets += Get-ChildItem -Path "release" -Filter "*.blockmap" -File |
             ForEach-Object { $_.FullName }
 
-          $targets += $releaseExecutables
-          $targets = $targets | Select-Object -Unique
-
-          if ($targets.Count -eq 0) {
-            throw "No published-build executable artifacts were found."
+          if (Test-Path -LiteralPath "release\latest.yml") {
+            $assets += (Resolve-Path "release\latest.yml").Path
           }
 
-          $failed = $false
+          $assets = @($assets | Select-Object -Unique)
 
-          foreach ($target in $targets) {
-            if (-not (Test-Path -LiteralPath $target)) {
-              Write-Host "MISSING   $target"
-              $failed = $true
-              continue
-            }
-
-            $signature = Get-AuthenticodeSignature -LiteralPath $target
-            $subject = if ($signature.SignerCertificate) {
-              $signature.SignerCertificate.Subject
-            } else {
-              "(none)"
-            }
-
-            Write-Host "$($signature.Status.ToString().PadRight(10)) $target"
-            Write-Host "           Signer: $subject"
-
-            if ($signature.Status -ne "Valid") {
-              $failed = $true
-            }
+          if ($assets.Count -eq 0) {
+            throw "No release assets were found."
           }
 
-          if ($failed) {
-            throw "The published build contains missing or invalid signatures."
+          Write-Host "Release tag: $tag"
+          Write-Host "Assets:"
+          $assets | ForEach-Object { Write-Host $_ }
+
+          gh release view $tag --repo "$env:GITHUB_REPOSITORY" *> $null
+
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists. Replacing matching assets."
+            gh release upload $tag @assets `
+              --repo "$env:GITHUB_REPOSITORY" `
+              --clobber
+          }
+          else {
+            Write-Host "Creating release $tag."
+            gh release create $tag @assets `
+              --repo "$env:GITHUB_REPOSITORY" `
+              --target "$env:GITHUB_SHA" `
+              --title $version `
+              --generate-notes
           }
 
-          Write-Host "All published-build artifacts are validly signed."
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub Release publishing failed."
+          }
 
       - name: Azure logout
         if: always()
