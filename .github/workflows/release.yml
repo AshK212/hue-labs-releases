@@ -145,8 +145,7 @@ jobs:
       - name: Package unpacked Windows application
         shell: pwsh
         run: |
-          npx electron-builder --win --dir --publish never `
-            "-c.win.signExecutable=false"
+          npx electron-builder --win --dir --publish never
 
       - name: Confirm unpacked application exists
         shell: pwsh
@@ -219,7 +218,6 @@ jobs:
           npx electron-builder --win nsis portable `
             --prepackaged "release\win-unpacked" `
             --publish never `
-            "-c.win.signExecutable=false"
 
       - name: Confirm distributable artifacts exist
         shell: pwsh
