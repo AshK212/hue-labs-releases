@@ -113,6 +113,31 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Prepare OIDC token for electron-builder
+        uses: actions/github-script@v7
+        env:
+          AZURE_OIDC_TOKEN_PATH: ${{ runner.temp }}\azure-oidc-token.txt
+        with:
+          script: |
+            const fs = require("fs");
+
+            const token = await core.getIDToken(
+              "api://AzureADTokenExchange"
+            );
+
+            fs.writeFileSync(
+              process.env.AZURE_OIDC_TOKEN_PATH,
+              token,
+              { encoding: "utf8" }
+            );
+
+            fs.appendFileSync(
+              process.env.GITHUB_ENV,
+              `AZURE_FEDERATED_TOKEN_FILE=${process.env.AZURE_OIDC_TOKEN_PATH}\n`
+            );
+
+            core.info("OIDC token prepared for electron-builder.");
+
       - name: Sign backend executable with Azure Artifact Signing
         uses: azure/artifact-signing-action@v2
         with:
@@ -144,6 +169,34 @@ jobs:
 
           if ($signature.Status -ne "Valid") {
             throw "Backend executable is not validly signed."
+          }
+
+      - name: Verify electron-builder Azure environment
+        shell: pwsh
+        run: |
+          $requiredVariables = @(
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_FEDERATED_TOKEN_FILE"
+          )
+
+          foreach ($variableName in $requiredVariables) {
+            $value = [Environment]::GetEnvironmentVariable($variableName)
+
+            if ([string]::IsNullOrWhiteSpace($value)) {
+              throw "$variableName is missing."
+            }
+
+            if ($variableName -eq "AZURE_FEDERATED_TOKEN_FILE") {
+              if (-not (Test-Path -LiteralPath $value)) {
+                throw "OIDC token file does not exist: $value"
+              }
+
+              Write-Host "$variableName is configured and the file exists."
+            }
+            else {
+              Write-Host "$variableName is configured."
+            }
           }
 
       - name: Package and sign Windows artifacts
