@@ -139,6 +139,18 @@ jobs:
             throw "Backend executable is not validly signed."
           }
 
+      # Generate the packaged production configuration from the release secret.
+      # This writes production-config/production.json, which electron-builder
+      # bundles as an extraResource; the Electron main process reads it and injects
+      # the values into the Python backend child only (never the renderer/preload).
+      # The script prints presence only — it never echoes the key or URL.
+      - name: Generate production configuration
+        shell: pwsh
+        env:
+          HUE_LABS_API_KEY: ${{ secrets.HUE_LABS_API_KEY }}
+          HUE_LABS_API_BASE_URL: ${{ vars.HUE_LABS_API_BASE_URL }}
+        run: node scripts/generate_production_config.js
+
       # electron-builder's Azure signing path requires an auth configuration that
       # does not work with this GitHub OIDC-only setup. We therefore package first
       # without signing, and use Azure Artifact Signing for the generated EXEs.

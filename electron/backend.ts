@@ -24,6 +24,11 @@ import {
   isDev,
 } from "./config";
 import { log } from "./logger";
+import {
+  loadProductionConfig,
+  resolveProductionEnv,
+  summarizeProductionConfig,
+} from "./production-config";
 
 /** The running backend child process, or null when not started / stopped. */
 let backendProcess: ChildProcess | null = null;
@@ -59,6 +64,20 @@ export function startBackend(): ChildProcess {
     // Keep Python output unbuffered so our log forwarding is real-time.
     PYTHONUNBUFFERED: "1",
   };
+
+  // Hue Labs production API configuration for cloud submissions. In development
+  // these come straight from process.env; in the installed app they come from
+  // the packaged production.json (an extraResource) read from resourcesPath.
+  // process.env always wins so a developer/operator can override. These values
+  // are injected into the Python child ONLY — never surfaced to the renderer,
+  // preload, or IPC — and their raw values are never logged.
+  const prodConfig = isDev ? null : loadProductionConfig(process.resourcesPath);
+  if (!isDev && !prodConfig) {
+    log.info("backend", "production configuration unavailable — cloud submission disabled");
+  }
+  const apiEnv = resolveProductionEnv(process.env, prodConfig);
+  Object.assign(env, apiEnv);
+  log.info("backend", `hue labs api: ${summarizeProductionConfig(apiEnv)}`);
 
   if (isDev) {
     const cwd = backendDevDir();

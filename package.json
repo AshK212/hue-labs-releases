@@ -15,8 +15,9 @@
     "desktop:electron": "wait-on http-get://127.0.0.1:5173 && npm run electron:compile && electron .",
     "desktop": "concurrently -k -n vite,electron -c cyan,green \"npm run frontend:dev\" \"npm run desktop:electron\"",
     "build": "npm run frontend:build && npm run electron:compile",
-    "dist": "npm run build && npm run backend:build && electron-builder --win",
-    "dist:unpacked": "npm run build && npm run backend:build && electron-builder --win --dir"
+    "test:electron": "npm run electron:compile && node scripts/test_production_config.js",
+    "dist": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --win",
+    "dist:unpacked": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --win --dir"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -46,6 +47,13 @@
         "to": "backend",
         "filter": [
           "**/*"
+        ]
+      },
+      {
+        "from": "production-config",
+        "to": ".",
+        "filter": [
+          "production.json"
         ]
       }
     ],

@@ -163,6 +163,13 @@ This is a standard electron-builder-on-Windows requirement and is unrelated to t
 
 ---
 
+$env:HUE_LABS_API_BASE_URL="https://hue-labs-backend.onrender.com"
+$env:HUE_LABS_API_KEY="xxxxxxxx"
+npm run desktop
+
+$env:HUE_LABS_API_KEY="xxxxxxxx"
+python -m app.production.check
+
 ## 7. Troubleshooting
 
 | Symptom | Cause / Fix |

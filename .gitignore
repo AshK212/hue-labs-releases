@@ -30,6 +30,11 @@ backend/build/
 .env
 *.local
 
+# Generated packaged production config (carries the release API key at build
+# time). Written by scripts/generate_production_config.js and bundled as an
+# Electron extraResource. Never commit it.
+production-config/
+
 # Editor / OS
 .vscode/
 .idea/
