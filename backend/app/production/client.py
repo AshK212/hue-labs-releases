@@ -25,9 +25,15 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 from app import config
+
+if TYPE_CHECKING:  # avoid a runtime import; only needed for type hints
+    from app.production.schemas import (
+        ProductionBenchmarkRequest,
+        ProductionTelemetryRequest,
+    )
 
 
 @dataclass
@@ -125,6 +131,22 @@ class ProductionApiClient:
     async def health(self) -> ApiResult:
         """GET /health (public, no API key). Safe: returns a result, never raises."""
         return await self._request("GET", "/health", auth=False)
+
+    async def submit_benchmark(self, payload: "ProductionBenchmarkRequest") -> ApiResult:
+        """POST /benchmark (authed). Serializes to the camelCase wire shape.
+
+        Reuses :meth:`_request`, so it never raises, retries once on a transient
+        failure, and fails fast without a network call when no API key is set.
+        """
+        return await self._request(
+            "POST", "/benchmark", json=payload.model_dump(by_alias=True), auth=True
+        )
+
+    async def submit_telemetry(self, payload: "ProductionTelemetryRequest") -> ApiResult:
+        """POST /telemetry (authed). Same safety guarantees as ``submit_benchmark``."""
+        return await self._request(
+            "POST", "/telemetry", json=payload.model_dump(by_alias=True), auth=True
+        )
 
     async def _request(
         self,
