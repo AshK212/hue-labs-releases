@@ -86,6 +86,7 @@ class BenchmarkResult(BaseModel):
     # value is unavailable it stays None and submission safely skips.
     first_token_latency_ms: Optional[float] = None  # load + prompt-eval time
     vram_used_mb: Optional[float] = None            # model VRAM from Ollama /api/ps
+    model_quant: Optional[str] = None               # quantization from Ollama /api/show
 
 
 # --- Ollama pull ----------------------------------------------------------

@@ -4,7 +4,12 @@
 // `runPrivacyTests()` to execute (verified via esbuild+node). It installs a fake
 // localStorage so the pure get/set helpers can be exercised in Node.
 
-import { DEFAULT_PRIVACY, getStoredPrivacy, setStoredPrivacy } from "./privacy";
+import {
+  announceAppOpenAfterSync,
+  DEFAULT_PRIVACY,
+  getStoredPrivacy,
+  setStoredPrivacy,
+} from "./privacy";
 
 function makeLocalStorage(): Storage {
   const map = new Map<string, string>();
@@ -47,4 +52,65 @@ export function runPrivacyTests(): string {
   assert(partial.crash_reports_enabled === false, "missing crash key filled from defaults");
 
   return "7 checks passed";
+}
+
+// --- app_open startup ordering (Stage 4.1) --------------------------------
+
+export async function runAppOpenOrderingTests(): Promise<string> {
+  const settings = { ...DEFAULT_PRIVACY };
+
+  // 1. Privacy sync runs BEFORE app_open, and app_open runs when sync succeeds.
+  {
+    const order: string[] = [];
+    await announceAppOpenAfterSync(settings, {
+      sync: async () => {
+        order.push("sync");
+        return true;
+      },
+      trigger: async () => {
+        order.push("trigger");
+      },
+    });
+    assert(order.join(",") === "sync,trigger", "sync must run before trigger");
+  }
+
+  // 2. A failed sync (resolves false) must NOT trigger app_open.
+  {
+    let triggered = false;
+    await announceAppOpenAfterSync(settings, {
+      sync: async () => false,
+      trigger: async () => {
+        triggered = true;
+      },
+    });
+    assert(triggered === false, "failed sync must not trigger app_open");
+  }
+
+  // 3. A rejected sync (throws) must NOT trigger app_open.
+  {
+    let triggered = false;
+    await announceAppOpenAfterSync(settings, {
+      sync: async () => {
+        throw new Error("network down");
+      },
+      trigger: async () => {
+        triggered = true;
+      },
+    });
+    assert(triggered === false, "rejected sync must not trigger app_open");
+  }
+
+  // 4. A successful sync triggers app_open exactly once.
+  {
+    let count = 0;
+    await announceAppOpenAfterSync(settings, {
+      sync: async () => true,
+      trigger: async () => {
+        count += 1;
+      },
+    });
+    assert(count === 1, "successful sync triggers app_open exactly once");
+  }
+
+  return "4 checks passed";
 }

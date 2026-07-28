@@ -33,7 +33,7 @@ from app.schemas import BenchmarkResult, GpuInfo, HardwareInfo
 
 # --- builders --------------------------------------------------------------
 
-def _result(*, first_token=120.0, vram=4096.0, tps=50.0, seconds=2.0) -> BenchmarkResult:
+def _result(*, first_token=120.0, vram=4096.0, tps=50.0, seconds=2.0, quant="Q4_K_M") -> BenchmarkResult:
     return BenchmarkResult(
         model="llama3.2:3b",
         profile="optimized",
@@ -45,6 +45,7 @@ def _result(*, first_token=120.0, vram=4096.0, tps=50.0, seconds=2.0) -> Benchma
         created_at="2026-07-28T00:00:00+00:00",
         first_token_latency_ms=first_token,
         vram_used_mb=vram,
+        model_quant=quant,
     )
 
 
@@ -506,17 +507,24 @@ def test_run_benchmark_populates_latency_and_vram(monkeypatch=None):
     async def fake_vram(model):
         return 4096.0
 
+    async def fake_quant(model):
+        return "Q4_K_M"
+
     orig_gen = ollama_client.generate
     orig_vram = ollama_client.used_vram_mb
+    orig_quant = ollama_client.model_quantization
     ollama_client.generate = fake_generate
     ollama_client.used_vram_mb = fake_vram
+    ollama_client.model_quantization = fake_quant
     try:
         result = asyncio.run(bench.run_benchmark("m", "optimized", _hardware()))
     finally:
         ollama_client.generate = orig_gen
         ollama_client.used_vram_mb = orig_vram
+        ollama_client.model_quantization = orig_quant
     assert result.first_token_latency_ms == 600.0
     assert result.vram_used_mb == 4096.0
+    assert result.model_quant == "Q4_K_M"
 
 
 @case
@@ -530,15 +538,21 @@ def test_run_benchmark_survives_vram_probe_failure():
     async def boom(model):
         raise RuntimeError("ps failed")
 
+    async def fake_quant(model):
+        return None
+
     orig_gen = ollama_client.generate
     orig_vram = ollama_client.used_vram_mb
+    orig_quant = ollama_client.model_quantization
     ollama_client.generate = fake_generate
     ollama_client.used_vram_mb = boom
+    ollama_client.model_quantization = fake_quant
     try:
         result = asyncio.run(bench.run_benchmark("m", "baseline", _hardware()))
     finally:
         ollama_client.generate = orig_gen
         ollama_client.used_vram_mb = orig_vram
+        ollama_client.model_quantization = orig_quant
     # Local benchmark still succeeds; vram simply stays None (submission will skip).
     assert result.tokens_per_sec == 50.0
     assert result.vram_used_mb is None

@@ -76,6 +76,13 @@ async def run_benchmark(
     except Exception:  # noqa: BLE001 - defensive; local benchmark must never fail on this
         vram_used_mb = None
 
+    # Quantization from Ollama's model details (authoritative), best-effort. Left
+    # None when it can't be resolved — never fabricated (cloud submission skips).
+    try:
+        model_quant = await ollama_client.model_quantization(model)
+    except Exception:  # noqa: BLE001 - defensive; local benchmark must never fail on this
+        model_quant = None
+
     return BenchmarkResult(
         model=model,
         profile=profile,
@@ -87,4 +94,5 @@ async def run_benchmark(
         created_at=datetime.now(timezone.utc).isoformat(),
         first_token_latency_ms=first_token_latency_ms,
         vram_used_mb=vram_used_mb,
+        model_quant=model_quant,
     )

@@ -42,6 +42,7 @@ REQUIRED_BENCHMARK_METRICS = (
     "tokens_per_sec",
     "first_token_latency_ms",
     "vram_used_mb",
+    "model_quant",
 )
 
 
@@ -77,9 +78,17 @@ class ProductionIntegration:
     # --- lifecycle hooks --------------------------------------------------
 
     def on_app_open(self) -> None:
-        """Emit ``app_open`` exactly once per backend launch (telemetry only)."""
+        """Emit ``app_open`` at most once per backend process (telemetry only).
+
+        Driven by an explicit frontend call AFTER privacy has synced, so the
+        persisted telemetry setting is authoritative here. When telemetry is
+        disabled nothing is emitted and the once-guard is left unset, so enabling
+        telemetry later in the same process can still emit exactly one app_open.
+        """
         if self._app_open_sent:
             return
+        if not self._settings_provider().telemetry_enabled:
+            return  # disabled: no emit, no network call, not marked as sent
         self._app_open_sent = True
         self._emit(events.APP_OPEN, props={})
 
@@ -177,7 +186,7 @@ class ProductionIntegration:
             app_version=self._app_version,
             hardware=hardware,
             model_name=model,
-            model_quant=None,  # the Milestone-1 path doesn't detect quantization
+            model_quant=result.model_quant,  # resolved from Ollama; None → gate skips
             optimization_profile=profile,
             result=result,
         )

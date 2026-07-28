@@ -52,8 +52,9 @@ logger = logging.getLogger("local_ai_optimizer")
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     storage.init_db()
-    # One app_open per backend launch (fire-and-forget; never blocks startup).
-    production.on_app_open()
+    # NOTE: app_open is intentionally NOT emitted here. Emitting during startup
+    # could race ahead of the frontend syncing the user's privacy choice, so the
+    # frontend triggers it via POST /telemetry/app-open only AFTER privacy sync.
     try:
         yield
     finally:
@@ -215,3 +216,15 @@ async def get_privacy_settings() -> PrivacySettings:
 @app.post("/privacy/settings", response_model=PrivacySettings)
 async def set_privacy_settings(settings: PrivacySettings) -> PrivacySettings:
     return PrivacyService().save_settings(settings)
+
+
+# --- App-open signal ------------------------------------------------------
+# The frontend calls this once, AFTER it has synced privacy settings, so the
+# persisted telemetry preference is authoritative before app_open is considered.
+# Carries no request body and returns no sensitive data. Emits app_open at most
+# once per backend process, and only when telemetry is enabled.
+
+@app.post("/telemetry/app-open")
+async def telemetry_app_open() -> dict:
+    production.on_app_open()
+    return {"status": "ok"}

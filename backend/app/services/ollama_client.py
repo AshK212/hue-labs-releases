@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import AsyncIterator
 
 import httpx
@@ -98,6 +99,51 @@ async def used_vram_mb(model: str) -> float | None:
                 return round(size_vram / (1024 * 1024), 1)
             return None  # loaded on CPU (0) — honestly "no GPU VRAM used"
     return None
+
+
+# A well-formed GGUF quant token, e.g. Q4_K_M, Q4_0, Q8_0, Q2_K, F16, BF16.
+# Anchored to an identifier boundary so it can't false-match inside a name.
+_QUANT_TOKEN_RE = re.compile(
+    r"(?:^|[:._\-])(Q\d+(?:_[0-9A-Z]+)*|F16|F32|BF16)(?=$|[:._\-])", re.IGNORECASE
+)
+
+
+def _quant_from_tag(model: str | None) -> str | None:
+    """Extract an explicit quant token from a model identifier, or None.
+
+    Conservative on purpose: only a clearly-formed quant token (``...-q4_K_M``,
+    ``:Q8_0``) is accepted. A plain tag like ``llama3.2:3b`` yields None rather
+    than a guess.
+    """
+    if not model:
+        return None
+    match = _QUANT_TOKEN_RE.search(model)
+    return match.group(1).upper() if match else None
+
+
+async def model_quantization(model: str) -> str | None:
+    """Resolve the model's quantization level, or None if it can't be determined.
+
+    Order of reliability:
+      1. Ollama ``/api/show`` → ``details.quantization_level`` (authoritative).
+      2. A well-formed quant token embedded in the model identifier.
+
+    Best-effort: never raises. Returns None when neither source yields a value, so
+    the caller can safely skip cloud submission rather than send a fabricated one.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.post(
+                f"{config.OLLAMA_HOST}/api/show", json={"model": model}
+            )
+            resp.raise_for_status()
+            details = resp.json().get("details") or {}
+            level = details.get("quantization_level")
+            if isinstance(level, str) and level.strip():
+                return level.strip()
+    except Exception:  # noqa: BLE001 - best-effort; fall through to tag parsing
+        pass
+    return _quant_from_tag(model)
 
 
 async def has_model(model: str) -> bool:

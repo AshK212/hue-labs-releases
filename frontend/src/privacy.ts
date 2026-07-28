@@ -48,20 +48,68 @@ export function setStoredPrivacy(next: PrivacySettings): void {
 }
 
 /**
- * Best-effort, fire-and-forget push of privacy settings to the local backend
- * (`POST /api/privacy/settings`). Never throws and never blocks the UI; if the
- * backend isn't reachable the local value still applies. Carries booleans only.
+ * Push privacy settings to the local backend (`POST /api/privacy/settings`).
+ * Never throws and never blocks the UI; carries booleans only. Resolves to
+ * `true` when the backend accepted the update, `false` on any failure — callers
+ * use that to decide whether it's safe to proceed (e.g. trigger app_open).
  */
-export function syncPrivacyToBackend(settings: PrivacySettings): void {
+export function syncPrivacyToBackend(settings: PrivacySettings): Promise<boolean> {
   try {
-    void fetch("/api/privacy/settings", {
+    return fetch("/api/privacy/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
-    }).catch(() => {
-      /* backend not up yet / offline — local value still applies */
-    });
+    })
+      .then((r) => r.ok)
+      .catch(() => false); // backend not up yet / offline — local value still applies
   } catch {
-    /* fetch unavailable — best-effort only */
+    return Promise.resolve(false); // fetch unavailable — best-effort only
+  }
+}
+
+/**
+ * Ask the backend to emit the launch `app_open` event. No body, no secret. The
+ * backend gates on its persisted telemetry setting and emits at most once per
+ * process. Best-effort; never throws.
+ */
+export function triggerAppOpen(): Promise<void> {
+  try {
+    return fetch("/api/telemetry/app-open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    })
+      .then(() => undefined)
+      .catch(() => undefined);
+  } catch {
+    return Promise.resolve();
+  }
+}
+
+/**
+ * Launch orchestration: sync the stored privacy settings to the backend FIRST,
+ * and only trigger `app_open` if that sync resolved successfully. If the sync
+ * fails (or throws), `app_open` is not triggered — so the backend never emits
+ * app_open against a stale/unsynced telemetry preference.
+ *
+ * Dependencies are injectable purely so this ordering can be unit-tested.
+ */
+export async function announceAppOpenAfterSync(
+  settings: PrivacySettings,
+  deps: {
+    sync?: (s: PrivacySettings) => Promise<boolean>;
+    trigger?: () => Promise<void>;
+  } = {}
+): Promise<void> {
+  const sync = deps.sync ?? syncPrivacyToBackend;
+  const trigger = deps.trigger ?? triggerAppOpen;
+  let synced = false;
+  try {
+    synced = await sync(settings);
+  } catch {
+    synced = false; // a rejected sync is treated as failure — no app_open
+  }
+  if (synced) {
+    await trigger();
   }
 }

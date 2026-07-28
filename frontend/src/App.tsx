@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { getStoredPrivacy, syncPrivacyToBackend } from "./privacy";
+import { announceAppOpenAfterSync, getStoredPrivacy } from "./privacy";
 import { ThemeProvider } from "./ThemeProvider";
 import { UpdateProvider } from "./update/UpdateManager";
 import { UpdateOverlays } from "./update/UpdateOverlays";
@@ -86,11 +86,12 @@ function Journey() {
 }
 
 export default function App() {
-  // On launch, mirror the persisted privacy choices into the backend once, so
-  // server-side telemetry/benchmark gating matches the UI even if the user
-  // changed a setting while the backend was down. Best-effort; never blocks.
+  // On launch, sync the persisted privacy choices to the backend FIRST, then —
+  // only if that sync succeeds — trigger the one-time app_open telemetry event.
+  // This guarantees app_open is never emitted against a stale/unsynced telemetry
+  // preference. Best-effort; never blocks the UI.
   useEffect(() => {
-    syncPrivacyToBackend(getStoredPrivacy());
+    void announceAppOpenAfterSync(getStoredPrivacy());
   }, []);
 
   return (
