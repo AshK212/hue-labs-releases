@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { getStoredPrivacy, syncPrivacyToBackend } from "./privacy";
 import { ThemeProvider } from "./ThemeProvider";
 import { UpdateProvider } from "./update/UpdateManager";
 import { UpdateOverlays } from "./update/UpdateOverlays";
@@ -84,6 +86,13 @@ function Journey() {
 }
 
 export default function App() {
+  // On launch, mirror the persisted privacy choices into the backend once, so
+  // server-side telemetry/benchmark gating matches the UI even if the user
+  // changed a setting while the backend was down. Best-effort; never blocks.
+  useEffect(() => {
+    syncPrivacyToBackend(getStoredPrivacy());
+  }, []);
+
   return (
     // Globally honor the OS "reduce motion" setting for every Framer animation.
     <MotionConfig reducedMotion="user">

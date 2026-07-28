@@ -60,6 +60,22 @@ async def run_benchmark(
     total_seconds = eval_duration_ns / 1e9
     tokens_per_sec = eval_count / total_seconds
 
+    # First-token latency (honest, from Ollama's own timing): time to load the
+    # model plus evaluate the prompt, i.e. the wait before the first output token.
+    # Left None if Ollama didn't report the durations — never guessed.
+    load_ns = int(response.get("load_duration", 0) or 0)
+    prompt_eval_ns = int(response.get("prompt_eval_duration", 0) or 0)
+    first_token_latency_ms = (
+        round((load_ns + prompt_eval_ns) / 1e6, 1) if (load_ns + prompt_eval_ns) > 0 else None
+    )
+
+    # VRAM used by the model, best-effort from Ollama /api/ps. Never fails the
+    # benchmark — a probe error simply leaves it None (cloud submission skips).
+    try:
+        vram_used_mb = await ollama_client.used_vram_mb(model)
+    except Exception:  # noqa: BLE001 - defensive; local benchmark must never fail on this
+        vram_used_mb = None
+
     return BenchmarkResult(
         model=model,
         profile=profile,
@@ -69,4 +85,6 @@ async def run_benchmark(
         prompt=config.BENCHMARK_PROMPT,
         options=options,
         created_at=datetime.now(timezone.utc).isoformat(),
+        first_token_latency_ms=first_token_latency_ms,
+        vram_used_mb=vram_used_mb,
     )

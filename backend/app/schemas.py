@@ -80,6 +80,12 @@ class BenchmarkResult(BaseModel):
     prompt: str
     options: dict = Field(default_factory=dict)  # the runtime options actually used
     created_at: str
+    # Additive, optional honest measurements (default None so the Milestone-1
+    # contract and the frontend are unaffected). Derived from Ollama's own real
+    # numbers — never fabricated. Used by the cloud benchmark submission; when a
+    # value is unavailable it stays None and submission safely skips.
+    first_token_latency_ms: Optional[float] = None  # load + prompt-eval time
+    vram_used_mb: Optional[float] = None            # model VRAM from Ollama /api/ps
 
 
 # --- Ollama pull ----------------------------------------------------------

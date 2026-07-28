@@ -12,6 +12,7 @@ Benchmark and telemetry submission never raise and never affect the local flow.
 """
 
 from app.production.client import ApiResult, ProductionApiClient
+from app.production.integration import ProductionIntegration, production
 from app.production.mapper import ProductionRequestMapper
 from app.production.schemas import (
     ProductionBenchmarkRequest,
@@ -27,4 +28,6 @@ __all__ = [
     "ProductionTelemetryRequest",
     "ProductionSubmissionService",
     "ProductionSubmitResult",
+    "ProductionIntegration",
+    "production",
 ]

@@ -24,6 +24,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from app import config, storage
+from app.privacy.schemas import PrivacySettings
+from app.privacy.service import PrivacyService
+from app.production.integration import production
 from app.schemas import (
     ApplyOptimizationRequest,
     ApplyOptimizationResponse,
@@ -49,12 +52,18 @@ logger = logging.getLogger("local_ai_optimizer")
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     storage.init_db()
-    yield
+    # One app_open per backend launch (fire-and-forget; never blocks startup).
+    production.on_app_open()
+    try:
+        yield
+    finally:
+        # Give any in-flight cloud submission a short, bounded window to finish.
+        await production.flush(timeout=3.0)
 
 
 app = FastAPI(
     title="Local AI Optimizer",
-    version="0.1.0",
+    version=config.APP_VERSION,
     description="A friendly control layer on top of Ollama.",
     lifespan=lifespan,
 )
@@ -145,14 +154,18 @@ async def benchmark_run(req: BenchmarkRequest) -> BenchmarkResult:
         )
 
     hw = hardware_service.detect_hardware()
+    # A real measured run is beginning.
+    production.on_optimize_start(model=req.model, profile=req.profile)
     try:
         result = await benchmark.run_benchmark(req.model, req.profile, hw)
     except OllamaError as exc:
         # Expected, explainable failures (timeout, connection, bad response).
+        production.on_error(stage="benchmark", exc=exc)
         logger.warning("Benchmark failed (model=%s profile=%s): %s", req.model, req.profile, exc)
         raise HTTPException(status_code=502, detail=str(exc))
     except Exception as exc:  # noqa: BLE001 - log everything else with a traceback
         # Unexpected failure: log the full traceback so it's visible in the terminal.
+        production.on_error(stage="benchmark", exc=exc)
         logger.exception("Unexpected error during benchmark (model=%s profile=%s)", req.model, req.profile)
         raise HTTPException(
             status_code=500,
@@ -163,7 +176,12 @@ async def benchmark_run(req: BenchmarkRequest) -> BenchmarkResult:
         "Benchmark ok (model=%s profile=%s): %.2f tok/s over %d tokens",
         req.model, req.profile, result.tokens_per_sec, result.output_tokens,
     )
+    # Save locally FIRST; the cloud submission below is fire-and-forget and can
+    # never affect this response or the saved row.
     storage.save_benchmark(result)
+    production.on_optimize_complete(
+        model=req.model, profile=req.profile, hardware=hw, result=result
+    )
     return result
 
 
@@ -182,3 +200,18 @@ async def optimization_apply(req: ApplyOptimizationRequest) -> ApplyOptimization
 @app.get("/benchmark/history")
 async def benchmark_history() -> dict:
     return {"runs": storage.recent_runs()}
+
+
+# --- Privacy sync ---------------------------------------------------------
+# The UI keeps privacy choices in localStorage; these endpoints mirror them into
+# the backend so telemetry/benchmark gating is honored server-side. Only booleans
+# cross this boundary — never the API key or any secret.
+
+@app.get("/privacy/settings", response_model=PrivacySettings)
+async def get_privacy_settings() -> PrivacySettings:
+    return PrivacyService().get_settings()
+
+
+@app.post("/privacy/settings", response_model=PrivacySettings)
+async def set_privacy_settings(settings: PrivacySettings) -> PrivacySettings:
+    return PrivacyService().save_settings(settings)

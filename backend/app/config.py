@@ -7,6 +7,10 @@ reasonably change per machine can be overridden with an environment variable.
 import os
 from typing import Optional
 
+# Single source of truth for the backend/app version (used in telemetry and
+# benchmark submissions, and as the FastAPI app version).
+APP_VERSION: str = "0.1.0"
+
 # Where the local Ollama server listens. Ollama's default is 11434.
 OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
 

@@ -73,6 +73,33 @@ async def get_status() -> OllamaStatus:
         )
 
 
+async def used_vram_mb(model: str) -> float | None:
+    """Best-effort VRAM (MB) the model currently occupies, via Ollama ``/api/ps``.
+
+    Returns the loaded model's ``size_vram`` in MB, or ``None`` when Ollama isn't
+    reachable, the model isn't loaded, or it's running on CPU (``size_vram`` 0).
+    Never raises and never fabricates: a machine with no GPU telemetry yields
+    ``None`` so cloud submission can safely skip rather than send a made-up value.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(f"{config.OLLAMA_HOST}/api/ps")
+            resp.raise_for_status()
+            models = resp.json().get("models", []) or []
+    except Exception:  # noqa: BLE001 - purely best-effort; never disturb the run
+        return None
+
+    base = model.split(":")[0]
+    for m in models:
+        name = m.get("name") or m.get("model") or ""
+        if name == model or name.split(":")[0] == base:
+            size_vram = m.get("size_vram")
+            if isinstance(size_vram, (int, float)) and size_vram > 0:
+                return round(size_vram / (1024 * 1024), 1)
+            return None  # loaded on CPU (0) — honestly "no GPU VRAM used"
+    return None
+
+
 async def has_model(model: str) -> bool:
     status = await get_status()
     names = {m.name for m in status.models}

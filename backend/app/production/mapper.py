@@ -19,10 +19,13 @@ from __future__ import annotations
 from typing import Optional
 
 from app.optimization.schemas import BenchmarkResult, OptimizationRun
+from app.production import events
 from app.production.schemas import (
     ProductionBenchmarkRequest,
     ProductionTelemetryRequest,
 )
+from app.schemas import BenchmarkResult as MeasuredBenchmarkResult
+from app.schemas import HardwareInfo
 from app.telemetry.schemas import TelemetryEvent
 
 
@@ -70,6 +73,68 @@ class ProductionRequestMapper:
                 else None
             ),
             run_id=run_id if run_id is not None else run.run_id,
+        )
+
+    def benchmark_measurement(
+        self,
+        *,
+        device_id: str,
+        run_id: str,
+        app_version: Optional[str],
+        hardware: Optional[HardwareInfo],
+        model_name: Optional[str],
+        model_quant: Optional[str],
+        optimization_profile: Optional[str],
+        result: MeasuredBenchmarkResult,
+    ) -> ProductionBenchmarkRequest:
+        """Real measured benchmark → ProductionBenchmarkRequest.
+
+        Built from the live ``POST /benchmark/run`` data (hardware probe + the
+        Milestone-1 ``BenchmarkResult``), NOT from a synthetic ``OptimizationRun``.
+        Nothing is fabricated: metrics the run didn't measure stay ``None`` and the
+        caller's required-metrics gate decides whether to submit.
+        """
+        gpu = hardware.gpus[0] if hardware and hardware.gpus else None
+        return ProductionBenchmarkRequest(
+            device_id=device_id,
+            app_version=app_version,
+            os=self._os_string(hardware),
+            cpu=hardware.cpu_name if hardware else None,
+            gpu=gpu.name if gpu else None,
+            ram_gb=hardware.memory_total_gb if hardware else None,
+            model_name=model_name,
+            model_quant=model_quant,
+            optimization_profile=optimization_profile,
+            tokens_per_sec=result.tokens_per_sec,
+            first_token_latency_ms=result.first_token_latency_ms,
+            vram_used_mb=result.vram_used_mb,
+            run_id=run_id,
+        )
+
+    def telemetry_request(
+        self,
+        *,
+        event: str,
+        props: Optional[dict],
+        device_id: str,
+        session_id: str,
+        app_version: Optional[str] = None,
+        os: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> ProductionTelemetryRequest:
+        """Approved production event → ProductionTelemetryRequest.
+
+        ``props`` is filtered through the per-event allowlist (never forwarded
+        verbatim), so unknown/private keys are dropped before anything is sent.
+        """
+        return ProductionTelemetryRequest(
+            device_id=device_id,
+            app_version=app_version,
+            os=os,
+            session_id=session_id,
+            event=event,
+            props=events.allow_props(event, props),
+            error_message=error_message,
         )
 
     def telemetry(

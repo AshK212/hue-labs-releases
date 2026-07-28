@@ -29,6 +29,10 @@ from app.optimization.schemas import OptimizationRun
 from app.production import identity
 from app.production.client import ProductionApiClient
 from app.production.mapper import ProductionRequestMapper
+from app.production.schemas import (
+    ProductionBenchmarkRequest,
+    ProductionTelemetryRequest,
+)
 from app.telemetry.schemas import TelemetryEvent
 
 log = logging.getLogger(__name__)
@@ -73,42 +77,81 @@ class ProductionSubmissionService:
         self._device_id_provider = device_id_provider
         self._session_id_provider = session_id_provider
         self._os_provider = os_provider
+        # Retained references to in-flight fire-and-forget tasks, so the event
+        # loop can't garbage-collect a pending submission mid-flight.
+        self._tasks: set[asyncio.Task] = set()
 
-    # --- awaitable submitters (never raise) -------------------------------
+    # --- request-based submitters (Stage 4; never raise) ------------------
 
-    async def submit_benchmark(self, run: OptimizationRun) -> ProductionSubmitResult:
-        """Submit one benchmark. Never raises; never fails local optimization."""
+    async def submit_benchmark_request(
+        self, req: ProductionBenchmarkRequest
+    ) -> ProductionSubmitResult:
+        """Send a prebuilt benchmark request. Never raises. Retries once (client)."""
         endpoint = "/benchmark"
         guard = self._guard(endpoint)
         if guard is not None:
             return guard
         try:
-            payload = self._mapper.benchmark(run, device_id=self._device_id_provider())
-            result = await self._client.submit_benchmark(payload)
+            result = await self._client.submit_benchmark(req)
         except Exception as exc:  # noqa: BLE001 - defensive; must never propagate
             return self._from_exception(endpoint, exc)
         return self._from_api(endpoint, result)
 
-    async def submit_telemetry(
-        self, event: TelemetryEvent, *, error_message: Optional[str] = None
+    async def submit_telemetry_request(
+        self, req: ProductionTelemetryRequest
     ) -> ProductionSubmitResult:
-        """Submit one telemetry event. Never raises; never affects UX."""
+        """Send a prebuilt telemetry request. Never raises."""
         endpoint = "/telemetry"
         guard = self._guard(endpoint)
         if guard is not None:
             return guard
         try:
-            payload = self._mapper.telemetry(
+            result = await self._client.submit_telemetry(req)
+        except Exception as exc:  # noqa: BLE001 - telemetry must never break the caller
+            return self._from_exception(endpoint, exc)
+        return self._from_api(endpoint, result)
+
+    def submit_benchmark_request_background(self, req: ProductionBenchmarkRequest) -> None:
+        """Schedule a prebuilt benchmark request without blocking the caller."""
+        self._schedule(self.submit_benchmark_request(req))
+
+    def submit_telemetry_request_background(self, req: ProductionTelemetryRequest) -> None:
+        """Schedule a prebuilt telemetry request without blocking the caller."""
+        self._schedule(self.submit_telemetry_request(req))
+
+    # --- awaitable submitters (Stage 3 compat; never raise) ---------------
+
+    async def submit_benchmark(self, run: OptimizationRun) -> ProductionSubmitResult:
+        """Submit one benchmark from an OptimizationRun. Never raises."""
+        endpoint = "/benchmark"
+        guard = self._guard(endpoint)
+        if guard is not None:
+            return guard
+        try:
+            req = self._mapper.benchmark(run, device_id=self._device_id_provider())
+        except Exception as exc:  # noqa: BLE001
+            return self._from_exception(endpoint, exc)
+        return await self.submit_benchmark_request(req)
+
+    async def submit_telemetry(
+        self, event: TelemetryEvent, *, error_message: Optional[str] = None
+    ) -> ProductionSubmitResult:
+        """Submit one telemetry event from a Milestone-2 TelemetryEvent. Never raises."""
+        endpoint = "/telemetry"
+        guard = self._guard(endpoint)
+        if guard is not None:
+            return guard
+        try:
+            req = self._mapper.telemetry(
                 event,
                 device_id=self._device_id_provider(),
                 session_id=self._session_id_provider(),
                 os=self._os_provider(),
                 error_message=error_message,
             )
-            result = await self._client.submit_telemetry(payload)
-        except Exception as exc:  # noqa: BLE001 - telemetry must never break the caller
+        except Exception as exc:  # noqa: BLE001
             return self._from_exception(endpoint, exc)
-        return self._from_api(endpoint, result)
+        return await self.submit_telemetry_request(req)
 
     # --- fire-and-forget (non-blocking) -----------------------------------
 
@@ -121,6 +164,22 @@ class ProductionSubmissionService:
     ) -> None:
         """Schedule a telemetry submission without blocking the caller."""
         self._schedule(self.submit_telemetry(event, error_message=error_message))
+
+    # --- lifecycle --------------------------------------------------------
+
+    async def flush(self, timeout: float = 3.0) -> None:
+        """Wait up to ``timeout`` seconds for in-flight submissions to finish.
+
+        Called on shutdown so a just-scheduled submission gets a brief, bounded
+        chance to complete. Never raises; abandons anything still pending.
+        """
+        pending = [t for t in self._tasks if not t.done()]
+        if not pending:
+            return
+        try:
+            await asyncio.wait(pending, timeout=timeout)
+        except Exception:  # noqa: BLE001 - shutdown best-effort
+            pass
 
     # --- internals --------------------------------------------------------
 
@@ -178,4 +237,8 @@ class ProductionSubmissionService:
             except Exception:  # noqa: BLE001
                 log.debug("production: background submission failed to run (suppressed)")
             return
-        loop.create_task(_runner())
+        # Retain a reference until the task finishes; otherwise the loop may drop
+        # it and the submission is silently cancelled (see asyncio docs).
+        task = loop.create_task(_runner())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
