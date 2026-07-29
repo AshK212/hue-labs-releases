@@ -52,14 +52,35 @@ export function frontendDistDir(): string {
   return path.join(appRoot(), "frontend", "dist");
 }
 
+/**
+ * The bundled backend's file name. PyInstaller appends `.exe` on Windows and
+ * emits a bare executable on macOS/Linux — centralised here so callers never
+ * branch on platform themselves.
+ */
+function backendExecutableName(): string {
+  return process.platform === "win32" ? "lao-backend.exe" : "lao-backend";
+}
+
 /** The bundled backend executable produced by PyInstaller (production only). */
 export function backendExePath(): string {
-  return path.join(process.resourcesPath, "backend", "lao-backend.exe");
+  return path.join(process.resourcesPath, "backend", backendExecutableName());
 }
 
 /** The backend source folder used to launch uvicorn in development. */
 export function backendDevDir(): string {
   return path.join(appRoot(), "backend");
+}
+
+/**
+ * The virtualenv Python interpreter used to launch uvicorn in development.
+ * Windows places it under `Scripts/python.exe`; macOS/Linux under `bin/python`.
+ * Canonical runtime helper — prefer this over inlining the venv path.
+ */
+export function developmentPythonPath(): string {
+  const venv = path.join(backendDevDir(), ".venv");
+  return process.platform === "win32"
+    ? path.join(venv, "Scripts", "python.exe")
+    : path.join(venv, "bin", "python");
 }
 
 /** The splash screen HTML, resolvable in both dev and packaged builds. */

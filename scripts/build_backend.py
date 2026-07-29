@@ -26,7 +26,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BACKEND_DIR = os.path.join(ROOT, "backend")
 ENTRY = os.path.join(ROOT, "scripts", "run_backend.py")
-VENV_PYTHON = os.path.join(BACKEND_DIR, ".venv", "Scripts", "python.exe")
+VENV_DIR = os.path.join(BACKEND_DIR, ".venv")
 DIST_DIR = os.path.join(BACKEND_DIR, "dist")
 BUILD_DIR = os.path.join(BACKEND_DIR, "build")
 APP_NAME = "lao-backend"
@@ -49,9 +49,23 @@ HIDDEN_IMPORTS = [
 COLLECT_ALL = ["uvicorn", "fastapi", "pydantic", "starlette", "anyio", "httpx"]
 
 
-def python_exe() -> str:
-    """Prefer the project virtualenv's Python; fall back to the current one."""
-    return VENV_PYTHON if os.path.exists(VENV_PYTHON) else sys.executable
+def python_executable() -> str:
+    """Prefer the project virtualenv's Python; fall back to the current one.
+
+    Windows places the interpreter under ``.venv/Scripts/python.exe`` while
+    macOS/Linux use ``.venv/bin/python``. Centralised here so the build never
+    branches on ``os.name`` inline.
+    """
+    if os.name == "nt":
+        venv_python = os.path.join(VENV_DIR, "Scripts", "python.exe")
+    else:
+        venv_python = os.path.join(VENV_DIR, "bin", "python")
+    return venv_python if os.path.exists(venv_python) else sys.executable
+
+
+def backend_binary_name() -> str:
+    """The frozen backend's file name — ``.exe`` on Windows, bare elsewhere."""
+    return f"{APP_NAME}.exe" if os.name == "nt" else APP_NAME
 
 
 def ensure_pyinstaller(py: str) -> None:
@@ -66,7 +80,7 @@ def ensure_pyinstaller(py: str) -> None:
 
 
 def build() -> None:
-    py = python_exe()
+    py = python_executable()
     print(f"Using Python: {py}")
     ensure_pyinstaller(py)
 
@@ -104,7 +118,7 @@ def build() -> None:
     print("Running PyInstaller:\n  " + " ".join(cmd))
     subprocess.check_call(cmd, cwd=BACKEND_DIR)
 
-    exe = os.path.join(DIST_DIR, APP_NAME, f"{APP_NAME}.exe")
+    exe = os.path.join(DIST_DIR, APP_NAME, backend_binary_name())
     if not os.path.exists(exe):
         raise SystemExit(f"Build failed: expected executable not found at {exe}")
     print(f"\nBackend bundled successfully:\n  {exe}")

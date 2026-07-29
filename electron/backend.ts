@@ -21,6 +21,7 @@ import {
   HEALTH_URL,
   backendDevDir,
   backendExePath,
+  developmentPythonPath,
   isDev,
 } from "./config";
 import { log } from "./logger";
@@ -81,7 +82,7 @@ export function startBackend(): ChildProcess {
 
   if (isDev) {
     const cwd = backendDevDir();
-    const python = path.join(cwd, ".venv", "Scripts", "python.exe");
+    const python = developmentPythonPath();
     log.info("backend", `dev mode — launching uvicorn via ${python}`);
     backendProcess = spawn(
       python,
