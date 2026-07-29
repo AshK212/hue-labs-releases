@@ -17,7 +17,8 @@
     "build": "npm run frontend:build && npm run electron:compile",
     "test:electron": "npm run electron:compile && node scripts/test_production_config.js",
     "dist": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --win",
-    "dist:unpacked": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --win --dir"
+    "dist:unpacked": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --win --dir",
+    "dist:mac": "npm run build && npm run backend:build && node scripts/generate_production_config.js && electron-builder --mac"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -88,6 +89,26 @@
     },
     "portable": {
       "artifactName": "HueLabs-${version}-${os}-${arch}-Portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "identity": null,
+      "artifactName": "HueLabs-${version}-${os}-${arch}.${ext}"
     },
     "publish": [
       {
