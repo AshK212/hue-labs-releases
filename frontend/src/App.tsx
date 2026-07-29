@@ -6,6 +6,7 @@ import { UpdateProvider } from "./update/UpdateManager";
 import { UpdateOverlays } from "./update/UpdateOverlays";
 import { JourneyProvider, useJourney } from "./journey/JourneyContext";
 import { STEP } from "./journey/steps";
+import { isMacDesktop } from "./platform";
 import { BrandBackground } from "./components/BrandBackground";
 import { WindowControls } from "./components/WindowControls";
 import { Screen } from "./components/Screen";
@@ -92,6 +93,12 @@ export default function App() {
   // preference. Best-effort; never blocks the UI.
   useEffect(() => {
     void announceAppOpenAfterSync(getStoredPrivacy());
+  }, []);
+
+  // Tag the document on macOS so platform-specific CSS (native traffic-light
+  // spacing) can apply. Inert on Windows — the class is never added there.
+  useEffect(() => {
+    document.documentElement.classList.toggle("mac-desktop", isMacDesktop);
   }, []);
 
   return (

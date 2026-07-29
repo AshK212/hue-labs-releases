@@ -103,7 +103,7 @@ export function WelcomeScreen() {
 
       {/* Top bar (dragging is handled by the global title-bar strip) */}
       <header className="relative z-10 w-full">
-        <div className="max-w-[1300px] mx-auto w-full px-8 lg:px-20 h-[84px] flex items-center justify-between">
+        <div className="mac-tl-inset-left max-w-[1300px] mx-auto w-full px-8 lg:px-20 h-[84px] flex items-center justify-between">
           <div>
             <BrandLockup markSize={40} onClick={() => enterFlowAt(STEP.Welcome)} />
           </div>

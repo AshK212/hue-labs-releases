@@ -68,7 +68,7 @@ export function Dashboard() {
     <div className="h-[var(--vph)] overflow-hidden">
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 w-64 bg-carbon/90 backdrop-blur-xl border-r border-mist-200 flex flex-col px-4 py-6 z-20">
-        <div className="px-2 mb-8">
+        <div className="mac-tl-inset-top px-2 mb-8">
           <BrandLockup markSize={34} onClick={() => enterFlowAt(STEP.Welcome)} />
         </div>
 

@@ -261,6 +261,21 @@
     -webkit-app-region: no-drag;
   }
 
+  /* macOS only: reserve room for the native traffic-light buttons so they never
+     crowd the Hue Labs branding. These rules are inert on Windows because the
+     `mac-desktop` class is added to <html> only on macOS (see platform.ts and
+     App.tsx). The two-class selector wins over the base Tailwind padding on the
+     same element without touching Windows layout.
+       - inset-left: tall, vertically-centred headers (TopBar, Welcome).
+       - inset-top:  the narrow dashboard sidebar where the brand sits at the
+                     very top-left, under the lights. */
+  .mac-desktop .mac-tl-inset-left {
+    padding-left: 5.5rem; /* 88px — clears the traffic-light cluster */
+  }
+  .mac-desktop .mac-tl-inset-top {
+    padding-top: 1.75rem; /* 28px — drops the sidebar brand below the lights */
+  }
+
   .orb {
     @apply pointer-events-none fixed rounded-full blur-3xl;
   }

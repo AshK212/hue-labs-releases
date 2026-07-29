@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { isMacDesktop } from "../platform";
+
 /**
  * Custom window controls for the frameless desktop window: minimize, maximize /
  * restore, and close.
@@ -10,9 +12,15 @@ import { useEffect, useState } from "react";
  * region beneath the buttons, so they are plain, clickable buttons (a drag
  * region beneath was what swallowed the clicks before).
  *
+ * Platform note: on macOS the OS draws the native red/yellow/green traffic
+ * lights (titleBarStyle "hidden"), so we do NOT render our own min/max/close —
+ * that would duplicate the window controls. We still render the draggable strip
+ * (full width, since no buttons sit on the right) so the title bar stays
+ * draggable. The IPC handlers are untouched. On Windows nothing changes.
+ *
  * NOTE: Electron preload/main changes need a full app restart (`npm run desktop`).
  */
-const CONTROLS_W = 140; // px reserved on the right for the controls
+const CONTROLS_W = 140; // px reserved on the right for the controls (Windows)
 
 export function WindowControls() {
   const [maximized, setMaximized] = useState(false);
@@ -28,6 +36,12 @@ export function WindowControls() {
       off?.();
     };
   }, [api]);
+
+  // macOS: keep only the draggable strip (native traffic lights own the
+  // controls). Span the full width since no custom buttons occupy the right.
+  if (isMacDesktop) {
+    return <div className="fixed top-0 inset-x-0 h-9 z-[90] app-drag" />;
+  }
 
   const run = (name: "minimize" | "maximizeToggle" | "close") => api?.[name]?.();
 

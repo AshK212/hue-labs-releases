@@ -29,7 +29,7 @@ export function TopBar({ step, onBack }: { step: number; onBack: () => void }) {
       )}
 
       <header className="fixed top-0 inset-x-0 z-30 h-[84px]">
-        <div className="h-full max-w-[1240px] mx-auto px-8 lg:px-12 flex items-center justify-between">
+        <div className="mac-tl-inset-left h-full max-w-[1240px] mx-auto px-8 lg:px-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {showBack ? (
               <button
