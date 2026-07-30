@@ -170,7 +170,7 @@ signing, notarization, or Gatekeeper stapling.
 The current `build/icon.png` is 256×256, so the mac build will fail at the icon step until
 a proper `build/icon.icns` (or a larger PNG) is added.
 
-**Output → `release/`:**
+**Output → `release/`:** 
 
 | File | What it is |
 |------|-----------|
