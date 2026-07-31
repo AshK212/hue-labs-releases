@@ -12,6 +12,7 @@
 import {
   outcomePresentation,
   dashboardRecommendation,
+  outcomeCopy,
   FALLBACK_OUTCOME_MESSAGE,
 } from "./benchmarkOutcome";
 
@@ -52,9 +53,13 @@ export function runBenchmarkOutcomeTests(): void {
   assertEqual(missing.tone, "neutral", "missing.tone");
   assert(FALLBACK_OUTCOME_MESSAGE.length > 0, "fallback message is non-empty");
 
-  // Dashboard recommendation: only a confirmed improvement recommends tested settings.
+  // Dashboard recommendation: an improvement is reported honestly, never as applied.
   const recImproved = dashboardRecommendation("improved", 5);
-  assertEqual(recImproved.headline, "Use tested settings", "improved rec headline");
+  assertEqual(recImproved.headline, "Tested settings performed better", "improved rec headline");
+  assert(
+    recImproved.detail.includes("not been applied permanently"),
+    "improved rec states settings are not applied"
+  );
   const recNeutral = dashboardRecommendation("no_meaningful_difference", 5);
   assertEqual(recNeutral.headline, "Keep current configuration", "neutral rec headline");
   assert(recNeutral.detail.includes("5%"), "neutral rec mentions threshold");
@@ -63,6 +68,16 @@ export function runBenchmarkOutcomeTests(): void {
   assert(
     recSlower.detail.toLowerCase().includes("reduced"),
     "slower rec explains reduced performance"
+  );
+
+  // Result-page improved copy is honest: confirmed, but not applied.
+  const improvedCopy = outcomeCopy("improved", { percent: 3.3, measuredRuns: 3 });
+  assertEqual(improvedCopy.heading, "Performance improvement confirmed", "improved heading");
+  assert(improvedCopy.message.includes("3.3%"), "improved copy includes percent");
+  assert(improvedCopy.message.includes("3 runs"), "improved copy includes run count");
+  assert(
+    improvedCopy.message.includes("not been applied permanently"),
+    "improved copy states not applied"
   );
 
   // eslint-disable-next-line no-console

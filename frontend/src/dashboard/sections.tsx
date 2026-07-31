@@ -108,16 +108,18 @@ export function OverviewSection({
   const { hardware, baseline, optimized, comparison, profile, restartBenchmarks, reoptimize, enterFlowAt } =
     useJourney();
   const modelLabel = useModelLabel();
-  // Current speed = the ACCEPTED configuration, per the backend classification —
-  // never the tested candidate unless it was a confirmed improvement. Falls back
-  // to the most recent baseline (current-config) history row so a rejected tested
-  // row can't be shown as the current speed on a fresh launch.
-  const accepted = comparison?.classification === "improved";
+  // Current configuration speed ALWAYS reflects the current/default configuration —
+  // never the tested settings, because tested settings are not applied or persisted
+  // anywhere. Falls back to the most recent baseline (current-config) history row,
+  // then any recent row, so a rejected/tested row is never shown as current.
   const current =
-    (accepted && optimized ? optimized.tokens_per_sec : baseline?.tokens_per_sec) ??
+    baseline?.tokens_per_sec ??
     history.find((r) => r.profile === "baseline")?.tokens_per_sec ??
     history[0]?.tokens_per_sec ??
     0;
+  // The tested-settings median — shown ONLY as a recommendation/measurement, never
+  // as the active configuration.
+  const testedTps = optimized?.tokens_per_sec ?? null;
   // The recommendation panel + "what changed" only reflect a confirmed improvement.
   const rec = comparison
     ? dashboardRecommendation(comparison.classification, comparison.threshold_percent)
@@ -205,7 +207,20 @@ export function OverviewSection({
             <div>
               <div className="text-body font-semibold text-ink-900">{rec.headline}</div>
               <p className="text-caption text-ink-400 mt-1 leading-relaxed">{rec.detail}</p>
-              {/* Only a confirmed improvement lists the changed settings. */}
+              {/* Improved: surface the tested median as a measurement/recommendation
+                  only — never labelled as the current/active configuration. */}
+              {comparison?.classification === "improved" && testedTps != null && (
+                <div className="mt-3">
+                  <p className="text-micro font-mono uppercase tracking-wide text-ink-500">
+                    Best measured tested settings
+                  </p>
+                  <div className="mt-0.5 text-body font-semibold font-mono text-ink-900 tnum">
+                    {testedTps.toFixed(1)}{" "}
+                    <span className="text-caption font-sans font-normal text-ink-400">tokens/sec</span>
+                  </div>
+                </div>
+              )}
+              {/* Only a confirmed improvement lists the tested changed settings. */}
               {comparison?.classification === "improved" && changes.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {changes.map((c) => (
@@ -433,9 +448,9 @@ export function OptimizationSection() {
   const changes = Array.from(new Set((profile?.changed_settings ?? []).map(friendlySetting)));
   return (
     <div className="space-y-5">
-      <DashCard title="Applied settings" icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />}>
+      <DashCard title="Tested settings" icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />}>
         {changes.length === 0 ? (
-          <p className="text-caption text-ink-400">No optimization applied yet.</p>
+          <p className="text-caption text-ink-400">No settings tested yet.</p>
         ) : (
           <div className="space-y-3">
             {changes.map((c) => (

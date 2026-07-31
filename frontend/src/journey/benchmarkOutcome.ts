@@ -43,20 +43,35 @@ export interface OutcomeCopy {
   message: string;
 }
 
+export interface OutcomeCopyContext {
+  /** Backend signed comparison percentage (for the improved copy). */
+  percent?: number | null;
+  /** Backend measured-run count (for the improved copy). */
+  measuredRuns?: number | null;
+}
+
 /**
  * Heading + body copy for a backend-decided outcome. The classification is the
  * backend's decision (single source of truth) — this only maps it to wording and
- * never re-derives the threshold. For a confirmed improvement we render the
- * backend's own message; the other outcomes use precise copy that does not imply
- * an optimization was applied.
+ * never re-derives the threshold. Every outcome uses copy that is honest about the
+ * fact that tested settings are measured, NOT applied permanently.
  */
 export function outcomeCopy(
   classification: BenchmarkClassification | null | undefined,
-  improvedMessage: string
+  ctx: OutcomeCopyContext = {}
 ): OutcomeCopy {
   switch (classification) {
-    case "improved":
-      return { heading: "Performance improved", message: improvedMessage };
+    case "improved": {
+      const pct = ctx.percent == null ? null : Math.abs(ctx.percent);
+      const pctPart = pct == null ? "" : ` of ${pct}%`;
+      const runsPart = ctx.measuredRuns == null ? "" : ` across ${ctx.measuredRuns} runs`;
+      return {
+        heading: "Performance improvement confirmed",
+        message:
+          `The tested settings produced a measured improvement${pctPart}${runsPart}. ` +
+          "These settings were tested only and have not been applied permanently.",
+      };
+    }
     case "slower":
       return {
         heading: "Analysis complete",
@@ -95,20 +110,22 @@ export function dashboardRecommendation(
   switch (classification) {
     case "improved":
       return {
-        headline: "Use tested settings",
-        detail: "A confirmed improvement was measured.",
+        headline: "Tested settings performed better",
+        detail:
+          "A confirmed improvement was measured, but these settings have not been " +
+          "applied permanently.",
       };
     case "slower":
       return {
         headline: "Keep current configuration",
-        detail: "The tested settings reduced performance.",
+        detail: "Tested settings reduced performance.",
       };
     case "no_meaningful_difference":
     default: {
       const t = thresholdPercent == null ? 5 : thresholdPercent;
       return {
         headline: "Keep current configuration",
-        detail: `The tested settings did not exceed the ${t}% decision threshold.`,
+        detail: `Tested settings did not exceed the ${t}% decision threshold.`,
       };
     }
   }

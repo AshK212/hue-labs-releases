@@ -200,9 +200,9 @@ async def optimization_apply(req: ApplyOptimizationRequest) -> ApplyOptimization
     hw = hardware_service.detect_hardware()
     profile = build_optimized_profile(hw)
     explanation = (
-        "We applied a conservative, hardware-aware profile using standard Ollama "
-        "runtime settings. Re-run the benchmark to see the measured difference on "
-        "this machine."
+        "We prepared a conservative, hardware-aware test profile using standard Ollama "
+        "runtime settings, so we can measure it against your current configuration. "
+        "These settings are tested only and are not applied permanently."
     )
     return ApplyOptimizationResponse(profile=profile, explanation=explanation)
 

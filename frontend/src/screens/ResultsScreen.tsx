@@ -10,7 +10,6 @@ import {
   outcomeCopy,
   differenceCaption,
   formatDifference,
-  FALLBACK_OUTCOME_MESSAGE,
 } from "../journey/benchmarkOutcome";
 import { friendlySetting } from "../journey/labels";
 import { FLOW_STEPS, STEP } from "../journey/steps";
@@ -100,10 +99,10 @@ export function ResultsScreen() {
   const after = optimized?.tokens_per_sec ?? 0;
   // Classification is backend-owned; the UI only renders it (no threshold recompute).
   const presentation = outcomePresentation(comparison?.classification);
-  const copy = outcomeCopy(
-    comparison?.classification,
-    comparison?.recommendation_message ?? FALLBACK_OUTCOME_MESSAGE
-  );
+  const copy = outcomeCopy(comparison?.classification, {
+    percent: comparison?.comparison_percent,
+    measuredRuns: comparison?.measured_runs ?? optimized?.measured_runs ?? null,
+  });
   // Hooks must run unconditionally (before any early return).
   const cardRef = useRef<HTMLDivElement>(null);
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
