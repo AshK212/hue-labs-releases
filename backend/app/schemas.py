@@ -88,6 +88,17 @@ class BenchmarkResult(BaseModel):
     vram_used_mb: Optional[float] = None            # model VRAM from Ollama /api/ps
     model_quant: Optional[str] = None               # quantization from Ollama /api/show
 
+    # --- Benchmark methodology v2 (additive; None on legacy callers/rows) ----
+    # `tokens_per_sec` above is the MEDIAN of `run_tokens_per_sec`. These fields
+    # are local diagnostics only — the cloud submission never reads them.
+    benchmark_method_version: Optional[str] = None   # e.g. "2.0"
+    measured_runs: Optional[int] = None              # number of measured generations
+    warmup_runs: Optional[int] = None                # number of discarded warm-ups
+    run_tokens_per_sec: Optional[list[float]] = None  # each measured run's tok/s
+    # Dispersion of the measured runs. Diagnostic ONLY — NOT a confidence interval
+    # and NOT a claim of statistical significance.
+    tokens_per_sec_stddev: Optional[float] = None
+
 
 # --- Ollama pull ----------------------------------------------------------
 
@@ -124,3 +135,29 @@ class ApplyOptimizationResponse(BaseModel):
     profile: OptimizationProfile
     # Plain-language explanation shown on the before/after screen.
     explanation: str
+
+
+# --- Benchmark comparison / classification (v2) ---------------------------
+# The backend is the single source of truth for the acceptance threshold. The
+# frontend renders this result; it must NOT re-implement the 5% rule.
+
+class BenchmarkComparisonRequest(BaseModel):
+    baseline_tokens_per_sec: float
+    optimized_tokens_per_sec: float
+    # For copy ("across {N} measured runs"); optional so older callers still work.
+    measured_runs: Optional[int] = None
+
+
+class BenchmarkComparison(BaseModel):
+    # "improved" | "no_meaningful_difference" | "slower"
+    classification: str
+    # Signed percentage change of optimized vs baseline throughput.
+    comparison_percent: float
+    # "apply_optimized" | "keep_baseline" — a stable code for callers to branch on.
+    recommendation_code: str
+    # Beginner-friendly, user-safe sentence for the UI to render verbatim.
+    recommendation_message: str
+    # The product acceptance threshold used (percent). Echoed for transparency.
+    threshold_percent: float
+    measured_runs: Optional[int] = None
+    method_version: str

@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 import httpx
 
@@ -30,6 +31,8 @@ from app.production.integration import production
 from app.schemas import (
     ApplyOptimizationRequest,
     ApplyOptimizationResponse,
+    BenchmarkComparison,
+    BenchmarkComparisonRequest,
     BenchmarkRequest,
     BenchmarkResult,
     HardwareInfo,
@@ -37,7 +40,13 @@ from app.schemas import (
     PullModelRequest,
     RecommendationResponse,
 )
-from app.services import benchmark, hardware as hardware_service, ollama_client, recommender
+from app.services import (
+    benchmark,
+    comparison as comparison_service,
+    hardware as hardware_service,
+    ollama_client,
+    recommender,
+)
 from app.services.ollama_client import OllamaError
 from app.services.optimization import build_optimized_profile
 
@@ -201,6 +210,34 @@ async def optimization_apply(req: ApplyOptimizationRequest) -> ApplyOptimization
 @app.get("/benchmark/history")
 async def benchmark_history() -> dict:
     return {"runs": storage.recent_runs()}
+
+
+@app.post("/benchmark/compare", response_model=BenchmarkComparison)
+async def benchmark_compare(req: BenchmarkComparisonRequest) -> BenchmarkComparison:
+    """Classify an optimized run against its baseline (single source of truth).
+
+    The backend owns the acceptance threshold; the UI renders this result. The
+    comparison is also persisted locally for history — never sent to the cloud.
+    """
+    result = comparison_service.classify(
+        req.baseline_tokens_per_sec,
+        req.optimized_tokens_per_sec,
+        measured_runs=req.measured_runs,
+    )
+    try:
+        storage.save_comparison(
+            model=None,
+            baseline_tokens_per_sec=req.baseline_tokens_per_sec,
+            optimized_tokens_per_sec=req.optimized_tokens_per_sec,
+            classification=result.classification,
+            comparison_percent=result.comparison_percent,
+            recommendation_code=result.recommendation_code,
+            method_version=result.method_version,
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+    except Exception:  # noqa: BLE001 - persistence must never break the response
+        logger.warning("Could not persist benchmark comparison", exc_info=True)
+    return result
 
 
 # --- Privacy sync ---------------------------------------------------------

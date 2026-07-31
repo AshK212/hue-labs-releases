@@ -8,6 +8,7 @@ import {
 } from "react";
 import { api } from "../api/client";
 import type {
+  BenchmarkComparison,
   BenchmarkResult,
   HardwareInfo,
   OllamaStatus,
@@ -44,6 +45,7 @@ interface JourneyValue {
   profile: OptimizationProfile | null;
   baseline: BenchmarkResult | null;
   optimized: BenchmarkResult | null;
+  comparison: BenchmarkComparison | null;
 
   // Derived
   ollamaReady: boolean;
@@ -77,6 +79,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<OptimizationProfile | null>(null);
   const [baseline, setBaseline] = useState<BenchmarkResult | null>(null);
   const [optimized, setOptimized] = useState<BenchmarkResult | null>(null);
+  const [comparison, setComparison] = useState<BenchmarkComparison | null>(null);
 
   const [prefetchPhase, setPrefetchPhase] = useState<Phase>("idle");
   const [prefetchError, setPrefetchError] = useState<string | null>(null);
@@ -109,6 +112,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setBaseline(null);
     setOptimized(null);
+    setComparison(null);
     setBaselinePhase("idle");
     setOptimizePhase("idle");
     setBaselineError(null);
@@ -119,6 +123,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   const restartBenchmarks = useCallback(() => {
     setBaseline(null);
     setOptimized(null);
+    setComparison(null);
     setProfile(null);
     setBaselinePhase("idle");
     setOptimizePhase("idle");
@@ -131,6 +136,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
   // Re-run just the optimization against the existing baseline.
   const reoptimize = useCallback(() => {
     setOptimized(null);
+    setComparison(null);
     setProfile(null);
     setOptimizePhase("idle");
     setOptimizeError(null);
@@ -187,13 +193,30 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
     try {
       const res = await api.applyOptimization(selectedModel);
       setProfile(res.profile);
-      setOptimized(await api.runBenchmark(selectedModel, "optimized"));
+      const opt = await api.runBenchmark(selectedModel, "optimized");
+      setOptimized(opt);
+      // Classification is decided by the backend (single source of truth for the
+      // 5% acceptance rule). A comparison failure must not break the flow — the
+      // Results screen falls back to a neutral outcome if it's absent.
+      if (baseline) {
+        try {
+          setComparison(
+            await api.compareBenchmark(
+              baseline.tokens_per_sec,
+              opt.tokens_per_sec,
+              opt.measured_runs ?? null
+            )
+          );
+        } catch {
+          setComparison(null);
+        }
+      }
       setOptimizePhase("done");
     } catch (e) {
       setOptimizeError((e as Error).message);
       setOptimizePhase("error");
     }
-  }, [selectedModel]);
+  }, [selectedModel, baseline]);
 
   const value: JourneyValue = {
     view,
@@ -214,6 +237,7 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
     profile,
     baseline,
     optimized,
+    comparison,
     ollamaReady,
     modelInstalled,
     prefetchPhase,

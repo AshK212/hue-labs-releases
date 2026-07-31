@@ -158,13 +158,13 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
 
         <div style={s.hero}>
           <div style={s.tpsBlock}>
-            <span style={s.tpsLabel}>Before</span>
+            <span style={s.tpsLabel}>{data.beforeLabel}</span>
             <span style={s.tpsValue}>{data.beforeTps}</span>
             <span style={s.tpsUnit}>tok/s</span>
           </div>
           <span style={s.arrow}>&rarr;</span>
           <div style={s.tpsBlock}>
-            <span style={s.tpsLabel}>After</span>
+            <span style={s.tpsLabel}>{data.afterLabel}</span>
             <span style={{ ...s.tpsValue, ...s.tpsValueStrong }}>{data.afterTps}</span>
             <span style={s.tpsUnit}>tok/s</span>
           </div>
@@ -175,14 +175,35 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
             <span style={s.calloutValue}>{data.improvement}</span>
             <span style={s.calloutLabel}>{data.improvementCaption}</span>
           </div>
-          <div style={s.vDivider} />
-          <div style={s.callout}>
-            <span style={s.calloutValue}>
-              {data.score}
-              <span style={s.scoreOut}>{data.scoreOutOf}</span>
-            </span>
-            <span style={s.calloutLabel}>Optimization Score</span>
-          </div>
+          {data.method ? (
+            <>
+              <div style={s.vDivider} />
+              <div style={s.callout}>
+                <span style={s.calloutValue}>{data.method}</span>
+                <span style={s.calloutLabel}>{data.methodLabel}</span>
+              </div>
+              {data.thresholdValue && (
+                <>
+                  <div style={s.vDivider} />
+                  <div style={s.callout}>
+                    <span style={s.calloutValue}>{data.thresholdValue}</span>
+                    <span style={s.calloutLabel}>{data.thresholdLabel}</span>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <div style={s.vDivider} />
+              <div style={s.callout}>
+                <span style={s.calloutValue}>
+                  {data.score}
+                  <span style={s.scoreOut}>{data.scoreOutOf}</span>
+                </span>
+                <span style={s.calloutLabel}>Optimization Score</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div style={s.footer}>

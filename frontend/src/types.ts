@@ -50,12 +50,36 @@ export interface RecommendationResponse {
 export interface BenchmarkResult {
   model: string;
   profile: string;
-  tokens_per_sec: number;
+  tokens_per_sec: number; // median of run_tokens_per_sec (methodology v2)
   output_tokens: number;
   total_seconds: number;
   prompt: string;
   options: Record<string, unknown>;
   created_at: string;
+  // Methodology v2 diagnostics (optional; absent on legacy responses).
+  benchmark_method_version?: string | null;
+  measured_runs?: number | null;
+  warmup_runs?: number | null;
+  run_tokens_per_sec?: number[] | null;
+  // Dispersion of the measured runs. Diagnostic only — NOT a confidence interval.
+  tokens_per_sec_stddev?: number | null;
+}
+
+// Backend-owned comparison/classification result (methodology v2). The frontend
+// renders this; it must NOT re-implement the acceptance threshold.
+export type BenchmarkClassification =
+  | "improved"
+  | "no_meaningful_difference"
+  | "slower";
+
+export interface BenchmarkComparison {
+  classification: BenchmarkClassification;
+  comparison_percent: number; // signed % change of optimized vs baseline
+  recommendation_code: "apply_optimized" | "keep_baseline";
+  recommendation_message: string; // beginner-friendly, render verbatim
+  threshold_percent: number;
+  measured_runs?: number | null;
+  method_version: string;
 }
 
 export type PullPhase =

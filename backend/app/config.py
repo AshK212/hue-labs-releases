@@ -40,6 +40,27 @@ BENCHMARK_PROMPT: str = (
 # Upper bound on generated tokens so a benchmark run is bounded and repeatable.
 BENCHMARK_NUM_PREDICT: int = 128
 
+# --- Benchmark methodology (v2) -----------------------------------------
+# Bumped whenever the measurement protocol changes, so historical rows stay
+# distinguishable. v2 = equal warm-up + repeated measured runs + median.
+BENCHMARK_METHOD_VERSION: str = "2.0"
+
+# How many warm-up generations to run and DISCARD before measuring. This warms
+# the model/GPU so baseline and optimized are both measured from the same warm
+# state (removes the cold-vs-warm bias). Configurable; never hardcoded downstream.
+BENCHMARK_WARMUP_RUNS: int = max(0, int(os.getenv("LAO_BENCHMARK_WARMUP_RUNS", "1")))
+
+# How many measured generations to run per benchmark; the MEDIAN tokens/sec is
+# reported. Bounded to at least 1. Configurable; never hardcoded downstream.
+BENCHMARK_MEASURED_RUNS: int = max(1, int(os.getenv("LAO_BENCHMARK_MEASURED_RUNS", "3")))
+
+# Product acceptance threshold (percent). A tuned configuration must beat the
+# baseline by at least this margin to be reported as an improvement. This is a
+# PRODUCT threshold — NOT a claim of statistical significance.
+BENCHMARK_MIN_IMPROVEMENT_PERCENT: float = float(
+    os.getenv("LAO_BENCHMARK_MIN_IMPROVEMENT", "5.0")
+)
+
 # --- Hue Labs production backend (Milestone 3) ---------------------------
 # The hosted service the desktop app talks to for health / (later) benchmark and
 # telemetry submission. Base URL is overridable; the API key is ONLY read from

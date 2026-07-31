@@ -2,6 +2,7 @@
 
 import type {
   ApplyOptimizationResponse,
+  BenchmarkComparison,
   BenchmarkResult,
   BenchmarkRun,
   HardwareInfo,
@@ -103,6 +104,22 @@ export const api = {
     request<ApplyOptimizationResponse>("/optimization/apply", {
       method: "POST",
       body: JSON.stringify({ model }),
+    }),
+
+  // Classify optimized-vs-baseline throughput. The backend owns the 5% rule and
+  // returns the outcome + user-safe message; the UI renders it.
+  compareBenchmark: (
+    baselineTokensPerSec: number,
+    optimizedTokensPerSec: number,
+    measuredRuns?: number | null
+  ) =>
+    request<BenchmarkComparison>("/benchmark/compare", {
+      method: "POST",
+      body: JSON.stringify({
+        baseline_tokens_per_sec: baselineTokensPerSec,
+        optimized_tokens_per_sec: optimizedTokensPerSec,
+        measured_runs: measuredRuns ?? null,
+      }),
     }),
 
   history: () => request<{ runs: BenchmarkRun[] }>("/benchmark/history"),

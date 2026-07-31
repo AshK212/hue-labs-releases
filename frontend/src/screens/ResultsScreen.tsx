@@ -5,7 +5,13 @@ import { Reveal } from "../components/Screen";
 import { Button } from "../components/Button";
 import { MetricCard } from "../components/Metric";
 import { TechnicalDetails } from "../components/TechnicalDetails";
-import { useCountUp } from "../components/useCountUp";
+import {
+  outcomePresentation,
+  outcomeCopy,
+  differenceCaption,
+  formatDifference,
+  FALLBACK_OUTCOME_MESSAGE,
+} from "../journey/benchmarkOutcome";
 import { friendlySetting } from "../journey/labels";
 import { FLOW_STEPS, STEP } from "../journey/steps";
 import { ArrowRightIcon, ArrowUpIcon, CheckIcon, ChipIcon, GpuIcon, SparkIcon } from "../components/Icons";
@@ -42,12 +48,14 @@ function toOptimizationRun(args: {
   model: string;
   baseline: BenchmarkResult;
   optimized: BenchmarkResult;
+  improved: boolean;
 }): OptimizationRun {
-  const { hardware, model, baseline, optimized } = args;
+  const { hardware, model, baseline, optimized, improved } = args;
   const before = baseline.tokens_per_sec;
   const after = optimized.tokens_per_sec;
-  const gainPercent = before > 0 ? ((after - before) / before) * 100 : 0;
-  const hasGain = gainPercent >= 1; // same threshold the page uses for "improved"
+  // The win/no-win decision comes from the backend classification (single source
+  // of truth), not a locally re-derived threshold.
+  const hasGain = improved;
 
   return {
     baseline_result: { tokens_per_sec: before },
@@ -86,12 +94,17 @@ const PREVIEW_MIN_H = 300;
 const PREVIEW_MAX_H = 400;
 
 export function ResultsScreen() {
-  const { baseline, optimized, profile, reset, openDashboard, hardware, selectedModel } = useJourney();
+  const { baseline, optimized, comparison, profile, reset, openDashboard, hardware, selectedModel } =
+    useJourney();
   const before = baseline?.tokens_per_sec ?? 0;
   const after = optimized?.tokens_per_sec ?? 0;
-  const pct = before > 0 ? ((after - before) / before) * 100 : 0;
+  // Classification is backend-owned; the UI only renders it (no threshold recompute).
+  const presentation = outcomePresentation(comparison?.classification);
+  const copy = outcomeCopy(
+    comparison?.classification,
+    comparison?.recommendation_message ?? FALLBACK_OUTCOME_MESSAGE
+  );
   // Hooks must run unconditionally (before any early return).
-  const animatedPct = useCountUp(Math.abs(pct), 1000);
   const cardRef = useRef<HTMLDivElement>(null);
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -113,13 +126,30 @@ export function ResultsScreen() {
 
   if (!baseline || !optimized) return null;
 
-  const improved = pct >= 1;
-  const aboutSame = Math.abs(pct) < 1;
-  const changes = Array.from(new Set((profile?.changed_settings ?? []).map(friendlySetting)));
+  const improved = presentation.improved;
+  // Only surface the changed settings when there was a real, confirmed gain.
+  const changes = improved
+    ? Array.from(new Set((profile?.changed_settings ?? []).map(friendlySetting)))
+    : [];
 
-  // Presentation-only card data (built from the run adapter above).
-  const run = toOptimizationRun({ hardware, model: selectedModel ?? "", baseline, optimized });
-  const cardData = buildResultCardData(run);
+  // Presentation-only card data (built from the run adapter above). When we have a
+  // backend comparison, pass it through so the card shows the tested-settings
+  // median (even when not accepted), the backend's %, and the method/threshold.
+  const run = toOptimizationRun({ hardware, model: selectedModel ?? "", baseline, optimized, improved });
+  const cardData = buildResultCardData(
+    run,
+    comparison
+      ? {
+          testedTps: after,
+          classification: comparison.classification,
+          comparisonPercent: comparison.comparison_percent,
+          measuredRuns: optimized.measured_runs ?? comparison.measured_runs ?? null,
+          thresholdPercent: comparison.threshold_percent,
+          beforeLabel: "Current configuration",
+          afterLabel: "Tested settings",
+        }
+      : undefined
+  );
   const busy = busyAction !== null;
 
   // Scale the card to a window-aware target height so the whole page fits at
@@ -177,16 +207,25 @@ export function ResultsScreen() {
   const beforeAfter = (
     <div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5 sm:gap-3.5">
-        <MetricCard label="Before" value={before.toFixed(1)} unit="tokens/sec" />
+        <MetricCard label="Current configuration" value={before.toFixed(1)} unit="tokens/sec" />
         <div className={`grid place-items-center w-9 h-9 rounded-full border ${improved ? "bg-sage-50 border-sky-100 text-sage-500" : "bg-mist-100 border-mist-200 text-ink-400"}`}>
           <ArrowRightIcon className="w-4 h-4" />
         </div>
-        <MetricCard label="After" value={after.toFixed(1)} unit="tokens/sec" tone={improved ? "green" : "blue"} />
+        <MetricCard label="Tested settings" value={after.toFixed(1)} unit="tokens/sec" tone={improved ? "green" : "blue"} />
       </div>
-      {improved && (
-        <p className="text-caption font-mono text-sage-600 font-medium text-center mt-3">
-          +{(after - before).toFixed(1)} tokens/sec faster
-        </p>
+      {/* Measured difference — value + caption from the backend comparison; the
+          frontend never recomputes the 5% decision. */}
+      {comparison && (
+        <div className="text-center mt-3">
+          <p
+            className={`text-caption font-mono font-medium ${improved ? "text-sage-600" : "text-ink-600"}`}
+          >
+            Difference: {formatDifference(comparison.comparison_percent)}
+          </p>
+          <p className="text-micro font-mono uppercase tracking-wide text-ink-400 mt-1">
+            {differenceCaption(comparison.classification, comparison.threshold_percent)}
+          </p>
+        </div>
       )}
     </div>
   );
@@ -255,6 +294,42 @@ export function ResultsScreen() {
     </div>
   );
 
+  // Collapsed, honest methodology disclosure — real values only, no confidence
+  // or significance claims. Uses the additive v2 fields with safe fallbacks.
+  const num = (v: number | null | undefined) => (v == null ? "—" : String(v));
+  const detailRows: { label: string; value: string }[] = [
+    { label: "Method", value: "Median" },
+    { label: "Warm-up runs", value: num(optimized.warmup_runs ?? baseline.warmup_runs) },
+    { label: "Measured runs", value: num(optimized.measured_runs ?? baseline.measured_runs) },
+    {
+      label: "Decision threshold",
+      value: comparison ? `${comparison.threshold_percent}%` : "—",
+    },
+    { label: "Model", value: selectedModel ?? "—" },
+    {
+      label: "Benchmark methodology version",
+      value: optimized.benchmark_method_version ?? comparison?.method_version ?? "—",
+    },
+  ];
+  const benchmarkDetails = (
+    <details className="group text-left rounded-tile border border-mist-200 bg-mist-50/50 open:bg-mist-50 transition-colors">
+      <summary className="flex items-center justify-between gap-2 px-4 py-2.5 cursor-pointer list-none select-none">
+        <span className="text-micro font-mono uppercase tracking-wider text-ink-400">
+          Benchmark details
+        </span>
+        <span className="text-ink-400 transition-transform duration-200 group-open:rotate-90">›</span>
+      </summary>
+      <div className="px-4 pb-3.5 pt-1 space-y-1.5">
+        {detailRows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between gap-4 font-mono text-micro">
+            <span className="text-ink-500">{row.label}</span>
+            <span className="text-sky-600 tnum">{row.value}</span>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+
   return (
     // Full-height stage under the fixed 84px top bar (and the 4rem stage bottom
     // padding). The scroll region is full-width, so if it ever scrolls the bar
@@ -283,14 +358,10 @@ export function ResultsScreen() {
 
               <Reveal index={1} className="mt-4">
                 <h1 className="text-[34px] sm:text-[40px] leading-tight font-semibold tracking-tight2 text-ink-900">
-                  Optimization complete
+                  {copy.heading}
                 </h1>
                 <p className="text-body text-ink-500 mt-2.5 max-w-[34rem] mx-auto">
-                  {improved
-                    ? `Your model now runs about ${animatedPct.toFixed(0)}% faster on this machine, measured on the same prompt.`
-                    : aboutSame
-                    ? "Your speed held steady — about the same on this machine. That's a solid baseline."
-                    : `Measured ${pct.toFixed(0)}% on this machine. The gain depends on your hardware.`}
+                  {copy.message}
                 </p>
               </Reveal>
             </div>
@@ -317,6 +388,11 @@ export function ResultsScreen() {
             {/* Share actions — one clean row spanning the content width. */}
             <Reveal index={3} className="mt-6">
               {shareActions}
+            </Reveal>
+
+            {/* Collapsed methodology disclosure. */}
+            <Reveal index={4} className="mt-6">
+              <div className="mx-auto w-full max-w-[34rem]">{benchmarkDetails}</div>
             </Reveal>
           </div>
         </div>

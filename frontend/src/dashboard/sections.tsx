@@ -19,6 +19,7 @@ import {
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/Badge";
 import { friendlySetting } from "../journey/labels";
+import { dashboardRecommendation } from "../journey/benchmarkOutcome";
 import type { BenchmarkRun, OllamaModel } from "../types";
 import { DashCard, EmptyState, StatLine } from "./widgets";
 import { BrandLineChart, ChartLegend, type ChartPoint } from "../components/BrandChart";
@@ -78,7 +79,10 @@ function chartPoints(history: BenchmarkRun[]): ChartPoint[] {
     .map((r) => ({
       value: r.tokens_per_sec,
       tone: r.profile === "optimized" ? "signal" : "gray",
-      title: `${r.tokens_per_sec.toFixed(1)} tok/s · ${r.profile}`,
+      // Presentation-only friendly label; the stored `profile` value is unchanged.
+      title: `${r.tokens_per_sec.toFixed(1)} tok/s · ${
+        r.profile === "optimized" ? "Tested settings" : "Current configuration"
+      }`,
     }));
 }
 
@@ -101,10 +105,23 @@ export function OverviewSection({
   models: OllamaModel[];
   onNavigate: (s: SectionId) => void;
 }) {
-  const { hardware, baseline, optimized, profile, restartBenchmarks, reoptimize, enterFlowAt } =
+  const { hardware, baseline, optimized, comparison, profile, restartBenchmarks, reoptimize, enterFlowAt } =
     useJourney();
   const modelLabel = useModelLabel();
-  const current = optimized?.tokens_per_sec ?? baseline?.tokens_per_sec ?? history[0]?.tokens_per_sec ?? 0;
+  // Current speed = the ACCEPTED configuration, per the backend classification —
+  // never the tested candidate unless it was a confirmed improvement. Falls back
+  // to the most recent baseline (current-config) history row so a rejected tested
+  // row can't be shown as the current speed on a fresh launch.
+  const accepted = comparison?.classification === "improved";
+  const current =
+    (accepted && optimized ? optimized.tokens_per_sec : baseline?.tokens_per_sec) ??
+    history.find((r) => r.profile === "baseline")?.tokens_per_sec ??
+    history[0]?.tokens_per_sec ??
+    0;
+  // The recommendation panel + "what changed" only reflect a confirmed improvement.
+  const rec = comparison
+    ? dashboardRecommendation(comparison.classification, comparison.threshold_percent)
+    : null;
   const changes = Array.from(new Set((profile?.changed_settings ?? []).map(friendlySetting)));
   const baseModel = (baseline?.model ?? optimized?.model ?? "").split(":")[0];
   const modelSize = baseModel
@@ -117,7 +134,7 @@ export function OverviewSection({
         <DashCard className="lg:col-span-2" index={0}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Current speed</p>
+              <p className="text-micro font-mono uppercase tracking-wide text-ink-500">Current configuration speed</p>
               <div className="mt-2 flex items-end gap-3">
                 <span className="text-[64px] leading-none font-semibold font-mono tracking-tight2 text-ink-900 tnum">
                   {current.toFixed(1)}
@@ -179,8 +196,28 @@ export function OverviewSection({
           )}
         </DashCard>
 
-        <DashCard title="Optimization" icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />} index={4}>
-          {changes.length > 0 ? (
+        <DashCard
+          title={rec ? "Latest recommendation" : "Optimization"}
+          icon={<Sparkles className="w-5 h-5" strokeWidth={1.8} />}
+          index={4}
+        >
+          {rec ? (
+            <div>
+              <div className="text-body font-semibold text-ink-900">{rec.headline}</div>
+              <p className="text-caption text-ink-400 mt-1 leading-relaxed">{rec.detail}</p>
+              {/* Only a confirmed improvement lists the changed settings. */}
+              {comparison?.classification === "improved" && changes.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {changes.map((c) => (
+                    <div key={c} className="flex items-center gap-2 text-caption text-ink-700">
+                      <Zap className="w-4 h-4 text-sage-500" strokeWidth={2} />
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : changes.length > 0 ? (
             <div className="space-y-2">
               {changes.map((c) => (
                 <div key={c} className="flex items-center gap-2 text-caption text-ink-700">
@@ -220,8 +257,8 @@ export function OverviewSection({
         {history.length > 0 && (
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <ChartLegend tone="signal" label="Optimized" />
-              <ChartLegend tone="gray" label="Baseline" />
+              <ChartLegend tone="signal" label="Tested settings" />
+              <ChartLegend tone="gray" label="Current configuration" />
             </div>
             <p className="text-micro font-mono text-ink-400">
               {history.length} run{history.length === 1 ? "" : "s"} · latest{" "}
@@ -319,8 +356,8 @@ export function PerformanceSection({ history }: { history: BenchmarkRun[] }) {
         <BrandLineChart points={chartPoints(history)} height={200} />
         {history.length > 0 && (
           <div className="mt-4 flex items-center gap-5">
-            <ChartLegend tone="signal" label="Optimized" />
-            <ChartLegend tone="gray" label="Baseline" />
+            <ChartLegend tone="signal" label="Tested settings" />
+            <ChartLegend tone="gray" label="Current configuration" />
           </div>
         )}
       </DashCard>

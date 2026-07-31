@@ -29,11 +29,17 @@ export function BaselineScreen() {
 
   if (baselinePhase === "done" && baseline) {
     const perf = performanceLabel(baseline.tokens_per_sec);
+    // Methodology v2 exposes the measured-run count; fall back safely if a legacy
+    // response omits the additive field.
+    const runs = baseline.measured_runs ?? null;
+    const measuredLine = runs
+      ? `Measured across ${runs} runs after warm-up.`
+      : "Measured after warm-up.";
     return (
       <Column>
         <div className="flex flex-col items-center text-center">
           <Reveal index={0}>
-            <p className="text-body text-ink-500">Your speed right now</p>
+            <p className="text-body text-ink-500">Median throughput</p>
           </Reveal>
           <Reveal index={1} className="mt-4">
             <HeroNumber value={baseline.tokens_per_sec} unit="tokens per second" />
@@ -44,11 +50,14 @@ export function BaselineScreen() {
             </StatusBadge>
           </Reveal>
           <Reveal index={3} className="mt-4">
+            <p className="text-caption text-ink-500">{measuredLine}</p>
+          </Reveal>
+          <Reveal index={4} className="mt-2">
             <p className="text-micro font-mono uppercase tracking-wide text-ink-700">
               Default settings · {baseline.output_tokens} tokens in {baseline.total_seconds}s
             </p>
           </Reveal>
-          <Reveal index={4} className="mt-10">
+          <Reveal index={5} className="mt-10">
             <Button onClick={next} rightIcon={<ArrowRightIcon className="w-5 h-5" />}>
               Continue
             </Button>
