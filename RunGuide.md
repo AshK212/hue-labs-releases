@@ -265,7 +265,7 @@ export HUE_LABS_API_KEY="xxxxxxxx"
 python -m app.production.check
 ```
 
-## 7. Troubleshooting
+## 7. Troubleshootingc
 
 | Symptom | Cause / Fix |
 |---------|-------------|
@@ -280,3 +280,14 @@ python -m app.production.check
 
 
 Milestone 1 is Completed
+
+
+
+
+
+
+
+npm version 0.1.2 --no-git-tag-version
+
+Select-String -Path package.json -Pattern '"version"'
+Select-String -Path frontend\package.json -Pattern '"version"'
